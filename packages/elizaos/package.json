@@ -1,0 +1,78 @@
+{
+  "name": "@guardianclaw/elizaos-plugin",
+  "version": "1.2.1",
+  "description": "GuardianClaw AI safety plugin for ElizaOS - CLAW protocol validation and memory integrity for autonomous agents",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint src/",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "elizaos",
+    "eliza",
+    "ai-safety",
+    "alignment",
+    
+    "claw",
+    "autonomous-agents",
+    "ai-agents",
+    "plugin",
+    "web3",
+    "crypto",
+    "memory-integrity",
+    "memory-injection",
+    "hmac"
+  ],
+  "author": {
+    "name": "GuardianClaw Team",
+    "email": "contact@guardianclaw.org"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/guardian-claw/guardianclaw.git",
+    "directory": "packages/elizaos"
+  },
+  "homepage": "https://guardianclaw.org",
+  "bugs": {
+    "url": "https://github.com/guardian-claw/guardianclaw/issues"
+  },
+  "dependencies": {},
+  "peerDependencies": {
+    "@elizaos/core": "^1.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@elizaos/core": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@guardianclaw/core": "file:../core",
+    "@elizaos/core": "^1.0.0",
+    "@types/node": "^20.0.0",
+    "eslint": "^8.57.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.3.0",
+    "vitest": "^1.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

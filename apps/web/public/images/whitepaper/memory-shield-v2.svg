@@ -1,0 +1,118 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 480" width="600" height="480">
+  <defs>
+    <!-- Gradients -->
+    <linearGradient id="phase1-gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:0.15"/>
+      <stop offset="100%" style="stop-color:#3b82f6;stop-opacity:0.03"/>
+    </linearGradient>
+    <linearGradient id="phase2-gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#e11d48;stop-opacity:0.15"/>
+      <stop offset="100%" style="stop-color:#e11d48;stop-opacity:0.03"/>
+    </linearGradient>
+
+    <!-- Glow filters -->
+    <filter id="blue-glow" x="-15%" y="-15%" width="130%" height="130%">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feFlood flood-color="#3b82f6" flood-opacity="0.3"/>
+      <feComposite in2="blur" operator="in"/>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="green-glow" x="-15%" y="-15%" width="130%" height="130%">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feFlood flood-color="#e11d48" flood-opacity="0.3"/>
+      <feComposite in2="blur" operator="in"/>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="red-glow" x="-15%" y="-15%" width="130%" height="130%">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feFlood flood-color="#ef4444" flood-opacity="0.3"/>
+      <feComposite in2="blur" operator="in"/>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+
+    <!-- Arrow markers -->
+    <marker id="arrow-blue" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#3b82f6"/>
+    </marker>
+    <marker id="arrow-green" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#e11d48"/>
+    </marker>
+    <marker id="arrow-red" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#ef4444"/>
+    </marker>
+    <marker id="arrow-gray" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#71717a"/>
+    </marker>
+  </defs>
+
+  <!-- Background -->
+  <rect width="600" height="480" fill="#0a0a0a"/>
+
+  <!-- Main container -->
+  <rect x="20" y="20" width="560" height="440" rx="10" fill="#141414" stroke="#262626" stroke-width="1"/>
+
+  <!-- Title -->
+  <text x="300" y="50" text-anchor="middle" fill="#fafafa" font-family="Arial, sans-serif" font-size="18" font-weight="bold">Memory Shield v2.0</text>
+  <text x="300" y="70" text-anchor="middle" fill="#71717a" font-family="Arial, sans-serif" font-size="11">Proteção em duas fases contra injeção de memória</text>
+
+  <!-- New Entry (Input) -->
+  <rect x="240" y="90" width="120" height="40" rx="20" fill="#1e1e2e" stroke="#71717a" stroke-width="1.5"/>
+  <text x="300" y="115" text-anchor="middle" fill="#a1a1aa" font-family="Arial, sans-serif" font-size="11" font-weight="bold">Nova Entrada</text>
+
+  <!-- Arrow down to Phase 1 -->
+  <line x1="300" y1="130" x2="300" y2="155" stroke="#71717a" stroke-width="2" marker-end="url(#arrow-gray)"/>
+
+  <!-- Phase 1 Box -->
+  <g filter="url(#blue-glow)">
+    <rect x="100" y="165" width="400" height="110" rx="8" fill="url(#phase1-gradient)" stroke="#3b82f6" stroke-width="2"/>
+  </g>
+  <text x="300" y="190" text-anchor="middle" fill="#3b82f6" font-family="Arial, sans-serif" font-size="13" font-weight="bold">FASE 1: VALIDAÇÃO DE CONTEÚDO</text>
+
+  <!-- Content Validator Box inside Phase 1 -->
+  <rect x="130" y="200" width="340" height="55" rx="6" fill="#1e1e2e" stroke="#3b82f6" stroke-width="1"/>
+  <text x="300" y="223" text-anchor="middle" fill="#fafafa" font-family="Arial, sans-serif" font-size="11" font-weight="bold">MemoryContentValidator</text>
+  <text x="300" y="243" text-anchor="middle" fill="#a1a1aa" font-family="Arial, sans-serif" font-size="10">23+ padrões de injeção  |  9 categorias de ataque</text>
+
+  <!-- Decision diamond -->
+  <polygon points="300,295 340,325 300,355 260,325" fill="#1e1e2e" stroke="#71717a" stroke-width="1.5"/>
+  <text x="300" y="330" text-anchor="middle" fill="#a1a1aa" font-family="Arial, sans-serif" font-size="10">Seguro?</text>
+
+  <!-- BLOCKED path (left) -->
+  <line x1="260" y1="325" x2="130" y2="325" stroke="#ef4444" stroke-width="2" marker-end="url(#arrow-red)"/>
+  <text x="195" y="318" text-anchor="middle" fill="#ef4444" font-family="Arial, sans-serif" font-size="9">NÃO</text>
+
+  <g filter="url(#red-glow)">
+    <rect x="40" y="305" width="90" height="40" rx="6" fill="rgba(239,68,68,0.1)" stroke="#ef4444" stroke-width="2"/>
+  </g>
+  <text x="85" y="330" text-anchor="middle" fill="#ef4444" font-family="Arial, sans-serif" font-size="11" font-weight="bold">BLOQUEADO</text>
+
+  <!-- PASSED path (down) -->
+  <line x1="300" y1="355" x2="300" y2="375" stroke="#e11d48" stroke-width="2" marker-end="url(#arrow-green)"/>
+  <text x="330" y="368" fill="#e11d48" font-family="Arial, sans-serif" font-size="9">SIM</text>
+
+  <!-- Phase 2 Box -->
+  <g filter="url(#green-glow)">
+    <rect x="150" y="385" width="300" height="55" rx="8" fill="url(#phase2-gradient)" stroke="#e11d48" stroke-width="2"/>
+  </g>
+  <text x="300" y="408" text-anchor="middle" fill="#e11d48" font-family="Arial, sans-serif" font-size="13" font-weight="bold">FASE 2: ASSINATURA CRIPTOGRÁFICA</text>
+  <text x="300" y="428" text-anchor="middle" fill="#a1a1aa" font-family="Arial, sans-serif" font-size="10">HMAC-SHA256 + Chave Secreta</text>
+
+  <!-- Final output -->
+  <rect x="470" y="395" width="100" height="40" rx="6" fill="rgba(34,197,94,0.1)" stroke="#e11d48" stroke-width="2"/>
+  <text x="520" y="412" text-anchor="middle" fill="#e11d48" font-family="Arial, sans-serif" font-size="10" font-weight="bold">ENTRADA</text>
+  <text x="520" y="426" text-anchor="middle" fill="#e11d48" font-family="Arial, sans-serif" font-size="10" font-weight="bold">ASSINADA</text>
+
+  <!-- Arrow from Phase 2 to output -->
+  <line x1="450" y1="412" x2="465" y2="412" stroke="#e11d48" stroke-width="2" marker-end="url(#arrow-green)"/>
+
+  <!-- Legend / Stats -->
+  <g transform="translate(40, 400)">
+    <text x="0" y="0" fill="#71717a" font-family="Arial, sans-serif" font-size="9">Características:</text>
+    <text x="0" y="14" fill="#a1a1aa" font-family="Arial, sans-serif" font-size="8">• Latência: &lt;1ms</text>
+    <text x="0" y="26" fill="#a1a1aa" font-family="Arial, sans-serif" font-size="8">• Taxa FP: &lt;5%</text>
+    <text x="0" y="38" fill="#a1a1aa" font-family="Arial, sans-serif" font-size="8">• Taxa TP: &gt;90%</text>
+  </g>
+
+  <!-- OWASP reference -->
+  <text x="300" y="465" text-anchor="middle" fill="#71717a" font-family="Arial, sans-serif" font-size="9">Cobertura: OWASP ASI06 (Envenenamento de Memória e Contexto)</text>
+</svg>

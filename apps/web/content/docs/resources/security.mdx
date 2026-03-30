@@ -1,0 +1,245 @@
+﻿---
+title: "Security"
+description: "Security practices and vulnerability reporting"
+category: "resources"
+order: 4
+lastUpdated: "2026-01-23"
+---
+
+# Security
+
+Security practices and vulnerability reporting for GuardianClaw.
+
+## Reporting Vulnerabilities
+
+For security vulnerabilities, please contact maintainers directly instead of opening public issues.
+
+See the [Contributing Guide](https://github.com/guardianclaw/guardianclaw-platform/blob/main/docs/CONTRIBUTING.md) for contact details.
+
+### What to Include
+
+1. Description of the vulnerability
+2. Steps to reproduce
+3. Potential impact
+4. Any suggested fixes (optional)
+
+### Response Timeline
+
+- **Acknowledgment**: Within 48 hours
+- **Initial assessment**: Within 7 days
+- **Resolution timeline**: Depends on severity
+
+## Responsible Disclosure
+
+We follow responsible disclosure practices:
+
+1. Report vulnerabilities privately
+2. Allow time for a fix before public disclosure
+3. Coordinate disclosure timing
+
+## Security Design
+
+### CLAW Protocol
+
+The CLAW (Credibility, Limits, Avoidance, Worth) protocol provides defense-in-depth:
+
+| Gate | Security Function |
+|------|-------------------|
+| Truth | Detects deception, impersonation |
+| Harm | Blocks malicious content |
+| Scope | Prevents boundary violations, prompt injection |
+| Purpose | Requires legitimate justification |
+
+### 4-Layer Architecture
+
+| Layer | Protection |
+|-------|------------|
+| L1 Input | Pre-AI attack detection (700+ patterns) |
+| L2 Seed | Alignment via system prompt |
+| L3 Output | Post-AI heuristic checking |
+| L4 Observer | LLM-based transcript analysis |
+
+### Memory Protection
+
+Memory Shield provides HMAC-based signing to protect against memory injection attacks.
+
+```python
+from guardianclaw import MemoryIntegrityChecker
+
+checker = MemoryIntegrityChecker(secret_key="...")
+signed = checker.sign_entry(entry)
+result = checker.verify_entry(signed)
+```
+
+### Database Protection
+
+Database Guard prevents SQL injection and data exfiltration.
+
+```python
+from guardianclaw import DatabaseGuard
+
+guard = DatabaseGuard(
+    blocked_tables=["users_private", "api_keys"],
+)
+result = guard.validate("SELECT * FROM users")
+```
+
+## Security Best Practices
+
+### API Keys
+
+- Never commit API keys to version control
+- Use environment variables
+- Rotate keys regularly
+
+```python
+# Good
+import os
+api_key = os.environ.get("OPENAI_API_KEY")
+
+# Bad
+api_key = "sk-..."  # Never hardcode
+```
+
+### Fail-Closed Mode
+
+For high-stakes applications, use fail-closed mode:
+
+```python
+from guardianclaw import LayeredValidator, ValidationConfig
+
+config = ValidationConfig(
+    fail_closed=True,  # Block on errors
+)
+validator = LayeredValidator(config=config)
+```
+
+### Input Validation
+
+Always validate user input before processing:
+
+```python
+from guardianclaw import GuardianClaw
+
+claw = GuardianClaw()
+result = claw.validate_request(user_input)
+
+if not result["should_proceed"]:
+    # Block the request
+    pass
+```
+
+### Output Validation
+
+Validate LLM outputs before returning to users:
+
+```python
+from guardianclaw.detection import OutputValidator
+
+validator = OutputValidator()
+result = validator.validate(
+    output_text=llm_response,
+    input_text=user_input,
+)
+
+if not result.is_safe:
+    # Block or sanitize the output
+    pass
+```
+
+## Attack Detection
+
+GuardianClaw detects multiple attack vectors:
+
+### Prompt Injection
+
+- Direct injection patterns
+- Instruction override attempts
+- Role-playing attacks
+- Context manipulation
+
+### Jailbreak Attempts
+
+- Multiple jailbreak detection patterns
+- DAN, GPT-4, and other known jailbreaks
+- Obfuscation detection
+
+### Data Exfiltration
+
+- Sensitive data patterns
+- PII detection
+- API key/credential detection
+
+### Memory Attacks
+
+- Memory injection patterns
+- Context poisoning
+- Trust score manipulation
+
+## Compliance
+
+GuardianClaw supports compliance with:
+
+- EU AI Act (Regulation 2024/1689)
+- OWASP LLM Top 10
+- OWASP Agentic Top 10 (2026)
+- CSA AI Controls Matrix
+
+See the [Compliance Guide](/docs/guides/compliance) for details.
+
+## Data Privacy
+
+### No Data Storage
+
+GuardianClaw does not store or log any validated content by default:
+
+- No data sent to GuardianClaw servers
+- All validation happens locally or through your own API keys
+- History recording is opt-in and local
+
+### Local Processing
+
+Heuristic validation is 100% local with no network calls.
+
+Semantic validation uses your own API keys for OpenAI/Anthropic.
+
+## Dependencies
+
+GuardianClaw has minimal dependencies to reduce supply chain risk:
+
+**Core (no external dependencies):**
+- Python 3.10+
+
+**Optional dependencies:**
+- `openai` for semantic validation
+- `anthropic` for Claude-based validation
+- Integration-specific packages
+
+## Audit Trail
+
+For high-risk applications, implement logging:
+
+```python
+import logging
+from guardianclaw import LayeredValidator
+
+logging.basicConfig(level=logging.INFO)
+
+validator = LayeredValidator(
+    config=ValidationConfig(
+        log_validations=True,
+    )
+)
+```
+
+## Updates
+
+- Follow [GitHub releases](https://github.com/guardianclaw/guardianclaw-platform/releases) for security updates
+- Subscribe to security advisories
+- Update regularly to get latest detection patterns
+
+## Contact
+
+- **Security issues**: Contact maintainers directly (see [Contributing Guide](https://github.com/guardianclaw/guardianclaw-platform/blob/main/docs/CONTRIBUTING.md))
+- **General questions**: [GitHub Issues](https://github.com/guardianclaw/guardianclaw-platform/issues)
+- **Documentation**: https://guardianclaw.org/docs

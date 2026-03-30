@@ -1,0 +1,19 @@
+# Whitepaper Technical Diagrams
+#
+# This directory contains SVG assets for the GuardianClaw Whitepaper documentation.
+# All diagrams are self-contained with no external dependencies.
+#
+# Files:
+# - 4-layer-architecture.svg    (800x320)  Architecture: L1-L4 validation pipeline
+# - inputvalidator-detectors.svg (700x500)  Architecture: InputValidator detector hierarchy
+# - memory-shield-v2.svg         (600x480)  Products: Memory Shield v2.0 flow
+# - compliance-frameworks.svg    (700x400)  Compliance: CLAW protocol integration
+# - platform-overview.svg        (900x400)  Platform: Agent Builder to Monitor pipeline
+#
+# Usage in MDX:
+# ![Architecture](/images/whitepaper/4-layer-architecture.svg)
+#
+# Design specifications:
+# - Dark theme background (#0a0a0a)
+# - System font: Arial with sans-serif fallback
+# - Color scheme: GuardianClaw green (#22c55e), blue (#3b82f6), amber (#f59e0b), teal (#14b8a6)

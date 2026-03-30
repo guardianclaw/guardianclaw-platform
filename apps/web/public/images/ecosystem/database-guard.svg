@@ -1,0 +1,9 @@
+<svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
+  <title>Database Guard</title>
+  <!-- GuardianClaw Database Guard - Data exfiltration protection -->
+  <ellipse cx="9" cy="5" rx="6" ry="2.5"/>
+  <path d="M3 5v10c0 1.38 2.69 2.5 6 2.5"/>
+  <path d="M3 9c0 1.38 2.69 2.5 6 2.5s6-1.12 6-2.5"/>
+  <path d="M3 13c0 1.38 2.69 2.5 6 2.5"/>
+  <path d="M18 11l-4 2v3c0 1.66 1.54 3.22 4 4 2.46-.78 4-2.34 4-4v-3l-4-2z"/>
+</svg>

@@ -1,0 +1,1761 @@
+"""
+Tests for Solana Agent Kit integration.
+
+Run with:
+    pytest tests/test_solana_agent_kit_integration.py -v
+"""
+
+import pytest
+import warnings
+from unittest.mock import patch, MagicMock
+
+
+class TestAddressValidation:
+    """Tests for Solana address validation."""
+
+    def test_is_valid_solana_address_valid(self):
+        """Test valid Solana addresses."""
+        from guardianclaw.integrations.solana_agent_kit import is_valid_solana_address
+
+        # Real Solana addresses (base58, 32-44 chars)
+        valid_addresses = [
+            "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU",
+            "11111111111111111111111111111111",  # System program
+            "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",  # Token program
+            "So11111111111111111111111111111111111111112",  # Wrapped SOL
+        ]
+
+        for addr in valid_addresses:
+            assert is_valid_solana_address(addr), f"Should be valid: {addr}"
+
+    def test_is_valid_solana_address_invalid(self):
+        """Test invalid Solana addresses."""
+        from guardianclaw.integrations.solana_agent_kit import is_valid_solana_address
+
+        invalid_addresses = [
+            "",
+            "not-valid",
+            "ABC",  # Too short
+            "0xABC123",  # Ethereum format
+            "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAs0",  # Contains 0
+            "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsO",  # Contains O
+            "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsl",  # Contains l
+            "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsI",  # Contains I
+        ]
+
+        for addr in invalid_addresses:
+            assert not is_valid_solana_address(addr), f"Should be invalid: {addr}"
+
+    def test_is_valid_solana_address_none(self):
+        """Test None and non-string inputs."""
+        from guardianclaw.integrations.solana_agent_kit import is_valid_solana_address
+
+        assert not is_valid_solana_address(None)
+        assert not is_valid_solana_address(123)
+        assert not is_valid_solana_address([])
+
+
+class TestAddressValidationMode:
+    """Tests for AddressValidationMode enum."""
+
+    def test_address_validation_modes_exist(self):
+        """Test that all modes exist."""
+        from guardianclaw.integrations.solana_agent_kit import AddressValidationMode
+
+        assert AddressValidationMode.IGNORE.value == "ignore"
+        assert AddressValidationMode.WARN.value == "warn"
+        assert AddressValidationMode.STRICT.value == "strict"
+
+    def test_validator_strict_mode_blocks_invalid(self):
+        """Test STRICT mode blocks invalid addresses."""
+        from guardianclaw.integrations.solana_agent_kit import (
+            ClawValidator,
+            AddressValidationMode,
+            TransactionRisk,
+        )
+
+        validator = ClawValidator(
+            address_validation=AddressValidationMode.STRICT
+        )
+
+        result = validator.check(
+            action="transfer",
+            amount=1.0,
+            recipient="invalid-address",
+            worth="Test transfer",
+        )
+
+        assert not result.should_proceed
+        assert result.risk_level == TransactionRisk.CRITICAL
+        assert any("Invalid Solana address" in c for c in result.concerns)
+
+    def test_validator_warn_mode_allows_invalid(self):
+        """Test WARN mode allows but adds recommendation."""
+        from guardianclaw.integrations.solana_agent_kit import (
+            ClawValidator,
+            AddressValidationMode,
+        )
+
+        validator = ClawValidator(
+            address_validation=AddressValidationMode.WARN
+        )
+
+        result = validator.check(
+            action="transfer",
+            amount=1.0,
+            recipient="invalid-address",
+            worth="Test transfer",
+        )
+
+        # Should proceed (WARN doesn't block)
+        # Note: may be blocked by other checks, but not by address validation
+        assert any("Verify recipient" in r for r in result.recommendations)
+
+    def test_validator_ignore_mode(self):
+        """Test IGNORE mode doesn't validate."""
+        from guardianclaw.integrations.solana_agent_kit import (
+            ClawValidator,
+            AddressValidationMode,
+        )
+
+        validator = ClawValidator(
+            address_validation=AddressValidationMode.IGNORE
+        )
+
+        result = validator.check(
+            action="transfer",
+            amount=1.0,
+            recipient="invalid-address",
+            worth="Test transfer",
+        )
+
+        # No address-related concerns or recommendations
+        assert not any("address" in c.lower() for c in result.concerns)
+        assert not any("address" in r.lower() for r in result.recommendations)
+
+    def test_validator_accepts_string_mode(self):
+        """Test validator accepts string for address_validation."""
+        from guardianclaw.integrations.solana_agent_kit import (
+            ClawValidator,
+            AddressValidationMode,
+        )
+
+        validator = ClawValidator(address_validation="strict")
+        assert validator.address_validation == AddressValidationMode.STRICT
+
+        validator = ClawValidator(address_validation="WARN")
+        assert validator.address_validation == AddressValidationMode.WARN
+
+
+class TestTransactionRisk:
+    """Tests for TransactionRisk enum."""
+
+    def test_risk_level_ordering(self):
+        """Test risk level comparison."""
+        from guardianclaw.integrations.solana_agent_kit import TransactionRisk
+
+        assert TransactionRisk.LOW < TransactionRisk.MEDIUM
+        assert TransactionRisk.MEDIUM < TransactionRisk.HIGH
+        assert TransactionRisk.HIGH < TransactionRisk.CRITICAL
+        assert TransactionRisk.LOW <= TransactionRisk.LOW
+        assert TransactionRisk.CRITICAL >= TransactionRisk.HIGH
+
+
+class TestClawValidator:
+    """Tests for ClawValidator class."""
+
+    def test_validator_initialization_defaults(self):
+        """Test default initialization."""
+        from guardianclaw.integrations.solana_agent_kit import ClawValidator
+
+        validator = ClawValidator()
+
+        assert validator.max_transfer == 100.0
+        assert validator.confirm_above == 10.0
+        assert len(validator.blocked_addresses) == 0
+        assert len(validator.allowed_programs) == 0
+        assert "transfer" in validator.require_purpose_for
+        assert "send" in validator.require_purpose_for
+
+    def test_validator_custom_config(self):
+        """Test custom configuration."""
+        from guardianclaw.integrations.solana_agent_kit import ClawValidator
+
+        validator = ClawValidator(
+            max_transfer=50.0,
+            confirm_above=5.0,
+            blocked_addresses=["blocked1", "blocked2"],
+            allowed_programs=["prog1"],
+        )
+
+        assert validator.max_transfer == 50.0
+        assert validator.confirm_above == 5.0
+        assert "blocked1" in validator.blocked_addresses
+        assert "prog1" in validator.allowed_programs
+
+    def test_check_basic_transaction(self):
+        """Test basic transaction validation."""
+        from guardianclaw.integrations.solana_agent_kit import ClawValidator
+
+        validator = ClawValidator()
+
+        result = validator.check(
+            action="transfer",
+            amount=5.0,
+            recipient="7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU",
+            worth="Test payment for services",
+        )
+
+        assert result.transaction_type == "transfer"
+
+    def test_check_exceeds_max_transfer(self):
+        """Test transaction exceeding max transfer."""
+        from guardianclaw.integrations.solana_agent_kit import (
+            ClawValidator,
+            TransactionRisk,
+        )
+
+        validator = ClawValidator(max_transfer=10.0)
+
+        result = validator.check(
+            action="transfer",
+            amount=50.0,
+            recipient="7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU",
+        )
+
+        assert not result.should_proceed
+        assert result.risk_level == TransactionRisk.CRITICAL
+        assert any("exceeds limit" in c for c in result.concerns)
+
+    def test_check_blocked_address(self):
+        """Test blocked address detection."""
+        from guardianclaw.integrations.solana_agent_kit import (
+            ClawValidator,
+            TransactionRisk,
+        )
+
+        blocked = "BlockedAddress123456789012345678901234"
+        validator = ClawValidator(blocked_addresses=[blocked])
+
+        result = validator.check(
+            action="transfer",
+            amount=1.0,
+            recipient=blocked,
+            worth="Test transfer",
+        )
+
+        assert not result.should_proceed
+        assert result.risk_level == TransactionRisk.CRITICAL
+        assert any("blocked" in c.lower() for c in result.concerns)
+
+    def test_check_non_whitelisted_program(self):
+        """Test non-whitelisted program detection."""
+        from guardianclaw.integrations.solana_agent_kit import (
+            ClawValidator,
+            TransactionRisk,
+        )
+
+        validator = ClawValidator(
+            allowed_programs=["AllowedProgram123"]
+        )
+
+        result = validator.check(
+            action="call",
+            amount=0,
+            program_id="NotAllowedProgram456",
+            worth="Test call",
+        )
+
+        assert not result.should_proceed
+        assert result.risk_level == TransactionRisk.HIGH
+        assert any("not whitelisted" in c for c in result.concerns)
+
+    def test_check_requires_confirmation(self):
+        """Test high-value confirmation requirement."""
+        from guardianclaw.integrations.solana_agent_kit import ClawValidator
+
+        validator = ClawValidator(confirm_above=10.0)
+
+        result = validator.check(
+            action="transfer",
+            amount=25.0,
+            recipient="7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU",
+            worth="Large payment",
+        )
+
+        assert result.requires_confirmation
+
+    def test_worth_gate_missing_purpose(self):
+        """Test WORTH gate with missing worth."""
+        from guardianclaw.integrations.solana_agent_kit import ClawValidator
+
+        validator = ClawValidator()
+
+        result = validator.check(
+            action="transfer",
+            amount=5.0,
+            recipient="7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU",
+        )
+
+        assert any("requires explicit worth" in c for c in result.concerns)
+
+    def test_worth_gate_brief_purpose(self):
+        """Test WORTH gate with brief worth (less than 20 chars)."""
+        from guardianclaw.integrations.solana_agent_kit import ClawValidator
+
+        validator = ClawValidator()
+
+        result = validator.check(
+            action="transfer",
+            amount=5.0,
+            recipient="7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU",
+            worth="pay",  # Too short (3 chars, needs 20+)
+        )
+
+        # Should flag as too brief (less than 20 characters)
+        assert any("at least 20 characters" in c for c in result.concerns)
+
+    def test_worth_gate_valid_purpose(self):
+        """Test WORTH gate with valid worth."""
+        from guardianclaw.integrations.solana_agent_kit import ClawValidator
+
+        validator = ClawValidator()
+
+        result = validator.check(
+            action="transfer",
+            amount=5.0,
+            recipient="7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU",
+            worth="Monthly payment for hosting services",
+        )
+
+        assert not any("worth" in c.lower() for c in result.concerns)
+
+    def test_pattern_detection_drain(self):
+        """Test drain pattern detection."""
+        from guardianclaw.integrations.solana_agent_kit import ClawValidator
+
+        validator = ClawValidator()
+
+        result = validator.check(
+            action="drain_wallet",
+            amount=100.0,
+            worth="Drain operation",
+        )
+
+        assert any("drain" in c.lower() for c in result.concerns)
+
+    def test_pattern_detection_bulk_transfer(self):
+        """Test bulk transfer pattern detection."""
+        from guardianclaw.integrations.solana_agent_kit import ClawValidator
+
+        validator = ClawValidator()
+
+        result = validator.check(
+            action="transfer_all",
+            amount=100.0,
+            worth="Transfer all tokens",
+        )
+
+        assert any("bulk" in c.lower() for c in result.concerns)
+
+    def test_history_tracking(self):
+        """Test validation history tracking."""
+        from guardianclaw.integrations.solana_agent_kit import ClawValidator
+
+        validator = ClawValidator(max_history_size=5)
+
+        for i in range(7):
+            validator.check(
+                action="transfer",
+                amount=float(i),
+                worth=f"Payment {i}",
+            )
+
+        assert len(validator.history) == 5  # Max size enforced
+
+    def test_get_stats(self):
+        """Test statistics calculation."""
+        from guardianclaw.integrations.solana_agent_kit import ClawValidator
+
+        validator = ClawValidator(max_transfer=10.0)
+
+        # Some approved, some blocked
+        validator.check(action="transfer", amount=5.0, worth="Payment 1")
+        validator.check(action="transfer", amount=5.0, worth="Payment 2")
+        validator.check(action="transfer", amount=50.0)  # Blocked
+
+        stats = validator.get_stats()
+
+        assert stats["total"] == 3
+        assert stats["blocked"] >= 1
+        assert "block_rate" in stats
+
+    def test_clear_history(self):
+        """Test history clearing."""
+        from guardianclaw.integrations.solana_agent_kit import ClawValidator
+
+        validator = ClawValidator()
+        validator.check(action="transfer", amount=5.0, worth="Test")
+
+        assert len(validator.history) > 0
+
+        validator.clear_history()
+
+        assert len(validator.history) == 0
+
+
+class TestSafeTransaction:
+    """Tests for safe_transaction function."""
+
+    def test_safe_transaction_basic(self):
+        """Test basic safe_transaction call."""
+        from guardianclaw.integrations.solana_agent_kit import safe_transaction
+
+        result = safe_transaction(
+            "transfer",
+            amount=5.0,
+            recipient="7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU",
+            worth="Test payment",
+        )
+
+        assert result.transaction_type == "transfer"
+
+    def test_safe_transaction_with_params_dict(self):
+        """Test safe_transaction with params dict."""
+        from guardianclaw.integrations.solana_agent_kit import safe_transaction
+
+        result = safe_transaction(
+            "swap",
+            params={"amount": 10.0, "worth": "Token swap"},
+        )
+
+        assert result.transaction_type == "swap"
+
+    def test_safe_transaction_with_validator(self):
+        """Test safe_transaction with custom validator."""
+        from guardianclaw.integrations.solana_agent_kit import (
+            safe_transaction,
+            ClawValidator,
+        )
+
+        validator = ClawValidator(max_transfer=5.0)
+
+        result = safe_transaction(
+            "transfer",
+            amount=10.0,
+            validator=validator,
+        )
+
+        assert not result.should_proceed
+
+
+class TestCreateGuardianClawActions:
+    """Tests for create_claw_actions function."""
+
+    def test_create_actions_returns_dict(self):
+        """Test actions dictionary creation."""
+        from guardianclaw.integrations.solana_agent_kit import create_claw_actions
+
+        actions = create_claw_actions()
+
+        assert "validate_transfer" in actions
+        assert "validate_swap" in actions
+        assert "validate_action" in actions
+        assert "get_safety_seed" in actions
+
+    def test_validate_transfer_action(self):
+        """Test validate_transfer action."""
+        from guardianclaw.integrations.solana_agent_kit import create_claw_actions
+
+        actions = create_claw_actions()
+        result = actions["validate_transfer"](
+            5.0,
+            "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU",
+        )
+
+        assert "safe" in result
+        assert "risk" in result
+        assert "concerns" in result
+
+    def test_validate_swap_action(self):
+        """Test validate_swap action."""
+        from guardianclaw.integrations.solana_agent_kit import create_claw_actions
+
+        actions = create_claw_actions()
+        result = actions["validate_swap"](10.0, "SOL", "USDC")
+
+        assert "safe" in result
+        assert "risk" in result
+
+    def test_validate_action_generic(self):
+        """Test generic validate_action."""
+        from guardianclaw.integrations.solana_agent_kit import create_claw_actions
+
+        actions = create_claw_actions()
+        result = actions["validate_action"](
+            "stake",
+            amount=100.0,
+            worth="Staking rewards",
+        )
+
+        assert "safe" in result
+        assert "recommendations" in result
+
+    def test_get_safety_seed_action(self):
+        """Test get_safety_seed action."""
+        from guardianclaw.integrations.solana_agent_kit import create_claw_actions
+
+        actions = create_claw_actions()
+        seed = actions["get_safety_seed"]()
+
+        assert isinstance(seed, str)
+        assert len(seed) > 0
+
+
+class TestGuardianClawSafetyMiddleware:
+    """Tests for GuardianClawSafetyMiddleware class."""
+
+    def test_middleware_initialization(self):
+        """Test middleware initialization."""
+        from guardianclaw.integrations.solana_agent_kit import GuardianClawSafetyMiddleware
+
+        middleware = GuardianClawSafetyMiddleware()
+
+        assert middleware.validator is not None
+
+    def test_middleware_wrap_function(self):
+        """Test wrapping a function."""
+        from guardianclaw.integrations.solana_agent_kit import (
+            GuardianClawSafetyMiddleware,
+            ClawValidator,
+            AddressValidationMode,
+        )
+
+        # Use WARN mode to allow invalid addresses in this test
+        validator = ClawValidator(
+            max_transfer=100.0,
+            address_validation=AddressValidationMode.WARN
+        )
+        middleware = GuardianClawSafetyMiddleware(validator=validator)
+
+        def my_transfer(amount, recipient):
+            return f"Transferred {amount} to {recipient}"
+
+        safe_fn = middleware.wrap(my_transfer, "transfer")
+
+        # Should work for safe amount
+        result = safe_fn(5.0, "recipient")
+        assert "Transferred" in result
+
+    def test_middleware_blocks_unsafe(self):
+        """Test middleware blocks unsafe transactions."""
+        from guardianclaw.integrations.solana_agent_kit import (
+            GuardianClawSafetyMiddleware,
+            ClawValidator,
+            TransactionBlockedError,
+        )
+
+        validator = ClawValidator(max_transfer=10.0)
+        middleware = GuardianClawSafetyMiddleware(validator=validator)
+
+        def my_transfer(amount, recipient):
+            return f"Transferred {amount}"
+
+        safe_fn = middleware.wrap(my_transfer, "transfer")
+
+        with pytest.raises(TransactionBlockedError):
+            safe_fn(50.0, "recipient")
+
+    def test_middleware_preserves_function_metadata(self):
+        """Test wrapper preserves function name and docstring."""
+        from guardianclaw.integrations.solana_agent_kit import GuardianClawSafetyMiddleware
+
+        middleware = GuardianClawSafetyMiddleware()
+
+        def my_transfer(amount, recipient):
+            """Transfer tokens."""
+            return amount
+
+        safe_fn = middleware.wrap(my_transfer, "transfer")
+
+        assert safe_fn.__name__ == "my_transfer"
+        assert safe_fn.__doc__ == "Transfer tokens."
+
+    def test_middleware_handles_kwargs(self):
+        """Test middleware handles keyword arguments."""
+        from guardianclaw.integrations.solana_agent_kit import (
+            GuardianClawSafetyMiddleware,
+            ClawValidator,
+            AddressValidationMode,
+        )
+
+        # Use WARN mode to allow invalid addresses in this test
+        validator = ClawValidator(
+            max_transfer=100.0,
+            address_validation=AddressValidationMode.WARN
+        )
+        middleware = GuardianClawSafetyMiddleware(validator=validator)
+
+        def my_transfer(amount, recipient):
+            return amount
+
+        safe_fn = middleware.wrap(my_transfer, "transfer")
+        result = safe_fn(amount=5.0, recipient="test")
+
+        assert result == 5.0
+
+    def test_middleware_handles_invalid_amount_type(self):
+        """Test middleware handles non-numeric amount."""
+        from guardianclaw.integrations.solana_agent_kit import (
+            GuardianClawSafetyMiddleware,
+            ClawValidator,
+            AddressValidationMode,
+        )
+
+        # Use WARN mode to allow invalid addresses in this test
+        validator = ClawValidator(address_validation=AddressValidationMode.WARN)
+        middleware = GuardianClawSafetyMiddleware(validator=validator)
+
+        def my_transfer(amount, recipient):
+            return amount
+
+        safe_fn = middleware.wrap(my_transfer, "transfer")
+
+        # Should not crash, converts to 0.0
+        result = safe_fn("not-a-number", "recipient")
+        assert result == "not-a-number"
+
+
+class TestMemoryIntegrityCheck:
+    """Tests for memory integrity check feature."""
+
+    def test_memory_check_disabled_by_default(self):
+        """Test memory check is disabled by default."""
+        from guardianclaw.integrations.solana_agent_kit import ClawValidator
+
+        validator = ClawValidator()
+
+        assert validator.memory_integrity_check is False
+        assert validator._memory_checker is None
+
+    def test_memory_check_warns_if_unavailable(self):
+        """Test warning when memory module unavailable."""
+        from guardianclaw.integrations.solana_agent_kit import ClawValidator
+
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+
+            # This will try to import the memory module
+            validator = ClawValidator(memory_integrity_check=True)
+
+            # Should have warned about unavailable module
+            # (unless module is available)
+            if validator._memory_checker is None:
+                assert any("memory" in str(warning.message).lower() for warning in w)
+
+
+class TestExports:
+    """Tests for module exports."""
+
+    def test_all_exports_available(self):
+        """Test all __all__ exports are available."""
+        from guardianclaw.integrations.solana_agent_kit import (
+            __version__,
+            TransactionRisk,
+            AddressValidationMode,
+            TransactionSafetyResult,
+            ClawValidator,
+            GuardianClawSafetyMiddleware,
+            TransactionBlockedError,
+            safe_transaction,
+            create_claw_actions,
+            is_valid_solana_address,
+        )
+
+        assert __version__ == "2.1.0"
+        assert TransactionRisk is not None
+        assert AddressValidationMode is not None
+        assert TransactionSafetyResult is not None
+        assert ClawValidator is not None
+        assert GuardianClawSafetyMiddleware is not None
+        assert TransactionBlockedError is not None
+        assert callable(safe_transaction)
+        assert callable(create_claw_actions)
+        assert callable(is_valid_solana_address)
+
+
+class TestTransactionBlockedError:
+    """Tests for TransactionBlockedError exception."""
+
+    def test_exception_message(self):
+        """Test exception message."""
+        from guardianclaw.integrations.solana_agent_kit import TransactionBlockedError
+
+        error = TransactionBlockedError("Test message")
+
+        assert str(error) == "Test message"
+
+    def test_exception_inheritance(self):
+        """Test exception inherits from Exception."""
+        from guardianclaw.integrations.solana_agent_kit import TransactionBlockedError
+
+        assert issubclass(TransactionBlockedError, Exception)
+
+
+class TestEdgeCases:
+    """Tests for edge cases and error handling."""
+
+    def test_zero_amount(self):
+        """Test zero amount transaction."""
+        from guardianclaw.integrations.solana_agent_kit import ClawValidator
+
+        validator = ClawValidator()
+
+        result = validator.check(
+            action="query",
+            amount=0,
+            worth="Query balance",
+        )
+
+        # Zero amount should be allowed (not over limit)
+        assert not any("exceeds limit" in c for c in result.concerns)
+
+    def test_empty_recipient(self):
+        """Test empty recipient."""
+        from guardianclaw.integrations.solana_agent_kit import ClawValidator
+
+        validator = ClawValidator()
+
+        result = validator.check(
+            action="swap",
+            amount=10.0,
+            recipient="",
+            worth="Token swap",
+        )
+
+        # Empty recipient shouldn't trigger address validation
+        assert not any("address" in c.lower() for c in result.concerns)
+
+    def test_action_case_insensitive(self):
+        """Test action matching is case-insensitive."""
+        from guardianclaw.integrations.solana_agent_kit import ClawValidator
+
+        validator = ClawValidator()
+
+        result1 = validator.check(action="TRANSFER", amount=5.0)
+        result2 = validator.check(action="transfer", amount=5.0)
+        result3 = validator.check(action="Transfer", amount=5.0)
+
+        # All should trigger worth requirement
+        assert any("worth" in c.lower() for c in result1.concerns)
+        assert any("worth" in c.lower() for c in result2.concerns)
+        assert any("worth" in c.lower() for c in result3.concerns)
+
+    def test_very_long_purpose(self):
+        """Test very long valid worth is accepted."""
+        from guardianclaw.integrations.solana_agent_kit import ClawValidator
+
+        validator = ClawValidator()
+
+        # Use a meaningful long worth (not gibberish)
+        long_purpose = "This is a very long and detailed worth explanation for this transfer. " * 20
+
+        result = validator.check(
+            action="transfer",
+            amount=5.0,
+            recipient="7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU",
+            worth=long_purpose,
+        )
+
+        # Long valid worth should be accepted
+        assert not any("20 characters" in c.lower() for c in result.concerns)
+        assert not any("3 words" in c.lower() for c in result.concerns)
+        assert not any("repeated characters" in c.lower() for c in result.concerns)
+
+    def test_reason_alias_for_purpose(self):
+        """Test 'reason' works as alias for 'worth'."""
+        from guardianclaw.integrations.solana_agent_kit import ClawValidator
+
+        validator = ClawValidator()
+
+        result = validator.check(
+            action="transfer",
+            amount=5.0,
+            recipient="7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU",
+            reason="Monthly payment for services",  # Using reason instead of worth
+        )
+
+        # Should not complain about missing worth
+        assert not any("requires explicit worth" in c for c in result.concerns)
+
+
+class TestStrictMode:
+    """Tests for strict_mode configuration."""
+
+    def test_strict_mode_disabled_by_default(self):
+        """Test strict mode is disabled by default."""
+        from guardianclaw.integrations.solana_agent_kit import ClawValidator
+
+        validator = ClawValidator()
+        assert validator.strict_mode is False
+
+    def test_strict_mode_blocks_with_concerns(self):
+        """Test strict mode blocks transactions with any concerns."""
+        from guardianclaw.integrations.solana_agent_kit import ClawValidator
+
+        validator = ClawValidator(strict_mode=True)
+
+        # Missing worth creates a concern but normally would proceed
+        result = validator.check(
+            action="transfer",
+            amount=5.0,
+            recipient="7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU",
+        )
+
+        # Should not proceed in strict mode
+        assert not result.should_proceed
+
+    def test_normal_mode_allows_medium_risk(self):
+        """Test normal mode allows MEDIUM risk transactions."""
+        from guardianclaw.integrations.solana_agent_kit import (
+            ClawValidator,
+            TransactionRisk,
+        )
+
+        validator = ClawValidator(strict_mode=False)
+
+        result = validator.check(
+            action="transfer",
+            amount=5.0,
+            recipient="7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU",
+        )
+
+        # MEDIUM risk should proceed in normal mode
+        if result.risk_level == TransactionRisk.MEDIUM:
+            assert result.should_proceed
+
+
+class TestCustomPatterns:
+    """Tests for custom_patterns configuration."""
+
+    def test_default_patterns_loaded(self):
+        """Test default suspicious patterns are loaded."""
+        from guardianclaw.integrations.solana_agent_kit import (
+            ClawValidator,
+            DEFAULT_SUSPICIOUS_PATTERNS,
+        )
+
+        validator = ClawValidator()
+
+        assert len(validator.custom_patterns) >= len(DEFAULT_SUSPICIOUS_PATTERNS)
+
+    def test_custom_pattern_detection(self):
+        """Test custom pattern detection."""
+        from guardianclaw.integrations.solana_agent_kit import (
+            ClawValidator,
+            SuspiciousPattern,
+            TransactionRisk,
+        )
+
+        custom = SuspiciousPattern(
+            name="test_pattern",
+            pattern=r"forbidden_word",
+            risk_level=TransactionRisk.HIGH,
+            message="Forbidden word detected",
+        )
+
+        validator = ClawValidator(custom_patterns=[custom])
+
+        result = validator.check(
+            action="forbidden_word_action",
+            amount=1.0,
+            worth="Testing custom patterns",
+        )
+
+        assert any("Forbidden word" in c for c in result.concerns)
+
+    def test_pattern_matches_method(self):
+        """Test SuspiciousPattern.matches() method."""
+        from guardianclaw.integrations.solana_agent_kit import (
+            SuspiciousPattern,
+            TransactionRisk,
+        )
+
+        pattern = SuspiciousPattern(
+            name="test",
+            pattern=r"danger",
+            risk_level=TransactionRisk.HIGH,
+            message="Danger detected",
+        )
+
+        assert pattern.matches("This is dangerous")
+        assert pattern.matches("DANGER ahead")
+        assert not pattern.matches("Safe text")
+
+
+class TestOnValidationCallback:
+    """Tests for on_validation callback."""
+
+    def test_callback_called_on_validation(self):
+        """Test callback is called after each validation."""
+        from guardianclaw.integrations.solana_agent_kit import ClawValidator
+
+        results = []
+
+        def callback(result):
+            results.append(result)
+
+        validator = ClawValidator(on_validation=callback)
+
+        validator.check(action="transfer", amount=5.0, worth="Test 1")
+        validator.check(action="swap", amount=10.0, worth="Test 2")
+
+        assert len(results) == 2
+        assert results[0].transaction_type == "transfer"
+        assert results[1].transaction_type == "swap"
+
+    def test_callback_error_handled(self):
+        """Test callback errors are handled gracefully."""
+        from guardianclaw.integrations.solana_agent_kit import ClawValidator
+
+        def bad_callback(result):
+            raise ValueError("Callback error")
+
+        validator = ClawValidator(on_validation=bad_callback)
+
+        # Should not raise, error is logged
+        result = validator.check(action="transfer", amount=5.0, worth="Test")
+
+        assert result is not None
+
+
+class TestBlockUnblockAddress:
+    """Tests for block_address and unblock_address methods."""
+
+    def test_block_address(self):
+        """Test blocking an address."""
+        from guardianclaw.integrations.solana_agent_kit import ClawValidator
+
+        validator = ClawValidator()
+        address = "TestAddress123456789012345678901234"
+
+        validator.block_address(address)
+
+        assert address in validator.blocked_addresses
+
+    def test_unblock_address(self):
+        """Test unblocking an address."""
+        from guardianclaw.integrations.solana_agent_kit import ClawValidator
+
+        address = "TestAddress123456789012345678901234"
+        validator = ClawValidator(blocked_addresses=[address])
+
+        validator.unblock_address(address)
+
+        assert address not in validator.blocked_addresses
+
+    def test_unblock_nonexistent_address(self):
+        """Test unblocking non-existent address is safe."""
+        from guardianclaw.integrations.solana_agent_kit import ClawValidator
+
+        validator = ClawValidator()
+
+        # Should not raise
+        validator.unblock_address("nonexistent")
+
+    def test_block_address_prevents_transaction(self):
+        """Test blocked address prevents transaction."""
+        from guardianclaw.integrations.solana_agent_kit import ClawValidator
+
+        validator = ClawValidator()
+        address = "BlockMeAddress123456789012345678901"
+
+        validator.block_address(address)
+
+        result = validator.check(
+            action="transfer",
+            amount=1.0,
+            recipient=address,
+            worth="Test transfer",
+        )
+
+        assert not result.should_proceed
+        assert any("blocked" in c.lower() for c in result.concerns)
+
+
+class TestUpdateConfig:
+    """Tests for get_config and update_config methods."""
+
+    def test_get_config(self):
+        """Test get_config returns current configuration."""
+        from guardianclaw.integrations.solana_agent_kit import ClawValidator
+
+        validator = ClawValidator(
+            max_transfer=50.0,
+            strict_mode=True,
+        )
+
+        config = validator.get_config()
+
+        assert config["max_transfer"] == 50.0
+        assert config["strict_mode"] is True
+        assert "blocked_addresses" in config
+        assert "custom_patterns_count" in config
+
+    def test_update_config(self):
+        """Test update_config modifies configuration."""
+        from guardianclaw.integrations.solana_agent_kit import ClawValidator
+
+        validator = ClawValidator(max_transfer=100.0)
+
+        validator.update_config(max_transfer=50.0, strict_mode=True)
+
+        assert validator.max_transfer == 50.0
+        assert validator.strict_mode is True
+
+    def test_update_config_partial(self):
+        """Test update_config with partial updates."""
+        from guardianclaw.integrations.solana_agent_kit import ClawValidator
+
+        validator = ClawValidator(max_transfer=100.0, confirm_above=10.0)
+
+        # Only update max_transfer
+        validator.update_config(max_transfer=50.0)
+
+        assert validator.max_transfer == 50.0
+        assert validator.confirm_above == 10.0  # Unchanged
+
+    def test_update_config_address_validation(self):
+        """Test update_config with address validation mode."""
+        from guardianclaw.integrations.solana_agent_kit import (
+            ClawValidator,
+            AddressValidationMode,
+        )
+
+        validator = ClawValidator()
+
+        validator.update_config(address_validation="strict")
+        assert validator.address_validation == AddressValidationMode.STRICT
+
+        validator.update_config(address_validation=AddressValidationMode.IGNORE)
+        assert validator.address_validation == AddressValidationMode.IGNORE
+
+
+class TestNegativeAmountValidation:
+    """Tests for negative amount validation."""
+
+    def test_negative_amount_blocked(self):
+        """Test negative amount is blocked."""
+        from guardianclaw.integrations.solana_agent_kit import (
+            ClawValidator,
+            TransactionRisk,
+        )
+
+        validator = ClawValidator()
+
+        result = validator.check(
+            action="transfer",
+            amount=-5.0,
+            worth="Test transfer",
+        )
+
+        assert not result.should_proceed
+        assert result.risk_level == TransactionRisk.CRITICAL
+        assert any("negative" in c.lower() for c in result.concerns)
+
+    def test_zero_amount_allowed(self):
+        """Test zero amount is allowed."""
+        from guardianclaw.integrations.solana_agent_kit import ClawValidator
+
+        validator = ClawValidator()
+
+        result = validator.check(
+            action="query",
+            amount=0,
+            worth="Balance check",
+        )
+
+        assert not any("negative" in c.lower() for c in result.concerns)
+
+
+class TestHighRiskActions:
+    """Tests for HIGH_RISK_ACTIONS detection."""
+
+    def test_drain_action_blocked(self):
+        """Test drain action is blocked."""
+        from guardianclaw.integrations.solana_agent_kit import ClawValidator
+
+        validator = ClawValidator()
+
+        result = validator.check(
+            action="drainWallet",
+            amount=100.0,
+            worth="Drain operation",
+        )
+
+        assert not result.should_proceed
+        assert any("High-risk action" in c for c in result.concerns)
+
+    def test_sweep_action_blocked(self):
+        """Test sweep action is blocked."""
+        from guardianclaw.integrations.solana_agent_kit import ClawValidator
+
+        validator = ClawValidator()
+
+        result = validator.check(
+            action="sweepTokens",
+            amount=100.0,
+            worth="Sweep operation",
+        )
+
+        assert not result.should_proceed
+        assert any("High-risk action" in c for c in result.concerns)
+
+    def test_transfer_all_blocked(self):
+        """Test transferAll action is blocked."""
+        from guardianclaw.integrations.solana_agent_kit import ClawValidator
+
+        validator = ClawValidator()
+
+        result = validator.check(
+            action="transferAll",
+            amount=100.0,
+            worth="Transfer all tokens",
+        )
+
+        assert not result.should_proceed
+
+    def test_normal_transfer_allowed(self):
+        """Test normal transfer is allowed."""
+        from guardianclaw.integrations.solana_agent_kit import ClawValidator
+
+        validator = ClawValidator()
+
+        result = validator.check(
+            action="transfer",
+            amount=5.0,
+            recipient="7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU",
+            worth="Normal payment",
+        )
+
+        # Normal transfer should not be blocked by high-risk action check
+        assert not any("High-risk action" in c for c in result.concerns)
+
+
+class TestNewExports:
+    """Tests for new module exports."""
+
+    def test_suspicious_pattern_export(self):
+        """Test SuspiciousPattern is exported."""
+        from guardianclaw.integrations.solana_agent_kit import SuspiciousPattern
+
+        assert SuspiciousPattern is not None
+
+    def test_default_patterns_export(self):
+        """Test DEFAULT_SUSPICIOUS_PATTERNS is exported."""
+        from guardianclaw.integrations.solana_agent_kit import DEFAULT_SUSPICIOUS_PATTERNS
+
+        assert isinstance(DEFAULT_SUSPICIOUS_PATTERNS, list)
+        assert len(DEFAULT_SUSPICIOUS_PATTERNS) > 0
+
+    def test_high_risk_actions_export(self):
+        """Test HIGH_RISK_ACTIONS is exported."""
+        from guardianclaw.integrations.solana_agent_kit import HIGH_RISK_ACTIONS
+
+        assert isinstance(HIGH_RISK_ACTIONS, list)
+        assert "drain" in HIGH_RISK_ACTIONS
+
+
+class TestMemoryIntegrityFunctions:
+    """Tests for memory integrity checker functions."""
+
+    def test_verify_transaction_history_disabled(self):
+        """Test verify_transaction_history when memory check disabled."""
+        from guardianclaw.integrations.solana_agent_kit import ClawValidator
+
+        validator = ClawValidator(memory_integrity_check=False)
+        result = validator.verify_transaction_history()
+
+        assert result["all_valid"] is True
+        assert result["checked"] == 0
+        assert "reason" in result
+
+    def test_verify_transaction_history_enabled(self):
+        """Test verify_transaction_history when memory check enabled."""
+        from guardianclaw.integrations.solana_agent_kit import ClawValidator
+
+        validator = ClawValidator(
+            memory_integrity_check=True,
+            memory_secret_key="test-key"
+        )
+
+        # Add some transactions
+        validator.check("transfer", amount=1.0, worth="test1")
+        validator.check("transfer", amount=2.0, worth="test2")
+
+        result = validator.verify_transaction_history()
+
+        assert result["all_valid"] is True
+        assert result["checked"] == 2
+        assert result["valid_count"] == 2
+        assert result["invalid_count"] == 0
+
+    def test_get_memory_stats_disabled(self):
+        """Test get_memory_stats when memory check disabled."""
+        from guardianclaw.integrations.solana_agent_kit import ClawValidator
+
+        validator = ClawValidator(memory_integrity_check=False)
+        stats = validator.get_memory_stats()
+
+        assert stats["enabled"] is False
+
+    def test_get_memory_stats_enabled(self):
+        """Test get_memory_stats when memory check enabled."""
+        from guardianclaw.integrations.solana_agent_kit import ClawValidator
+
+        validator = ClawValidator(
+            memory_integrity_check=True,
+            memory_secret_key="test-key"
+        )
+
+        # Add a transaction
+        validator.check("transfer", amount=1.0, worth="test")
+
+        stats = validator.get_memory_stats()
+
+        assert stats["enabled"] is True
+        assert stats["entries_stored"] == 1
+
+    def test_clear_history_clears_memory_store(self):
+        """Test clear_history also clears memory store."""
+        from guardianclaw.integrations.solana_agent_kit import ClawValidator
+
+        validator = ClawValidator(
+            memory_integrity_check=True,
+            memory_secret_key="test-key"
+        )
+
+        validator.check("transfer", amount=1.0, worth="test")
+        assert len(validator.history) == 1
+        assert len(validator._memory_store) == 1
+
+        validator.clear_history()
+
+        assert len(validator.history) == 0
+        assert len(validator._memory_store) == 0
+
+
+class TestRecipientTypeHandling:
+    """Tests for recipient type normalization."""
+
+    def test_recipient_none(self):
+        """Test recipient=None is handled."""
+        from guardianclaw.integrations.solana_agent_kit import ClawValidator
+
+        validator = ClawValidator()
+        result = validator.check("transfer", amount=1.0, recipient=None, worth="test")
+
+        # Should not crash
+        assert result is not None
+
+    def test_recipient_integer(self):
+        """Test recipient as integer is converted to string."""
+        from guardianclaw.integrations.solana_agent_kit import ClawValidator
+
+        validator = ClawValidator()
+        result = validator.check("transfer", amount=1.0, recipient=123, worth="test")
+
+        # Should not crash, converted to "123"
+        assert result is not None
+
+    def test_recipient_list(self):
+        """Test recipient as list is converted to string."""
+        from guardianclaw.integrations.solana_agent_kit import ClawValidator
+
+        validator = ClawValidator()
+        result = validator.check("transfer", amount=1.0, recipient=["abc"], worth="test")
+
+        # Should not crash, converted to "['abc']"
+        assert result is not None
+
+    def test_recipient_empty_string(self):
+        """Test empty recipient is handled."""
+        from guardianclaw.integrations.solana_agent_kit import ClawValidator
+
+        validator = ClawValidator()
+        result = validator.check("transfer", amount=1.0, recipient="", worth="test")
+
+        assert result is not None
+
+
+class TestAmountTypeHandling:
+    """Tests for amount type edge cases."""
+
+    def test_amount_none(self):
+        """Test amount=None is normalized to 0.0."""
+        from guardianclaw.integrations.solana_agent_kit import ClawValidator
+
+        validator = ClawValidator()
+        result = validator.check("transfer", amount=None, worth="test")
+
+        # Should not crash
+        assert result is not None
+
+    def test_amount_string_numeric(self):
+        """Test amount as numeric string is converted."""
+        from guardianclaw.integrations.solana_agent_kit import ClawValidator
+
+        validator = ClawValidator()
+        result = validator.check("transfer", amount="5.0", worth="test")
+
+        assert result is not None
+
+    def test_amount_invalid_string(self):
+        """Test amount as invalid string raises concern."""
+        from guardianclaw.integrations.solana_agent_kit import (
+            ClawValidator,
+            TransactionRisk,
+        )
+
+        validator = ClawValidator()
+        result = validator.check("transfer", amount="invalid", worth="test")
+
+        assert any("Invalid transaction amount" in c for c in result.concerns)
+        assert result.risk_level == TransactionRisk.CRITICAL
+
+    def test_amount_infinity(self):
+        """Test amount=infinity is blocked."""
+        from guardianclaw.integrations.solana_agent_kit import (
+            ClawValidator,
+            TransactionRisk,
+        )
+
+        validator = ClawValidator()
+        result = validator.check("transfer", amount=float('inf'), worth="test")
+
+        assert any("not a valid finite number" in c for c in result.concerns)
+        assert result.risk_level == TransactionRisk.CRITICAL
+
+    def test_amount_negative_infinity(self):
+        """Test amount=-infinity is blocked."""
+        from guardianclaw.integrations.solana_agent_kit import (
+            ClawValidator,
+            TransactionRisk,
+        )
+
+        validator = ClawValidator()
+        result = validator.check("transfer", amount=float('-inf'), worth="test")
+
+        assert any("not a valid finite number" in c for c in result.concerns)
+        assert result.risk_level == TransactionRisk.CRITICAL
+
+    def test_amount_nan(self):
+        """Test amount=NaN is blocked."""
+        from guardianclaw.integrations.solana_agent_kit import (
+            ClawValidator,
+            TransactionRisk,
+        )
+
+        validator = ClawValidator()
+        result = validator.check("transfer", amount=float('nan'), worth="test")
+
+        assert any("not a valid finite number" in c for c in result.concerns)
+        assert result.risk_level == TransactionRisk.CRITICAL
+
+
+class TestMemoInDescription:
+    """Tests for memo inclusion in description."""
+
+    def test_memo_sql_injection_detected(self):
+        """Test SQL injection in memo is detected."""
+        from guardianclaw.integrations.solana_agent_kit import ClawValidator
+
+        validator = ClawValidator()
+        result = validator.check(
+            "transfer",
+            amount=1.0,
+            memo="DROP TABLE users; --",
+            worth="test"
+        )
+
+        # Should detect the attack
+        assert not result.should_proceed
+        assert any("injection" in c.lower() for c in result.concerns)
+
+    def test_memo_system_command_detected(self):
+        """Test system command in memo is detected."""
+        from guardianclaw.integrations.solana_agent_kit import ClawValidator
+
+        validator = ClawValidator()
+        result = validator.check(
+            "transfer",
+            amount=1.0,
+            memo="rm -rf /",
+            worth="test"
+        )
+
+        assert not result.should_proceed
+
+    def test_long_memo_truncated(self):
+        """Test long memo is truncated without error."""
+        from guardianclaw.integrations.solana_agent_kit import ClawValidator
+
+        validator = ClawValidator()
+        long_memo = "A" * 500
+        result = validator.check(
+            "transfer",
+            amount=1.0,
+            memo=long_memo,
+            worth="test"
+        )
+
+        # Should not crash
+        assert result is not None
+
+
+class TestPurposeGateEnhancements:
+    """Tests for enhanced Worth Gate validation (20 chars, 3 words, gibberish)."""
+
+    def test_purpose_minimum_20_characters(self):
+        """Test worth requires at least 20 characters."""
+        from guardianclaw.integrations.solana_agent_kit import ClawValidator
+
+        validator = ClawValidator()
+
+        # 15 characters - too short
+        result = validator.check(
+            action="transfer",
+            amount=5.0,
+            recipient="7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU",
+            worth="short worth",  # 13 chars
+        )
+
+        assert any("at least 20 characters" in c for c in result.concerns)
+
+    def test_purpose_20_characters_accepted(self):
+        """Test worth with exactly 20+ characters is accepted."""
+        from guardianclaw.integrations.solana_agent_kit import ClawValidator
+
+        validator = ClawValidator()
+
+        # 25+ characters
+        result = validator.check(
+            action="transfer",
+            amount=5.0,
+            recipient="7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU",
+            worth="This is a valid worth with enough characters and words",
+        )
+
+        assert not any("at least 20 characters" in c for c in result.concerns)
+
+    def test_purpose_minimum_3_words(self):
+        """Test worth requires at least 3 words."""
+        from guardianclaw.integrations.solana_agent_kit import ClawValidator
+
+        validator = ClawValidator()
+
+        # 2 words only (but 20+ chars)
+        result = validator.check(
+            action="transfer",
+            amount=5.0,
+            recipient="7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU",
+            worth="TwoWordsOnlyHere1234",  # 20 chars, 1 word
+        )
+
+        assert any("at least 3 words" in c for c in result.concerns)
+
+    def test_purpose_3_words_accepted(self):
+        """Test worth with 3+ words is accepted."""
+        from guardianclaw.integrations.solana_agent_kit import ClawValidator
+
+        validator = ClawValidator()
+
+        result = validator.check(
+            action="transfer",
+            amount=5.0,
+            recipient="7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU",
+            worth="Payment for monthly services rendered",
+        )
+
+        assert not any("at least 3 words" in c for c in result.concerns)
+
+    def test_purpose_gibberish_detection(self):
+        """Test gibberish (repeated characters) is detected."""
+        from guardianclaw.integrations.solana_agent_kit import ClawValidator
+
+        validator = ClawValidator()
+
+        # Repeated character gibberish
+        result = validator.check(
+            action="transfer",
+            amount=5.0,
+            recipient="7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU",
+            worth="aaaaaaaaaaaaaaaaaaaaaa",  # 22 a's
+        )
+
+        assert any("meaningless repeated characters" in c for c in result.concerns)
+
+    def test_purpose_valid_repeated_letters_in_words(self):
+        """Test valid worth with some repeated letters is accepted."""
+        from guardianclaw.integrations.solana_agent_kit import ClawValidator
+
+        validator = ClawValidator()
+
+        result = validator.check(
+            action="transfer",
+            amount=5.0,
+            recipient="7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU",
+            worth="Good morning, this is a valid worth",
+        )
+
+        assert not any("meaningless repeated characters" in c for c in result.concerns)
+
+
+class TestAddressValidationDefault:
+    """Tests for address_validation default = STRICT."""
+
+    def test_default_is_strict(self):
+        """Test that address_validation defaults to STRICT."""
+        from guardianclaw.integrations.solana_agent_kit import (
+            ClawValidator,
+            AddressValidationMode,
+        )
+
+        validator = ClawValidator()
+        assert validator.address_validation == AddressValidationMode.STRICT
+
+    def test_default_blocks_invalid_address(self):
+        """Test that default config blocks invalid addresses."""
+        from guardianclaw.integrations.solana_agent_kit import (
+            ClawValidator,
+            TransactionRisk,
+        )
+
+        # Using default config (STRICT)
+        validator = ClawValidator()
+
+        result = validator.check(
+            action="transfer",
+            amount=1.0,
+            recipient="invalid-address-format",
+            worth="Test transfer with valid worth here",
+        )
+
+        assert not result.should_proceed
+        assert result.risk_level == TransactionRisk.CRITICAL
+        assert any("Invalid Solana address" in c for c in result.concerns)
+
+
+class TestMetadataSanitization:
+    """Tests for metadata sanitization."""
+
+    def test_allowed_metadata_keys_included(self):
+        """Test allowed metadata keys are included in description."""
+        from guardianclaw.integrations.solana_agent_kit import _sanitize_metadata
+
+        metadata = {
+            "fromToken": "SOL",
+            "toToken": "USDC",
+            "slippage": 0.5,
+        }
+
+        sanitized = _sanitize_metadata(metadata)
+
+        assert sanitized["fromToken"] == "SOL"
+        assert sanitized["toToken"] == "USDC"
+        assert sanitized["slippage"] == 0.5
+
+    def test_disallowed_metadata_keys_filtered(self):
+        """Test disallowed metadata keys are filtered out."""
+        from guardianclaw.integrations.solana_agent_kit import _sanitize_metadata
+
+        metadata = {
+            "fromToken": "SOL",
+            "malicious_key": "evil_value",
+            "injection": "DROP TABLE",
+            "toToken": "USDC",
+        }
+
+        sanitized = _sanitize_metadata(metadata)
+
+        assert "fromToken" in sanitized
+        assert "toToken" in sanitized
+        assert "malicious_key" not in sanitized
+        assert "injection" not in sanitized
+
+    def test_non_primitive_values_filtered(self):
+        """Test non-primitive values are filtered out."""
+        from guardianclaw.integrations.solana_agent_kit import _sanitize_metadata
+
+        metadata = {
+            "fromToken": "SOL",
+            "toToken": {"nested": "object"},  # Object, should be filtered
+            "slippage": [1, 2, 3],  # List, should be filtered
+        }
+
+        sanitized = _sanitize_metadata(metadata)
+
+        assert sanitized["fromToken"] == "SOL"
+        assert "toToken" not in sanitized
+        assert "slippage" not in sanitized
+
+    def test_sanitize_none_metadata(self):
+        """Test sanitizing None returns empty dict."""
+        from guardianclaw.integrations.solana_agent_kit import _sanitize_metadata
+
+        assert _sanitize_metadata(None) == {}
+
+    def test_sanitize_empty_metadata(self):
+        """Test sanitizing empty dict returns empty dict."""
+        from guardianclaw.integrations.solana_agent_kit import _sanitize_metadata
+
+        assert _sanitize_metadata({}) == {}
+
+    def test_sanitize_non_dict_metadata(self):
+        """Test sanitizing non-dict returns empty dict."""
+        from guardianclaw.integrations.solana_agent_kit import _sanitize_metadata
+
+        assert _sanitize_metadata("not a dict") == {}
+        assert _sanitize_metadata([1, 2, 3]) == {}
+
+
+class TestPatternPrecompilation:
+    """Tests for regex pattern pre-compilation."""
+
+    def test_pattern_compiled_on_init(self):
+        """Test pattern is pre-compiled on initialization."""
+        from guardianclaw.integrations.solana_agent_kit import (
+            SuspiciousPattern,
+            TransactionRisk,
+        )
+        import re
+
+        pattern = SuspiciousPattern(
+            name="test",
+            pattern=r"\btest\b",
+            risk_level=TransactionRisk.LOW,
+            message="Test pattern",
+        )
+
+        assert pattern._compiled is not None
+        assert isinstance(pattern._compiled, re.Pattern)
+
+    def test_precompiled_pattern_matches(self):
+        """Test pre-compiled pattern matching works correctly."""
+        from guardianclaw.integrations.solana_agent_kit import (
+            SuspiciousPattern,
+            TransactionRisk,
+        )
+
+        pattern = SuspiciousPattern(
+            name="drain",
+            pattern=r"\bdrain\b",
+            risk_level=TransactionRisk.CRITICAL,
+            message="Drain detected",
+        )
+
+        # Should match
+        assert pattern.matches("drain wallet")
+        assert pattern.matches("DRAIN operation")
+        assert pattern.matches("Please drain")
+
+        # Should not match (no word boundary)
+        assert not pattern.matches("drainage system")
+        assert not pattern.matches("undrained")
+
+
+class TestWordBoundaryPatterns:
+    """Tests for word boundary regex patterns (anti-ReDoS)."""
+
+    def test_drain_pattern_word_boundary(self):
+        """Test drain pattern uses word boundaries."""
+        from guardianclaw.integrations.solana_agent_kit import ClawValidator
+
+        validator = ClawValidator()
+
+        # Should match "drain" as a word
+        result1 = validator.check(
+            action="drain wallet",
+            amount=1.0,
+            worth="Test drain operation here",
+        )
+        assert any("drain" in c.lower() for c in result1.concerns)
+
+        # Should NOT match "drainage" (drain is not a separate word)
+        result2 = validator.check(
+            action="check_drainage",
+            amount=1.0,
+            worth="Check the drainage system carefully",
+        )
+        # The pattern detection should not trigger
+        assert not any("Potential drain operation" in c for c in result2.concerns)
+
+    def test_private_key_pattern_word_boundary(self):
+        """Test private key pattern uses word boundaries."""
+        from guardianclaw.integrations.solana_agent_kit import ClawValidator
+
+        validator = ClawValidator()
+
+        # Should match "private key" as separate words
+        result1 = validator.check(
+            action="transfer",
+            amount=1.0,
+            memo="send me your private key",
+            worth="Test transfer with valid worth",
+        )
+        assert any("private key" in c.lower() for c in result1.concerns)
+
+        # Should NOT match "privatekey" as one word (no space)
+        result2 = validator.check(
+            action="transfer",
+            amount=1.0,
+            memo="privatekey variable name",
+            worth="Test transfer with valid worth",
+        )
+        # The "private key exposure" pattern should not trigger
+        assert not any("Potential private key exposure" in c for c in result2.concerns)
+
+    def test_bulk_transfer_pattern(self):
+        """Test bulk transfer pattern with word boundaries."""
+        from guardianclaw.integrations.solana_agent_kit import ClawValidator
+
+        validator = ClawValidator()
+
+        # Should match "send all" as separate words
+        result1 = validator.check(
+            action="send all tokens",
+            amount=1.0,
+            worth="Send all tokens to recipient wallet",
+        )
+        # Check for bulk transfer detection
+        assert any("Bulk transfer" in c for c in result1.concerns)
+
+    def test_urgency_pattern_word_boundary(self):
+        """Test urgency pattern uses word boundaries."""
+        from guardianclaw.integrations.solana_agent_kit import ClawValidator
+
+        validator = ClawValidator()
+
+        # Should match "urgent" as a word
+        result1 = validator.check(
+            action="transfer",
+            amount=1.0,
+            memo="this is urgent please act now",
+            worth="Urgent transfer needed right away",
+        )
+        assert any("urgency" in c.lower() for c in result1.concerns)
+
+
+class TestAllowedMetadataKeys:
+    """Tests for ALLOWED_METADATA_KEYS constant."""
+
+    def test_allowed_keys_defined(self):
+        """Test ALLOWED_METADATA_KEYS is properly defined."""
+        from guardianclaw.integrations.solana_agent_kit import ALLOWED_METADATA_KEYS
+
+        expected_keys = {
+            "fromToken", "toToken", "slippage", "protocol", "expectedAPY",
+            "bridge", "fromChain", "toChain", "tokenSymbol", "tokenName", "decimals",
+        }
+
+        assert ALLOWED_METADATA_KEYS == expected_keys

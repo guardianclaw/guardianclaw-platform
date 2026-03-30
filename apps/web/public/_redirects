@@ -1,0 +1,5 @@
+# Cloudflare Pages redirects
+# Dynamic route rewrites are handled by functions/_middleware.ts
+
+# API proxy to backend
+/api/*  https://api.guardianclaw.dev/:splat  200

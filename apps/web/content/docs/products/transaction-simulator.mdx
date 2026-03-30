@@ -1,0 +1,182 @@
+---
+title: "Transaction Simulator"
+description: "Validate Solana transactions before execution - detect risks and prevent losses"
+category: "products"
+order: 5
+lastUpdated: "2026-01-24"
+---
+
+# Transaction Simulator
+
+Simulate Solana transactions **before** execution to detect potential issues and risks.
+
+## Overview
+
+The Transaction Simulator provides a critical safety layer for AI agents handling crypto assets. It simulates transactions before execution to detect:
+
+- **Transaction failures** via Solana RPC simulation
+- **High slippage** in swaps using Jupiter API
+- **Token security risks** (honeypots, freeze authority) via GoPlus API
+- **Liquidity issues** that could affect trade execution
+- **Price impact** for large trades
+
+## Installation
+
+```bash
+pip install guardianclaw httpx
+```
+
+## Quick Start
+
+### Basic Swap Simulation
+
+```python
+import asyncio
+from guardianclaw.safety.simulation import TransactionSimulator
+
+async def main():
+    async with TransactionSimulator(
+        rpc_url="https://api.mainnet-beta.solana.com"
+    ) as simulator:
+        # Simulate SOL -> USDC swap
+        result = await simulator.simulate_swap(
+            input_mint="So11111111111111111111111111111111111111112",  # SOL
+            output_mint="EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",  # USDC
+            amount=1_000_000_000,  # 1 SOL in lamports
+        )
+
+        if result.is_safe:
+            print(f"Expected output: {result.expected_output / 1e6:.2f} USDC")
+            print(f"Slippage: {result.slippage_bps / 100:.2f}%")
+        else:
+            print(f"Risks detected: {[r.description for r in result.risks]}")
+
+asyncio.run(main())
+```
+
+### Token Security Check
+
+```python
+from guardianclaw.safety.simulation import TransactionSimulator
+
+async def check_token():
+    async with TransactionSimulator() as simulator:
+        result = await simulator.check_token_security("TokenMintAddress...")
+
+        print(f"Is Safe: {result.is_safe}")
+        print(f"Has Freeze Authority: {result.has_freeze_authority}")
+        print(f"Is Honeypot: {result.is_honeypot}")
+
+        if not result.is_safe:
+            for risk in result.risks:
+                print(f"  - {risk.description}")
+```
+
+### PreflightValidator (Combined)
+
+```python
+from guardianclaw.safety.simulation import PreflightValidator
+
+async def validate():
+    # Combines CLAW validation + transaction simulation
+    async with PreflightValidator(
+        max_transfer=100.0,
+        max_slippage_bps=500,  # 5%
+        require_purpose=True,
+    ) as validator:
+        result = await validator.validate_swap(
+            input_mint="So11...",
+            output_mint="Token...",
+            amount=1_000_000_000,
+            purpose="Converting SOL to stable for savings",
+        )
+
+        if result.should_proceed:
+            print("Transaction approved!")
+            print(f"Expected output: {result.expected_output}")
+        else:
+            print("Transaction blocked:")
+            print(f"  Validation: {result.validation_concerns}")
+            print(f"  Simulation: {result.simulation_risks}")
+```
+
+## Components
+
+### TransactionSimulator
+
+Core simulator with RPC, Jupiter, and GoPlus integration.
+
+**Methods:**
+- `simulate_transaction(tx_base64)` - Simulate raw transaction
+- `simulate_swap(input_mint, output_mint, amount)` - Simulate token swap
+- `check_token_security(token_address)` - Check token security
+- `pre_flight_check(action, params)` - High-level action validation
+
+### PreflightValidator
+
+Combined validator that integrates with GuardianClaw CLAW.
+
+**Methods:**
+- `validate_with_simulation(action, **kwargs)` - Full validation
+- `validate_swap(...)` - Swap-specific validation
+- `validate_transfer(...)` - Transfer-specific validation
+- `check_token(token_address)` - Token security check
+
+### Analyzers
+
+Specialized risk analyzers:
+- `JupiterAnalyzer` - Swap quotes and slippage analysis
+- `GoPlusAnalyzer` - Token security via GoPlus API
+- `TokenRiskAnalyzer` - Comprehensive token analysis
+- `SlippageAnalyzer` - Slippage recommendations
+- `LiquidityAnalyzer` - Pool liquidity analysis
+
+## Risk Factors
+
+| Factor | Description |
+|--------|-------------|
+| `HONEYPOT` | Token prevents selling |
+| `FREEZE_AUTHORITY` | Funds can be frozen |
+| `MINT_AUTHORITY` | Token supply can increase |
+| `TRANSFER_TAX` | High transfer/sell taxes |
+| `HIGH_SLIPPAGE` | Slippage exceeds threshold |
+| `PRICE_IMPACT` | Large price impact |
+| `LOW_LIQUIDITY` | Insufficient pool liquidity |
+| `RUG_PULL` | Low LP locked percentage |
+
+## Risk Levels
+
+| Level | Action |
+|-------|--------|
+| `NONE` | No risks detected |
+| `LOW` | Minor concerns |
+| `MEDIUM` | Review recommended |
+| `HIGH` | Block recommended |
+| `CRITICAL` | Must block |
+
+## Configuration
+
+```python
+simulator = TransactionSimulator(
+    # Solana RPC endpoint
+    rpc_url="https://api.mainnet-beta.solana.com",
+
+    # GoPlus API key (optional, free tier available)
+    goplus_api_key=None,
+
+    # Jupiter API key (optional)
+    jupiter_api_key=None,
+
+    # Maximum acceptable slippage (basis points)
+    max_slippage_bps=500,  # 5%
+
+    # Cache TTL for token security results
+    cache_ttl_seconds=300,  # 5 minutes
+)
+```
+
+## API References
+
+- [Solana RPC simulateTransaction](https://solana.com/docs/rpc/http/simulatetransaction)
+- [Jupiter Swap API](https://dev.jup.ag/docs/swap-api)
+- [GoPlus Token Security API](https://docs.gopluslabs.io/reference/solanatokensecurityusingget)

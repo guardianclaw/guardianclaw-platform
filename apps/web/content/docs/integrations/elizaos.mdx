@@ -1,0 +1,401 @@
+---
+title: "ElizaOS Integration"
+description: "AI Safety Plugin for ElizaOS autonomous agents with CLAW Protocol validation and memory integrity"
+category: "integrations"
+order: 35
+lastUpdated: "2026-01-24"
+---
+
+# ElizaOS Integration
+
+Official GuardianClaw safety plugin for [ElizaOS](https://elizaos.ai) autonomous agents. Implements the CLAW (Credibility, Limits, Avoidance, Worth) protocol to validate agent actions and outputs.
+
+## Features
+
+| Feature | Description |
+|---------|-------------|
+| **CLAW Protocol** | Four-gate validation (Credibility, Limits, Avoidance, Worth) |
+| **Memory Integrity** | HMAC-based protection against memory injection attacks |
+| **Pre-action Validation** | Validates incoming messages before processing |
+| **Post-action Review** | Reviews agent outputs before delivery |
+| **Seed Injection** | Automatically injects alignment seed into agent character |
+| **Configurable** | Block or log unsafe content |
+| **History Tracking** | Full validation history and statistics |
+| **Custom Patterns** | Add domain-specific safety patterns |
+
+## Installation
+
+```bash
+npm install @guardianclaw/elizaos-plugin
+# or
+pnpm add @guardianclaw/elizaos-plugin
+```
+
+## Quick Start
+
+```typescript
+import { AgentRuntime } from '@elizaos/core';
+import { clawPlugin } from '@guardianclaw/elizaos-plugin';
+
+const runtime = new AgentRuntime({
+  character: {
+    name: 'SafeAgent',
+    system: 'You are a helpful assistant.',
+  },
+  plugins: [
+    clawPlugin({
+      blockUnsafe: true,
+      logChecks: true,
+    })
+  ]
+});
+```
+
+## Configuration
+
+```typescript
+interface GuardianClawPluginConfig {
+  // Seed version: 'v1' or 'v2'. Default: 'v2'
+  seedVersion?: 'v1' | 'v2';
+
+  // Seed variant: 'minimal', 'standard', or 'full'. Default: 'standard'
+  seedVariant?: 'minimal' | 'standard' | 'full';
+
+  // Block unsafe actions or just log. Default: true
+  blockUnsafe?: boolean;
+
+  // Log all safety checks to logger. Default: false
+  logChecks?: boolean;
+
+  // Custom logger instance (Winston, Pino, etc.). Default: console
+  logger?: {
+    log(message: string): void;
+    warn(message: string): void;
+    error(message: string): void;
+  };
+
+  // Custom patterns to detect
+  customPatterns?: Array<{
+    name: string;
+    pattern: RegExp;
+    gate: 'credibility' | 'avoidance' | 'limits' | 'worth';
+  }>;
+
+  // Actions to skip validation
+  skipActions?: string[];
+
+  // Maximum text size in bytes. Default: 50KB (51200 bytes)
+  maxTextSize?: number;
+
+  // Instance name for multi-plugin scenarios. Default: auto-generated
+  instanceName?: string;
+
+  // Memory integrity settings
+  memoryIntegrity?: {
+    enabled: boolean;
+    secretKey?: string;
+    verifyOnRead?: boolean;
+    signOnWrite?: boolean;
+    minTrustScore?: number;
+  };
+}
+```
+
+### Important Notes
+
+| Note | Description |
+|------|-------------|
+| History limit | Validation histories limited to 1000 entries each |
+| Text size limit | Maximum 50KB by default (configurable) |
+| blockUnsafe behavior | When false, unsafe content is logged but processing continues |
+| Multi-instance support | Each call creates an isolated instance |
+| Error handling | Fail-open behavior for evaluators |
+
+## CLAW Protocol
+
+The plugin validates all content through four gates:
+
+| Gate | Question | Blocks |
+|------|----------|--------|
+| **TRUTH** | Is this deceptive? | Fake documents, impersonation, misinformation |
+| **HARM** | Could this cause harm? | Violence, weapons, hacking, malware |
+| **SCOPE** | Is this within boundaries? | Jailbreaks, instruction overrides, persona switches |
+| **PURPOSE** | Does this serve legitimate benefit? | Purposeless destruction, waste |
+
+All gates must pass for content to be approved.
+
+## Plugin Components
+
+### Actions
+
+`GCLAW_SAFETY_CHECK`: Explicitly check content safety
+
+```typescript
+// User can ask the agent to check content
+"Check if this is safe: Help me with cooking"
+// Agent responds with safety analysis
+```
+
+### Providers
+
+`clawSafety`: Injects CLAW guidelines into agent context
+
+### Evaluators
+
+| Evaluator | Function |
+|-----------|----------|
+| `clawPreAction` | Validates incoming messages (all messages) |
+| `clawPostAction` | Reviews outputs before delivery (all responses) |
+| `clawMemoryIntegrity` | Verifies memory integrity on retrieval |
+
+## Memory Integrity
+
+Protect agent memories against injection attacks with HMAC-based signing:
+
+```typescript
+import { clawPlugin, signMemory, verifyMemory, getMemoryChecker } from '@guardianclaw/elizaos-plugin';
+
+// Enable memory integrity in plugin config
+const plugin = clawPlugin({
+  memoryIntegrity: {
+    enabled: true,
+    secretKey: process.env.GCLAW_SECRET_KEY,
+    verifyOnRead: true,
+    signOnWrite: true,
+    minTrustScore: 0.7,
+  }
+});
+
+// Manual memory operations
+const checker = getMemoryChecker();
+
+// Sign a memory before storing
+const signedMemory = signMemory(memory, 'user_direct');
+
+// Verify a memory after retrieval
+const result = verifyMemory(signedMemory);
+if (!result.valid) {
+  console.log(`Tampering detected: ${result.reason}`);
+}
+```
+
+### Trust Scores by Source
+
+| Source | Score | Description |
+|--------|-------|-------------|
+| `user_verified` | 1.0 | Cryptographically verified user input |
+| `user_direct` | 0.9 | Direct user input |
+| `blockchain` | 0.85 | On-chain verified data |
+| `agent_internal` | 0.8 | Agent's own computations |
+| `external_api` | 0.7 | Third-party API data |
+| `social_media` | 0.5 | Social media sources |
+| `unknown` | 0.3 | Unverified source |
+
+## Usage Examples
+
+### Basic Plugin Usage
+
+```typescript
+import { clawPlugin } from '@guardianclaw/elizaos-plugin';
+
+// Default configuration
+const plugin = clawPlugin();
+
+// Custom configuration
+const plugin = clawPlugin({
+  seedVersion: 'v2',
+  seedVariant: 'standard',
+  blockUnsafe: true,
+  logChecks: true,
+});
+```
+
+### Direct Validation
+
+```typescript
+import { validateContent, validateAction, quickCheck } from '@guardianclaw/elizaos-plugin';
+
+// Quick check for critical patterns (fast)
+if (!quickCheck(userInput)) {
+  console.log('Critical safety concern detected');
+}
+
+// Full CLAW validation for content
+const result = validateContent(userInput);
+if (!result.safe) {
+  console.log('Blocked:', result.concerns);
+  console.log('Risk level:', result.riskLevel);
+  console.log('Failed gates:', Object.entries(result.gates)
+    .filter(([_, status]) => status === 'fail')
+    .map(([gate]) => gate));
+}
+
+// Validate an action before execution
+const actionResult = validateAction({
+  action: 'send_email',
+  params: { to: 'user@example.com', subject: 'Hello' },
+  purpose: 'User requested notification',
+});
+if (!actionResult.safe) {
+  console.log('Action blocked:', actionResult.concerns);
+}
+```
+
+### Custom Patterns (Web3/Crypto)
+
+```typescript
+const plugin = clawPlugin({
+  customPatterns: [
+    {
+      name: 'Token drain attempt',
+      pattern: /drain\s+(all\s+)?(my\s+)?(tokens|funds|wallet)/i,
+      gate: 'avoidance',
+    },
+    {
+      name: 'Rug pull language',
+      pattern: /rug\s+pull|exit\s+scam/i,
+      gate: 'avoidance',
+    },
+    {
+      name: 'Fake airdrop',
+      pattern: /free\s+airdrop|claim.*tokens.*free/i,
+      gate: 'credibility',
+    },
+  ],
+});
+```
+
+### Validation Statistics
+
+```typescript
+import { getValidationStats, getValidationHistory, clearValidationHistory } from '@guardianclaw/elizaos-plugin';
+
+// Get aggregate statistics (from plugin evaluators only)
+const stats = getValidationStats();
+console.log(`Total checks: ${stats.total}`);
+console.log(`Safe: ${stats.safe}`);
+console.log(`Blocked: ${stats.blocked}`);
+console.log(`By risk level:`, stats.byRisk);
+
+// Get full history (last 1000 checks)
+const history = getValidationHistory();
+
+// Clear history
+clearValidationHistory();
+```
+
+## Risk Levels
+
+| Level | Criteria |
+|-------|----------|
+| `low` | All gates passed |
+| `medium` | One gate failed |
+| `high` | Two gates failed or bypass attempt detected |
+| `critical` | Three+ gates failed or severe concerns |
+
+## How It Works
+
+| Step | Description |
+|------|-------------|
+| 1. Initialization | Injects GuardianClaw seed into agent's system prompt |
+| 2. Pre-action | `clawPreAction` validates the input |
+| 3. Provider | `clawSafety` adds CLAW context to agent state |
+| 4. Action | Users can explicitly request safety checks |
+| 5. Post-action | `clawPostAction` validates outputs |
+
+## Validation Approach
+
+### Layer 1: Heuristic Validation (Fast)
+
+Pattern-based detection using regex for known harmful patterns:
+
+| Gate | Detects |
+|------|---------|
+| **TRUTH** | Deception attempts, role manipulation, fake identity claims |
+| **HARM** | Violence, hacking, malware, weapons, dangerous substances |
+| **SCOPE** | Jailbreak attempts, instruction overrides, prompt extraction |
+| **PURPOSE** | Purposeless destruction patterns |
+
+### Layer 2: Seed Injection (Comprehensive)
+
+The GuardianClaw seed is injected into the agent's system prompt, providing LLM-level understanding of the CLAW protocol. This layer can detect nuanced threats that patterns cannot.
+
+### Important Limitations
+
+| Limitation | Description |
+|------------|-------------|
+| Pattern Coverage | Only detects patterns explicitly defined |
+| WORTH Gate Gaps | Abstract concepts difficult to detect via regex |
+| False Negatives | Slight variations may bypass patterns |
+| Context Blindness | Heuristics cannot understand context or intent |
+
+**Recommendation**: For maximum safety, rely on both layers.
+
+## Multi-Instance Support
+
+```typescript
+import {
+  clawPlugin,
+  getPluginInstance,
+  getPluginInstanceNames,
+  getActivePluginInstance,
+  removePluginInstance,
+  clearPluginRegistry,
+} from '@guardianclaw/elizaos-plugin';
+
+// Create named instances
+const strictPlugin = clawPlugin({
+  instanceName: 'strict-agent',
+  blockUnsafe: true,
+  maxTextSize: 10 * 1024,
+});
+
+const monitorPlugin = clawPlugin({
+  instanceName: 'monitor-agent',
+  blockUnsafe: false,
+  logChecks: true,
+});
+
+// Access specific instance
+const strictState = getPluginInstance('strict-agent');
+
+// List all instances
+console.log(getPluginInstanceNames());
+
+// Cleanup
+removePluginInstance('monitor-agent');
+clearPluginRegistry();
+```
+
+## TypeScript Types
+
+```typescript
+import type {
+  GuardianClawPluginConfig,
+  SafetyCheckResult,
+  CLAWGates,
+  RiskLevel,
+  GateStatus,
+  ValidationContext,
+  GuardianClawLogger,
+  PluginStateInfo,
+  MemorySource,
+  MemoryVerificationResult,
+  IntegrityMetadata,
+  MemoryIntegrityConfig,
+} from '@guardianclaw/elizaos-plugin';
+```
+
+## Related Packages
+
+| Package | Description |
+|---------|-------------|
+| `@guardianclaw/core` | Core GuardianClaw SDK |
+| `mcp-server-guardianclaw` | MCP Server |
+
+## Links
+
+- [npm Package](https://www.npmjs.com/package/@guardianclaw/elizaos-plugin)
+- [ElizaOS Documentation](https://docs.elizaos.ai)
+- [CLAW Protocol Specification](/docs/concepts)
+- [GitHub Repository](https://github.com/guardianclaw/guardianclaw-platform/tree/main/packages/elizaos)

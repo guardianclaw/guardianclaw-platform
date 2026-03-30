@@ -1,0 +1,235 @@
+﻿---
+title: "Browser Extension"
+description: "Browser extension that protects AI conversations from data harvesting, monitors AI agents, and controls MCP tools"
+category: "integrations"
+order: 33
+lastUpdated: "2026-01-24"
+---
+
+# Browser Extension
+
+Browser extension that protects your AI conversations from data harvesting, monitors AI agents, controls MCP tools, and keeps you safe online.
+
+## Features
+
+### Core Protection
+
+| Feature | Description |
+|---------|-------------|
+| **Conversation Shield** | Blocks other extensions from reading your AI chats |
+| **Secret Scanner** | Detects passwords, API keys, seed phrases before you send them |
+| **Extension Trust Score** | Rates installed extensions by security risk |
+| **Real-time Alerts** | Notifications when threats are detected |
+
+### Agent Shield
+
+| Feature | Description |
+|---------|-------------|
+| **Agent Registry** | Track all connected AI agents (ElizaOS, custom) |
+| **Action Interceptor** | Review and approve agent actions before execution |
+| **Memory Scanner** | Detect memory injection attacks (40+ patterns) |
+| **Trust Levels** | Assign trust levels for automatic approval |
+
+### MCP Gateway
+
+| Feature | Description |
+|---------|-------------|
+| **Server Registry** | Track all connected MCP servers |
+| **Tool Interceptor** | Review and approve MCP tool calls |
+| **Risk Calculator** | Automatic risk assessment for tool calls |
+| **Tool Validation** | CLAW-based validation for all tool executions |
+
+### Approval System
+
+| Feature | Description |
+|---------|-------------|
+| **Configurable Rules** | Auto-approve, auto-reject, or manual approval |
+| **Risk-based Defaults** | Low risk auto-approved, high risk requires approval |
+| **Action History** | Full audit trail of all actions |
+| **Expiration Handling** | Automatic handling of expired requests |
+
+## Supported Platforms
+
+| Platform | URL |
+|----------|-----|
+| ChatGPT | chat.openai.com, chatgpt.com |
+| Claude | claude.ai |
+| Gemini | gemini.google.com |
+| Perplexity | perplexity.ai |
+| DeepSeek | deepseek.com |
+| Grok | grok.x.ai |
+| Copilot | copilot.microsoft.com |
+| Meta AI | meta.ai |
+
+## Installation
+
+### Chrome Web Store (Coming Soon)
+
+1. Visit the Chrome Web Store
+2. Search for "GuardianClaw Guard"
+3. Click "Add to Chrome"
+
+### Development Build
+
+```bash
+# Clone the repository
+git clone https://github.com/guardianclaw/guardianclaw-platform.git
+cd claw/packages/browser
+
+# Install dependencies
+npm install
+
+# Build extension
+npm run build
+
+# The built extension will be in ./dist
+```
+
+### Load in Chrome
+
+1. Open Chrome and go to `chrome://extensions`
+2. Enable "Developer mode" (top right)
+3. Click "Load unpacked"
+4. Select the `dist` folder
+
+### Load in Firefox
+
+1. Open Firefox and go to `about:debugging#/runtime/this-firefox`
+2. Click "Load Temporary Add-on"
+3. Select `manifest.json` from the `dist` folder
+
+### Load in Edge
+
+1. Open Edge and go to `edge://extensions`
+2. Enable "Developer mode"
+3. Click "Load unpacked"
+4. Select the `dist` folder
+
+## How It Works
+
+### Conversation Shield
+
+The extension injects a content script into AI chat platforms that:
+
+| Function | Description |
+|----------|-------------|
+| Monitor | Detects suspicious DOM access attempts |
+| Protect | Creates protective wrappers around conversation elements |
+| Block | Prevents unauthorized data extraction |
+
+### Secret Scanner
+
+Based on the same patterns used in the GuardianClaw VS Code extension:
+
+| Capability | Description |
+|------------|-------------|
+| Real-time scanning | Scans text as you type |
+| 30+ secret types | API keys, passwords, tokens, seed phrases |
+| Pre-submission warning | Options to remove, mask, or proceed |
+
+### The CLAW Protocol
+
+All actions are validated through the Credibility-Limits-Avoidance-Worth protocol:
+
+| Gate | Question |
+|------|----------|
+| **Truth** | Is this from a legitimate source? |
+| **Harm** | Could this cause harm? |
+| **Scope** | Is this within appropriate boundaries? |
+| **Purpose** | Is there a legitimate reason? |
+
+### Agent Shield
+
+Monitors AI agents and their actions:
+
+| Function | Description |
+|----------|-------------|
+| Intercept | Catches tool calls before execution |
+| Detect | Identifies memory injection attempts |
+| Approve | Requires approval for high-risk actions |
+
+### MCP Gateway
+
+Controls Model Context Protocol tool calls:
+
+| Function | Description |
+|----------|-------------|
+| Validate | Tools validated against CLAW protocol |
+| Calculate | Risk level assessment for each call |
+| Audit | Maintains complete audit trail |
+
+## Internationalization
+
+GuardianClaw Guard supports multiple languages:
+
+| Language | Code |
+|----------|------|
+| English | en |
+| Spanish | es |
+| Portuguese | pt |
+
+Language is auto-detected from browser settings or can be set manually in Settings.
+
+## Privacy
+
+GuardianClaw Guard is privacy-first:
+
+| Principle | Description |
+|-----------|-------------|
+| **No data collection** | Your conversations never leave your browser |
+| **No external servers** | All processing happens locally |
+| **Open source** | Verify the code yourself |
+
+## Development
+
+```bash
+# Install dependencies
+npm install
+
+# Development build with watch
+npm run dev
+
+# Production build
+npm run build
+
+# Run tests
+npm test
+
+# Run tests with coverage
+npm run test:coverage
+
+# Lint code
+npm run lint
+```
+
+## Testing
+
+```bash
+# Run all tests
+npm test
+
+# Run with coverage
+npm run test:coverage
+
+# Watch mode
+npm run test:watch
+```
+
+Current test coverage: 866 tests passing, 55%+ code coverage.
+
+## Part of GuardianClaw Ecosystem
+
+| Component | Description |
+|-----------|-------------|
+| VS Code Extension | Protect your code |
+| JetBrains Plugin | IDE integration |
+| Neovim Plugin | Editor integration |
+| Python/npm SDKs | For applications |
+| Browser Extension | Protect your browsing |
+
+## Links
+
+- [GitHub Repository](https://github.com/guardianclaw/guardianclaw-platform/tree/main/packages/browser)
+- [Documentation](https://guardianclaw.org/docs)
+- [PyPI Package](https://pypi.org/project/guardianclaw/)
+- [npm Package](https://www.npmjs.com/package/@guardianclaw/core)

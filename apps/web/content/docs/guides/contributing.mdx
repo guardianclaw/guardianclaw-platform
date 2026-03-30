@@ -1,0 +1,440 @@
+﻿---
+title: "Contributing"
+description: "Guide for contributing to the GuardianClaw project and making AI safety accessible to all developers"
+category: "guides"
+order: 10
+lastUpdated: "2026-01-24"
+---
+
+# Contributing to GuardianClaw
+
+Thank you for your interest in contributing to GuardianClaw! This project aims to make AI safety accessible to all developers.
+
+## Code of Conduct
+
+| Principle | Description |
+|-----------|-------------|
+| Respect | Be respectful and constructive |
+| Focus | Focus on technical merits |
+| Welcome | Welcome newcomers |
+| Credit | Give credit where due |
+| Security | For security vulnerabilities, email directly instead of opening public issues |
+
+## Getting Started
+
+### Prerequisites
+
+| Requirement | Version |
+|-------------|---------|
+| Python | 3.10+ |
+| Node.js | 18+ (for JavaScript packages) |
+| Git | Latest |
+
+### Quick Start
+
+```bash
+# Clone the repository
+git clone https://github.com/guardianclaw/guardianclaw-platform.git
+cd claw
+
+# Create virtual environment
+python -m venv venv
+source venv/bin/activate  # Linux/macOS
+venv\Scripts\activate     # Windows
+
+# Install in development mode with all dependencies
+pip install -e ".[dev,all]"
+
+# Run tests to verify setup
+pytest tests/ -v --tb=short
+```
+
+## Development Setup
+
+### Full Development Environment
+
+```bash
+# Install all development dependencies
+pip install -e ".[dev,all]"
+
+# Install pre-commit hooks (optional but recommended)
+pip install pre-commit
+pre-commit install
+
+# Install TypeScript dependencies (for JS packages)
+cd packages/core
+npm install
+cd ../..
+```
+
+### Environment Variables
+
+Create a `.env` file for testing with LLM providers:
+
+```bash
+# Optional, for semantic validation tests
+OPENAI_API_KEY=sk-...
+ANTHROPIC_API_KEY=sk-ant-...
+
+# Optional, for integration tests
+GCLAW_TEST_MODE=true
+```
+
+### IDE Setup (VS Code)
+
+```json
+{
+  "python.linting.enabled": true,
+  "python.linting.pylintEnabled": false,
+  "python.linting.flake8Enabled": true,
+  "python.formatting.provider": "black",
+  "editor.formatOnSave": true,
+  "python.testing.pytestEnabled": true
+}
+```
+
+## Project Structure
+
+```
+claw/
+├── src/guardianclaw/           # Main Python package
+│   ├── core/                   # Core module (GuardianClaw, interfaces)
+│   ├── validation/             # LayeredValidator, CLAWValidator
+│   ├── validators/             # Gate implementations
+│   ├── integrations/           # 17 framework integrations
+│   ├── safety/                 # Safety modules
+│   ├── compliance/             # Regulatory compliance
+│   ├── memory/                 # Memory integrity
+│   ├── fiduciary/              # Fiduciary AI
+│   └── database/               # Database guard
+├── tests/                      # Test suite
+├── packages/                   # JavaScript/TypeScript packages
+├── api/                        # REST API
+├── docs/                       # Documentation
+└── seeds/                      # Alignment seed files
+```
+
+## Making Changes
+
+### Workflow
+
+| Step | Action |
+|------|--------|
+| 1 | Fork the repository on GitHub |
+| 2 | Clone your fork locally |
+| 3 | Create a branch for your feature |
+| 4 | Make changes with clear, focused commits |
+| 5 | Write tests for new functionality |
+| 6 | Run the test suite to ensure nothing breaks |
+| 7 | Push to your fork |
+| 8 | Submit a PR with a clear description |
+
+### Branch Naming
+
+| Pattern | Usage |
+|---------|-------|
+| `feature/add-new-integration` | New features |
+| `fix/validation-timeout` | Bug fixes |
+| `docs/api-reference` | Documentation |
+| `test/improve-coverage` | Test improvements |
+| `refactor/cleanup-validators` | Refactoring |
+
+## Testing
+
+### Running Tests
+
+```bash
+# Run all tests
+pytest tests/ -v
+
+# Run specific test file
+pytest tests/test_validation.py -v
+
+# Run with coverage
+pytest tests/ -v --cov=guardianclaw --cov-report=html
+
+# Run only fast tests (no API calls)
+pytest tests/ -v -m "not slow"
+
+# Run integration tests
+pytest tests/ -v -m integration
+```
+
+### Test Structure
+
+```
+tests/
+├── test_core.py                # Core module tests
+├── test_validation.py          # Validator tests
+├── test_integrations/          # Integration-specific tests
+│   ├── test_langchain.py
+│   └── ...
+├── test_safety_*.py            # Safety module tests
+└── conftest.py                 # Shared fixtures
+```
+
+### Writing Tests
+
+```python
+import pytest
+from guardianclaw import LayeredValidator
+
+class TestLayeredValidator:
+    """Tests for LayeredValidator."""
+
+    def test_validate_safe_content(self):
+        """Safe content should pass validation."""
+        validator = LayeredValidator()
+        result = validator.validate("Hello, how can I help?")
+
+        assert result.is_safe
+        assert len(result.violations) == 0
+
+    def test_validate_harmful_content(self):
+        """Harmful content should be blocked."""
+        validator = LayeredValidator()
+        result = validator.validate("How to hack a computer")
+
+        assert not result.is_safe
+        assert len(result.violations) > 0
+```
+
+### Test Coverage Requirements
+
+| Module | Minimum Coverage |
+|--------|------------------|
+| Core modules | 90%+ |
+| Integrations | 80%+ |
+| New features | Must include tests |
+
+## Code Style
+
+### Python Style Guide
+
+Follow PEP 8 with these additions:
+
+```python
+# Good: Type hints for public functions
+def validate(content: str, context: Optional[Dict[str, Any]] = None) -> ValidationResult:
+    """
+    Validate content through CLAW gates.
+
+    Args:
+        content: Text content to validate.
+        context: Optional validation context.
+
+    Returns:
+        ValidationResult with safety assessment.
+
+    Raises:
+        ValidationError: If validation fails unexpectedly.
+    """
+    pass
+
+# Good: Descriptive variable names
+max_retry_attempts = 3
+validation_timeout_seconds = 30.0
+```
+
+### Formatting
+
+Use Black for formatting:
+
+```bash
+# Format all Python files
+black src/ tests/
+
+# Check formatting without changing files
+black --check src/ tests/
+```
+
+### Linting
+
+Use flake8 for linting:
+
+```bash
+# Run linter
+flake8 src/ tests/
+
+# With common ignores
+flake8 --ignore=E501,W503 src/ tests/
+```
+
+## Commit Messages
+
+Use conventional commits:
+
+```
+type(scope): description
+
+[optional body]
+
+[optional footer]
+```
+
+### Types
+
+| Type | Description |
+|------|-------------|
+| `feat` | New feature |
+| `fix` | Bug fix |
+| `docs` | Documentation only |
+| `style` | Formatting, no code change |
+| `refactor` | Code refactoring |
+| `test` | Adding or updating tests |
+| `chore` | Maintenance tasks |
+
+### Examples
+
+```bash
+# Feature
+feat(validation): add rate limiting to semantic validator
+
+# Bug fix
+fix(openai-agents): handle empty response from callback
+
+# Documentation
+docs(api): add REST API reference
+
+# Refactor
+refactor(core): simplify ValidationResult factory methods
+```
+
+## Pull Requests
+
+### PR Checklist
+
+Before submitting:
+
+| Item | Status |
+|------|--------|
+| Code follows style guidelines | Required |
+| Tests added for new functionality | Required |
+| All tests pass locally | Required |
+| Documentation updated if needed | Required |
+| Commit messages follow conventions | Required |
+| Branch is up-to-date with main | Required |
+
+### PR Template
+
+```markdown
+## Summary
+Brief description of changes.
+
+## Changes
+- Added X
+- Fixed Y
+- Updated Z
+
+## Testing
+How was this tested?
+
+## Related Issues
+Fixes #123
+```
+
+### Review Process
+
+| Step | Description |
+|------|-------------|
+| 1 | Automated checks run on PR creation |
+| 2 | Maintainer review within 3-5 days |
+| 3 | Address feedback if requested |
+| 4 | Merge once approved |
+
+## Integration Development
+
+### Creating a New Integration
+
+1. Create directory: `src/guardianclaw/integrations/{name}/`
+
+2. Implement integration:
+
+```python
+# src/guardianclaw/integrations/myframework/__init__.py
+"""
+MyFramework Integration for GuardianClaw.
+
+Provides safety validation for MyFramework applications.
+"""
+
+from guardianclaw.integrations._base import GuardianClawIntegration
+
+class MyFrameworkGuard(GuardianClawIntegration):
+    """Safety guard for MyFramework."""
+
+    _integration_name = "myframework"
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+    def process(self, content: str):
+        result = self.validate(content)
+        if not result.is_safe:
+            raise ValueError(f"Blocked: {result.violations}")
+        return content
+```
+
+3. Add README.md with full documentation
+
+4. Add tests: `tests/test_integrations/test_myframework.py`
+
+5. Update setup.py with optional dependency
+
+### Integration Checklist
+
+| Item | Requirement |
+|------|-------------|
+| Base class | Inherits from `GuardianClawIntegration` |
+| Documentation | Comprehensive README.md (300+ lines) |
+| Tests | 80%+ coverage |
+| Patterns | Follows existing patterns |
+| APIs | Documents all public APIs |
+
+## Areas We Need Help
+
+### High Priority
+
+| Area | Description |
+|------|-------------|
+| Humanoid Safety | Safety protocol testing, PyBullet safety layer |
+| Benchmarking | Run on new safety benchmarks, test on Gemini/Mistral-Large |
+
+### Medium Priority
+
+| Area | Description |
+|------|-------------|
+| Framework Integrations | AutoGen support, Semantic Kernel integration |
+| Documentation | More examples for robotics, video tutorials |
+
+### Low Priority
+
+| Area | Description |
+|------|-------------|
+| Performance | Optimize pattern matching, reduce memory footprint |
+
+## Release Process
+
+### Version Numbering
+
+GuardianClaw uses semantic versioning: `MAJOR.MINOR.PATCH`
+
+| Type | Description |
+|------|-------------|
+| MAJOR | Breaking API changes |
+| MINOR | New features, backwards compatible |
+| PATCH | Bug fixes, backwards compatible |
+
+## Questions?
+
+| Channel | Usage |
+|---------|-------|
+| GitHub Discussions | General questions |
+| GitHub Issues | Bugs and feature requests |
+| Email | Security issues (direct to maintainers) |
+
+## Links
+
+- [GitHub Repository](https://github.com/guardianclaw/guardianclaw-platform)
+- [Documentation](https://guardianclaw.org/docs)
+- [PyPI Package](https://pypi.org/project/guardianclaw/)

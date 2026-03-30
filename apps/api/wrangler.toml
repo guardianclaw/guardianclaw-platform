@@ -1,0 +1,71 @@
+name = "claw-api"
+main = "src/index.ts"
+compatibility_date = "2024-01-01"
+compatibility_flags = ["nodejs_compat"]
+workers_dev = true
+
+# Modal.com Runtime URLs (web endpoints)
+# Function names map to URLs: execute_agent_web -> execute-agent-web
+[vars]
+MODAL_RUNTIME_URL = "https://guardian-claw--claw-runtime-execute-agent-web.modal.run"
+MODAL_HEALTH_URL = "https://guardian-claw--claw-runtime-health-web.modal.run"
+MODAL_VALIDATE_INPUT_URL = "https://guardian-claw--claw-runtime-validate-input-web.modal.run"
+MODAL_VALIDATE_OUTPUT_URL = "https://guardian-claw--claw-runtime-validate-output-web.modal.run"
+MODAL_COMPLIANCE_URL = "https://guardian-claw--claw-runtime-check-compliance-web.modal.run"
+
+# Development
+[env.development]
+vars = { ENVIRONMENT = "development", MODAL_RUNTIME_URL = "https://guardian-claw--claw-runtime-execute-agent-web.modal.run" }
+
+# Staging
+# Note: No cron triggers in staging to stay within free tier limit
+[env.staging]
+workers_dev = true
+routes = [
+  { pattern = "staging-api.guardianclaw.org/*", zone_name = "guardianclaw.org" }
+]
+vars = { ENVIRONMENT = "staging", MODAL_RUNTIME_URL = "https://guardian-claw--claw-runtime-execute-agent-web.modal.run", MODAL_HEALTH_URL = "https://guardian-claw--claw-runtime-health-web.modal.run", MODAL_VALIDATE_INPUT_URL = "https://guardian-claw--claw-runtime-validate-input-web.modal.run", MODAL_VALIDATE_OUTPUT_URL = "https://guardian-claw--claw-runtime-validate-output-web.modal.run", MODAL_COMPLIANCE_URL = "https://guardian-claw--claw-runtime-check-compliance-web.modal.run" }
+[[env.staging.kv_namespaces]]
+binding = "RATE_LIMIT_KV"
+id = "31614b65988843fcb419e1a42c57255c"
+# Staging has no cron triggers - use HTTP endpoints for manual testing
+
+# Production
+[env.production]
+workers_dev = true
+vars = { ENVIRONMENT = "production", MODAL_RUNTIME_URL = "https://guardian-claw--claw-runtime-execute-agent-web.modal.run", MODAL_HEALTH_URL = "https://guardian-claw--claw-runtime-health-web.modal.run", MODAL_VALIDATE_INPUT_URL = "https://guardian-claw--claw-runtime-validate-input-web.modal.run", MODAL_VALIDATE_OUTPUT_URL = "https://guardian-claw--claw-runtime-validate-output-web.modal.run", MODAL_COMPLIANCE_URL = "https://guardian-claw--claw-runtime-check-compliance-web.modal.run" }
+routes = [
+  { pattern = "api.guardianclaw.org/*", zone_name = "guardianclaw.org" }
+]
+[[env.production.kv_namespaces]]
+binding = "RATE_LIMIT_KV"
+id = "fb3c4218daf445a582020802c05e1fd4"
+
+# Production cron triggers (Admin System)
+[env.production.triggers]
+crons = [
+  "0 * * * *",    # Hourly - aggregate metrics + refresh summary
+  "0 0 * * *",    # Daily midnight - daily metrics + revenue + cleanup
+  "*/5 * * * *",  # Every 5 min - check alert rules
+]
+
+# KV Namespaces for rate limiting persistence
+[[kv_namespaces]]
+binding = "RATE_LIMIT_KV"
+id = "fb3c4218daf445a582020802c05e1fd4"
+preview_id = "31614b65988843fcb419e1a42c57255c"
+
+# Secrets (set via: wrangler secret put <NAME>)
+# - SUPABASE_URL
+# - SUPABASE_SERVICE_KEY
+# - JWT_SECRET (legacy HS256, for backwards compatibility)
+# - JWT_ES256_PRIVATE_KEY (ES256 private key in JWK format - generate with: npx tsx scripts/generate-es256-keys.ts)
+# - JWT_ES256_PUBLIC_KEY (ES256 public key in JWK format - optional, derived from private)
+# - IP_HASH_SECRET (for GDPR-compliant IP hashing in logs)
+# - RESEND_API_KEY (for contact form email delivery via Resend)
+# - SOLANA_RPC_URL (Helius mainnet RPC - set per environment: wrangler secret put SOLANA_RPC_URL --env production)
+# - SOLANA_ARCHIVE_RPC_URL (Helius archival RPC for governance snapshot balance queries)
+
+# Cron Triggers are defined per-environment in [env.production.triggers]
+# Free plan limit is 5 triggers per account total
+# Production uses 3 triggers, staging uses 0

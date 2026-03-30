@@ -1,0 +1,57 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build outputs
+.next/
+dist/
+.turbo/
+out/
+*.tsbuildinfo
+
+# Environment
+.env
+.env.local
+.env.*.local
+.dev.vars
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Testing
+coverage/
+
+# Vercel
+.vercel/
+
+# Cloudflare
+.wrangler/
+
+# Supabase local
+supabase/.branches/
+supabase/.temp/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.vercel
+
+# Windows /dev/null artifact
+nul
+
+# Local development workspace (never commit)
+_internal/
+CLAUDE.md

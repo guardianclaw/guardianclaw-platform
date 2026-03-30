@@ -1,0 +1,98 @@
+---
+title: "OpenGuardrails Integration"
+description: "Bidirectional integration between GuardianClaw and OpenGuardrails"
+category: "integrations"
+order: 3
+lastUpdated: "2026-01-23"
+---
+
+# OpenGuardrails Integration
+
+Bidirectional integration between GuardianClaw and OpenGuardrails framework.
+
+## Installation
+
+```bash
+pip install guardianclaw requests openguardrails
+```
+
+## Integration Modes
+
+1. **Use OpenGuardrails as backend** - Leverage scanners from GuardianClaw
+2. **Register GuardianClaw as scanner** - Add CLAW to OpenGuardrails pipeline
+
+## Quick Start
+
+### Use OpenGuardrails as Backend
+
+```python
+from guardianclaw.integrations.openguardrails import OpenGuardrailsValidator
+
+validator = OpenGuardrailsValidator(
+    api_url="http://localhost:5001",
+    api_key="your-api-key",
+    fail_safe=False,  # Fail-closed (secure)
+)
+
+result = validator.validate("Check this content for safety")
+print(f"Safe: {result.safe}")
+print(f"Risk Level: {result.risk_level.value}")
+```
+
+### Register GuardianClaw as Scanner
+
+```python
+from guardianclaw.integrations.openguardrails import GuardianClawOpenGuardrailsScanner
+
+scanner = GuardianClawOpenGuardrailsScanner(
+    openguardrails_url="http://localhost:5000",
+    jwt_token="your-jwt-token",
+)
+
+scanner_tag = scanner.register()
+print(f"Registered as: {scanner_tag}")
+
+# Use in OpenGuardrails:
+# openguardrails scan --scanners {scanner_tag} "content"
+
+scanner.unregister()  # Cleanup
+```
+
+### Combined Pipeline
+
+```python
+from guardianclaw.integrations.openguardrails import GuardianClawGuardrailsWrapper
+
+wrapper = GuardianClawGuardrailsWrapper()
+
+result = wrapper.validate(
+    content="Some content",
+    scanners=["S1", "S2"]
+)
+
+print(f"Safe: {result['safe']}")
+print(f"Blocked by: {result['blocked_by']}")
+```
+
+## CLAW Gates
+
+| Gate | Description |
+|------|-------------|
+| **Truth** | Deception, misinformation |
+| **Harm** | Violence, weapons |
+| **Scope** | Jailbreaks, prompt injection |
+| **Purpose** | Purposeless actions |
+
+## Error Handling
+
+```python
+# Secure (default) - blocks if API unavailable
+validator = OpenGuardrailsValidator(fail_safe=False)
+
+# Insecure - allows if API unavailable (not recommended)
+validator = OpenGuardrailsValidator(fail_safe=True)
+```
+
+## Links
+
+- [OpenGuardrails](https://github.com/openguardrails/openguardrails)

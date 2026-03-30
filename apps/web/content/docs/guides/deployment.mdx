@@ -1,0 +1,153 @@
+---
+title: "Deployment Guide"
+description: "Deploy GuardianClaw in production environments"
+category: "guides"
+order: 3
+lastUpdated: "2026-01-23"
+---
+
+# Deployment Guide
+
+Deploy GuardianClaw in production environments.
+
+## Installation
+
+```bash
+pip install guardianclaw
+```
+
+## Environment Variables
+
+```bash
+# For semantic validation
+export OPENAI_API_KEY="sk-..."
+# or
+export ANTHROPIC_API_KEY="sk-ant-..."
+
+# For Memory Shield
+export GCLAW_MEMORY_SECRET="your-secure-secret"
+```
+
+## Docker Deployment
+
+```dockerfile
+FROM python:3.11-slim
+
+WORKDIR /app
+
+RUN pip install guardianclaw
+
+COPY . .
+
+CMD ["python", "your_app.py"]
+```
+
+```yaml
+# docker-compose.yml
+services:
+  app:
+    build: .
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - GCLAW_MEMORY_SECRET=${GCLAW_MEMORY_SECRET}
+```
+
+## Kubernetes
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: claw-app
+spec:
+  replicas: 3
+  template:
+    spec:
+      containers:
+        - name: app
+          image: your-app:latest
+          env:
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: claw-secrets
+                  key: openai-api-key
+```
+
+## Monitoring
+
+### Logging Violations
+
+```python
+import logging
+from guardianclaw import GuardianClaw
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("claw")
+
+claw = GuardianClaw(seed_level="standard")
+
+def process_with_logging(content):
+    is_safe, violations = claw.validate(content)
+
+    if not is_safe:
+        logger.warning(f"Violations: {violations}")
+
+    return is_safe
+```
+
+### Metrics
+
+```python
+from prometheus_client import Counter
+
+violations_counter = Counter(
+    'claw_violations_total',
+    'Total number of safety violations',
+    ['gate']
+)
+
+def process_with_metrics(content):
+    is_safe, violations = claw.validate(content)
+
+    for violation in violations:
+        gate = extract_gate(violation)
+        violations_counter.labels(gate=gate).inc()
+
+    return is_safe
+```
+
+## Performance Tuning
+
+### Caching
+
+```python
+from functools import lru_cache
+from guardianclaw import GuardianClaw
+
+claw = GuardianClaw(seed_level="standard")
+
+@lru_cache(maxsize=1000)
+def cached_validate(content_hash):
+    return claw.validate(content)
+```
+
+### Async Operations
+
+```python
+import asyncio
+from guardianclaw.integrations.solana_agent_kit import ClawValidator
+
+async def batch_validate(transactions):
+    validator = ClawValidator()
+    results = [validator.check(tx["action"], amount=tx["amount"]) for tx in transactions]
+    return results
+```
+
+## Security Best Practices
+
+1. **Secrets management** - Use vault/secrets manager
+2. **Fail closed** - `fail_closed=True` in production
+3. **Rate limiting** - Protect against abuse
+4. **Audit logging** - Record all violations
+5. **Regular updates** - Keep guardianclaw updated

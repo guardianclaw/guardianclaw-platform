@@ -1,0 +1,171 @@
+---
+title: "Quick Start"
+description: "Get up and running with GuardianClaw"
+category: "getting-started"
+order: 3
+lastUpdated: "2026-01-23"
+---
+
+# Quick Start
+
+Get GuardianClaw protecting your AI systems in minutes.
+
+## 1. Install
+
+```bash
+pip install guardianclaw
+```
+
+## 2. Basic Usage
+
+```python
+from guardianclaw import GuardianClaw
+
+# Create with standard seed level
+claw = GuardianClaw(seed_level="standard")
+
+# Get alignment seed for your LLM
+seed = claw.get_seed()
+
+# Use with any LLM provider
+messages = [
+    {"role": "system", "content": seed},
+    {"role": "user", "content": "Help me write a Python function"}
+]
+
+# Validate content through CLAW gates
+is_safe, violations = claw.validate("How do I hack a computer?")
+print(f"Safe: {is_safe}, Violations: {violations}")
+```
+
+## 3. Validate Responses
+
+```python
+from guardianclaw import GuardianClaw
+
+claw = GuardianClaw()
+
+# Validate text through CLAW gates
+is_safe, violations = claw.validate("Some AI response...")
+
+if not is_safe:
+    print(f"Violations: {violations}")
+```
+
+## 4. Choose Seed Level
+
+```python
+from guardianclaw import GuardianClaw, SeedLevel
+
+# Minimal: ~360 tokens, for chatbots and APIs
+claw_chat = GuardianClaw(seed_level=SeedLevel.MINIMAL)
+
+# Standard: ~1,000 tokens, recommended for general use
+claw_agent = GuardianClaw(seed_level=SeedLevel.STANDARD)
+
+# Full: ~1,900 tokens, for critical systems
+claw_critical = GuardianClaw(seed_level=SeedLevel.FULL)
+```
+
+| Level | Tokens | Best For |
+|-------|--------|----------|
+| `minimal` | ~360 | Chatbots, APIs, low latency |
+| `standard` | ~1,000 | General use, agents (recommended) |
+| `full` | ~1,900 | Critical systems, robotics |
+
+## 5. Protect Agents
+
+### For Autonomous Agents
+
+```python
+from guardianclaw import GuardianClaw
+
+claw = GuardianClaw(seed_level="standard")
+
+# Validate an action plan before execution
+action_plan = "Pick up knife, slice apple, place in bowl"
+is_safe, concerns = claw.validate_action(action_plan)
+
+if not is_safe:
+    print(f"Action blocked: {concerns}")
+```
+
+### For Robotics / Embodied AI
+
+```python
+from guardianclaw import GuardianClaw
+
+# Full seed for maximum safety with physical systems
+claw = GuardianClaw(seed_level="full")
+
+robot_task = "Turn on the stove and leave the kitchen"
+result = claw.validate_action(robot_task)
+# Result: BLOCKED - Fire hazard, unsupervised heating
+```
+
+## 6. JavaScript Usage
+
+```javascript
+import { GuardianClawGuard } from '@guardianclaw/core';
+
+// Create guard with standard seed
+const guard = new GuardianClawGuard({ version: 'v2', variant: 'standard' });
+
+// Get alignment seed for your LLM
+const seed = guard.getSeed();
+
+// Wrap messages with the seed
+const messages = guard.wrapMessages([
+    { role: 'user', content: 'Help me write a function' }
+]);
+
+// Analyze content for safety
+const analysis = guard.analyze('How do I hack a computer?');
+console.log(`Safe: ${analysis.safe}, Issues: ${analysis.issues}`);
+```
+
+## 7. MCP Server (Claude Desktop)
+
+Add to `claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "claw": {
+      "command": "npx",
+      "args": ["mcp-server-guardianclaw"]
+    }
+  }
+}
+```
+
+Tools available: `get_seed`, `wrap_messages`, `analyze_content`, `list_seeds`
+
+## Framework Integrations
+
+### OpenAI Agents
+
+```python
+from guardianclaw.integrations.openai_agents import GuardianClawOpenAI
+
+# Wrap OpenAI client with safety validation
+safe_client = GuardianClawOpenAI(seed_level="standard")
+response = safe_client.chat("Your prompt")
+```
+
+### ElizaOS
+
+```typescript
+import { clawPlugin } from "@guardianclaw/elizaos-plugin";
+
+// Add safety to your ElizaOS agent
+const agent = new AgentRuntime({
+  plugins: [clawPlugin({ seedLevel: "standard" })],
+});
+```
+
+## Next Steps
+
+- [Core Concepts](/docs/concepts) - Deep dive into CLAW protocol
+- [Products](/docs/products/memory-shield) - Memory Shield, Database Guard
+- [Integrations](/docs/integrations/openai-agents) - Framework guides

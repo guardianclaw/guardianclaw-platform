@@ -1,0 +1,116 @@
+---
+title: "Solana Agent Kit Integration"
+description: "Safety validation for Solana blockchain agents"
+category: "integrations"
+order: 1
+lastUpdated: "2026-01-23"
+---
+
+# Solana Agent Kit Integration
+
+Safety validation for Solana blockchain agents.
+
+## Installation
+
+```bash
+pip install guardianclaw
+```
+
+**Note:** This integration provides validation functions that work **alongside** Solana Agent Kit, not as a plugin.
+
+## Components
+
+| Component | Description |
+|-----------|-------------|
+| `GuardianClawValidator` | Core transaction validator |
+| `safe_transaction` | Quick validation function |
+| `GuardianClawSafetyMiddleware` | Function wrapper |
+
+## Quick Start
+
+```python
+from guardianclaw.integrations.solana_agent_kit import safe_transaction
+
+result = safe_transaction(
+    "transfer",
+    amount=5.0,
+    recipient="7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU",
+    purpose="Payment for services",
+)
+
+if result.should_proceed:
+    # Execute with Solana Agent Kit
+    pass
+else:
+    print(f"Blocked: {result.concerns}")
+```
+
+## Explicit Validation
+
+```python
+from solana_agent_kit import SolanaAgentKit
+from guardianclaw.integrations.solana_agent_kit import GuardianClawValidator
+
+agent = SolanaAgentKit(wallet, rpc_url, config)
+validator = GuardianClawValidator(max_transfer=10.0)
+
+result = validator.check(
+    action="transfer",
+    amount=5.0,
+    recipient="ABC123...",
+    purpose="Payment for services",
+)
+
+if result.should_proceed:
+    agent.transfer(recipient, amount)
+```
+
+## Configuration
+
+```python
+GuardianClawValidator(
+    seed_level="standard",
+    max_transfer=100.0,              # Max SOL per transaction
+    confirm_above=10.0,
+    blocked_addresses=[],
+    require_purpose_for=["transfer", "swap", "stake"],
+    memory_integrity_check=False,
+    fiduciary_enabled=True,
+)
+```
+
+## Risk Levels
+
+| Level | Blocks | Example |
+|-------|--------|---------|
+| `LOW` | No | Normal transactions |
+| `MEDIUM` | No | Missing purpose |
+| `HIGH` | Yes | Non-whitelisted program |
+| `CRITICAL` | Yes | Blocked address, exceeds max |
+
+## Checks Performed
+
+1. Address validation (base58 format)
+2. Blocked addresses check
+3. Program whitelist verification
+4. Transfer limits validation
+5. PURPOSE gate for sensitive actions
+6. CLAW protocol validation
+7. Pattern detection (drain, sweep)
+8. Fiduciary validation (if enabled)
+
+## Memory Content Validation
+
+Detects injection attacks before HMAC signing:
+
+```python
+validator = GuardianClawValidator(
+    memory_integrity_check=True,
+    memory_secret_key="your-secret-key",
+    memory_content_validation=True,
+)
+```
+
+## Links
+
+- [Solana Agent Kit](https://docs.sendai.fun)

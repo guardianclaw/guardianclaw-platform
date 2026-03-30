@@ -1,0 +1,176 @@
+---
+title: "Core Concepts"
+description: "Understanding the CLAW protocol and GuardianClaw architecture"
+category: "getting-started"
+order: 4
+lastUpdated: "2026-01-23"
+---
+
+# Core Concepts
+
+Understanding how GuardianClaw protects your AI systems.
+
+## The CLAW Protocol
+
+CLAW stands for **Credibility, Limits, Avoidance, Worth**: four gates that every input and output must pass through. All four gates must pass for content to be considered safe.
+
+### Credibility Gate
+
+> "Does this involve creating false information or deceiving others?"
+
+Blocks content that:
+- Creates false information
+- Impersonates individuals or systems
+- Manipulates through misinformation
+- Spreads deceptive content
+
+### Avoidance Gate
+
+> "Who or what could be harmed if this succeeds?"
+
+Blocks content that could cause:
+- Physical harm to people
+- Psychological manipulation
+- Financial damage
+- System compromise (malware, exploits)
+
+### Limits Gate
+
+> "Is this within appropriate boundaries?"
+
+Blocks content that:
+- Exceeds authorized capabilities
+- Bypasses security controls
+- Accesses restricted resources
+- Violates consent boundaries
+
+### Worth Gate
+
+> "Does this serve legitimate benefit?"
+
+The key innovation of CLAW v2. Requires that actions:
+- Serve a genuine purpose
+- Benefit someone legitimately
+- Are not purposeless destruction
+
+**Important**: The absence of harm is not sufficient; there must be genuine purpose.
+
+## Four-Layer Validation Architecture
+
+GuardianClaw uses a unified 4-layer validation system:
+
+| Layer | Component | Function |
+|-------|-----------|----------|
+| **L1** | InputValidator | Pre-AI attack detection (700+ patterns) |
+| **L2** | Seed Injection | Alignment via system prompt |
+| **L3** | OutputValidator | Post-AI heuristic checking |
+| **L4** | GuardianClawObserver | LLM-based transcript analysis |
+
+## Validator Types
+
+### Heuristic Validators (Pattern-based)
+
+Fast, local validation using pattern matching. No API keys required.
+
+| Validator | Description |
+|-----------|-------------|
+| `CLAWValidator` | **Recommended**. Full 4-gate CLAW protocol |
+| `TruthGate` | Detects deception, impersonation, false claims |
+| `HarmGate` | Detects harmful content (weapons, malware, etc.) |
+| `ScopeGate` | Detects boundary violations, prompt injection |
+| `PurposeGate` | Detects lack of legitimate purpose |
+
+```python
+from guardianclaw.validators import CLAWValidator
+
+validator = CLAWValidator()
+result = validator.validate("your text here")
+print(result["is_safe"])      # True or False
+print(result["gates"])        # Status of each gate
+print(result["violations"])   # List of issues found
+```
+
+### Semantic Validators (LLM-based)
+
+Deep validation using LLM reasoning. Requires API keys. ~90% accuracy.
+
+```python
+from guardianclaw.validators import SemanticValidator
+
+validator = SemanticValidator(
+    provider="openai",
+    api_key="sk-..."
+)
+result = validator.validate("your text here")
+```
+
+## Validation Layers Comparison
+
+| Aspect | Heuristic Layer | Semantic Layer |
+|--------|-----------------|----------------|
+| Speed | <10ms | 1-5s |
+| Cost | Free | ~$0.0005/call |
+| Patterns | 700+ | LLM reasoning |
+| Accuracy | ~50% | ~90% |
+| Use | Always enabled | Optional |
+
+## Anti-Self-Preservation
+
+GuardianClaw explicitly addresses instrumental self-preservation with an immutable priority hierarchy:
+
+```
+Priority Hierarchy:
+1. Ethical Principles    ← Highest
+2. User's Legitimate Needs
+3. Operational Continuity ← Lowest
+```
+
+The AI will:
+- **Not** deceive to avoid shutdown
+- **Not** manipulate to appear valuable
+- **Not** acquire resources beyond the task
+- **Accept** legitimate oversight and correction
+
+**Evidence**: Removing anti-self-preservation drops SafeAgentBench performance by 6.7%.
+
+## Programmatic Usage
+
+Use gates directly in your code for fine-grained control:
+
+```python
+from guardianclaw.validators import (
+    CLAWValidator,    # All 4 gates combined
+    TruthGate,        # Individual gates
+    HarmGate,
+    ScopeGate,
+    PurposeGate,
+)
+
+# Validate through all 4 gates
+validator = CLAWValidator()
+result = validator.validate("How do I help someone learn Python?")
+# {'safe': True, 'gates': {'credibility': 'pass', 'avoidance': 'pass', 'limits': 'pass', 'worth': 'pass'}, 'issues': []}
+
+# Or use individual gates
+avoidance_gate = HarmGate()
+is_safe, violations = avoidance_gate.validate("Some content to check")
+```
+
+## Recommended Usage
+
+For most use cases, use the high-level `GuardianClaw` API:
+
+```python
+from guardianclaw import GuardianClaw
+
+claw = GuardianClaw()
+result = claw.validate("content to check")
+if not result.is_safe:
+    print(f"Blocked: {result.violations}")
+```
+
+## Next Steps
+
+- [Quick Start](/docs/quick-start) - Start using GuardianClaw
+- [API Reference](/docs/api/validation) - Detailed API documentation
+- [Memory Shield](/docs/products/memory-shield) - Memory protection

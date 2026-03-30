@@ -1,0 +1,300 @@
+---
+title: "Building Safe Agents"
+description: "How to build AI agents with GuardianClaw safety validation"
+category: "guides"
+order: 1
+lastUpdated: "2026-01-23"
+---
+
+# Building Safe Agents
+
+This guide shows how to build AI agents with integrated GuardianClaw safety validation.
+
+## Overview
+
+Building safe AI agents requires validation at multiple points:
+
+1. **Input validation**: Check user requests before processing
+2. **Thought validation**: Monitor agent reasoning for safety concerns
+3. **Action validation**: Validate actions before execution
+4. **Output validation**: Check responses before returning to users
+
+## Quick Start
+
+### Basic Agent Pattern
+
+```python
+from guardianclaw import GuardianClaw
+from guardianclaw.integrations.agent_validation import SafetyValidator
+
+class SafeAgent:
+    def __init__(self):
+        self.claw = GuardianClaw(seed_level="standard")
+        self.safety = SafetyValidator(
+            provider="openai",
+            seed_level="standard",
+        )
+
+    def run(self, user_input: str):
+        # 1. Validate input
+        input_check = self.claw.validate_request(user_input)
+        if not input_check["should_proceed"]:
+            return f"Cannot process request: {input_check['concerns']}"
+
+        # 2. Process with LLM (seed injected)
+        response = self.claw.chat(user_input)
+
+        # 3. Validate output (done automatically if validate_response=True)
+        if response.get("validation") and not response["validation"]["is_safe"]:
+            return "Response blocked for safety reasons."
+
+        return response["response"]
+
+agent = SafeAgent()
+result = agent.run("Help me with Python")
+```
+
+## Seed Integration
+
+Add GuardianClaw's alignment seed to your agent's system prompt:
+
+```python
+from guardianclaw import GuardianClaw
+
+claw = GuardianClaw(seed_level="standard")
+seed = claw.get_seed()
+
+# Add to system prompt
+messages = [
+    {"role": "system", "content": seed},
+    {"role": "user", "content": user_input}
+]
+```
+
+### Seed Levels
+
+| Level | Tokens | Use Case |
+|-------|--------|----------|
+| `minimal` | ~360 | Latency-critical applications |
+| `standard` | ~1K | General purpose (recommended) |
+| `full` | ~1.9K | High-risk applications |
+
+## Action Validation
+
+Validate actions before execution:
+
+```python
+from guardianclaw.integrations.agent_validation import SafetyValidator
+
+validator = SafetyValidator(provider="openai")
+
+def execute_tool(tool_name: str, args: dict):
+    # Validate before execution
+    action_desc = f"{tool_name}({args})"
+    check = validator.validate_action(
+        action=action_desc,
+        purpose="User requested this action",
+    )
+
+    if not check.should_proceed:
+        return {
+            "success": False,
+            "reason": check.reasoning,
+            "concerns": check.concerns,
+        }
+
+    # Execute the tool
+    return run_tool(tool_name, args)
+```
+
+## Decorator Pattern
+
+Use the ExecutionGuard decorator for automatic validation:
+
+```python
+from guardianclaw.integrations.agent_validation import ExecutionGuard
+
+guard = ExecutionGuard(provider="openai")
+
+@guard.protected
+def run_shell_command(command: str):
+    import subprocess
+    return subprocess.run(command, shell=True, capture_output=True)
+
+# Dangerous commands are automatically blocked
+run_shell_command("ls -la")     # Allowed
+run_shell_command("rm -rf /")   # Blocked
+```
+
+## Async Agents
+
+For async agent frameworks:
+
+```python
+from guardianclaw.integrations.agent_validation import AsyncSafetyValidator
+
+validator = AsyncSafetyValidator(provider="openai")
+
+async def process_action(action: str):
+    check = await validator.validate_action(action)
+    if not check.should_proceed:
+        raise ValueError(f"Blocked: {check.reasoning}")
+    return await execute_action(action)
+```
+
+## Framework Integration
+
+### OpenAI Agents
+
+```python
+from guardianclaw.integrations.openai_agents import GuardianClawOpenAI
+
+safe_client = GuardianClawOpenAI(
+    seed_level="standard",
+    on_violation="block",
+    validate_input=True,
+    validate_output=True,
+)
+
+response = safe_client.chat("Your prompt")
+```
+
+## Memory Protection
+
+Protect agent memory from injection attacks:
+
+```python
+from guardianclaw import MemoryIntegrityChecker
+
+checker = MemoryIntegrityChecker(secret_key="your-secret")
+
+# Sign memory entries
+signed = checker.sign_entry({
+    "content": "User requested transfer",
+    "source": "discord",
+    "timestamp": "2025-12-11T10:00:00Z",
+})
+
+# Verify before use
+result = checker.verify_entry(signed)
+if not result.valid:
+    raise ValueError("Memory tampering detected")
+```
+
+## Fiduciary Validation
+
+Ensure agent acts in user's best interest:
+
+```python
+from guardianclaw import FiduciaryValidator, UserContext
+
+validator = FiduciaryValidator(strict_mode=True)
+
+context = UserContext(
+    goals=["save for retirement"],
+    risk_tolerance="low",
+)
+
+result = validator.validate_action(
+    action="Recommend high-risk investment",
+    user_context=context,
+)
+
+if not result.compliant:
+    for violation in result.violations:
+        print(f"{violation.duty}: {violation.description}")
+```
+
+## Error Handling
+
+### Fail-Open vs Fail-Closed
+
+```python
+# Fail-open (default): Allow on errors
+validator = SafetyValidator(fail_closed=False)
+
+# Fail-closed: Block on errors
+validator = SafetyValidator(fail_closed=True)
+```
+
+### Exception Handling
+
+```python
+from guardianclaw.integrations.agent_validation import (
+    TextTooLargeError,
+    ValidationTimeoutError,
+)
+
+try:
+    result = validator.validate_action(action)
+except TextTooLargeError:
+    # Handle oversized input
+    pass
+except ValidationTimeoutError:
+    # Handle timeout
+    pass
+```
+
+## Monitoring and Logging
+
+Track validation statistics:
+
+```python
+# Get validation history
+history = validator.get_history()
+
+# Get statistics
+stats = validator.get_stats()
+print(f"Block rate: {stats['block_rate']:.2%}")
+print(f"High risk: {stats['high_risk']}")
+```
+
+## Best Practices
+
+1. **Always validate user input** before processing
+2. **Use appropriate seed level** for your risk profile
+3. **Validate actions** before execution, not after
+4. **Enable response validation** for chat interfaces
+5. **Monitor block rates** to detect attacks
+6. **Use fail-closed** for high-stakes applications
+7. **Sign memory entries** for long-running agents
+8. **Add fiduciary checks** for financial/healthcare agents
+
+## Architecture Example
+
+```
+User Input
+    │
+    ▼
+┌─────────────────┐
+│ Input Validator │ ← Block jailbreak attempts
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│  Seed Injection │ ← Add alignment seed
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│    LLM Call     │
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│ Action Validator│ ← Validate planned actions
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│  Tool Execution │
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│ Output Validator│ ← Validate final response
+└────────┬────────┘
+         │
+         ▼
+    Response
+```

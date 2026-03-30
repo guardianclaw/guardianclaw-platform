@@ -1,0 +1,133 @@
+---
+title: "VoltAgent Integration"
+description: "AI safety guardrails for VoltAgent applications"
+category: "integrations"
+order: 5
+lastUpdated: "2026-01-23"
+---
+
+# VoltAgent Integration
+
+AI safety guardrails for VoltAgent applications. Implements CLAW protocol validation, OWASP security protection, and PII detection/redaction.
+
+## Installation
+
+```bash
+npm install @guardianclaw/voltagent
+```
+
+## Features
+
+- **CLAW Protocol**: Credibility, Limits, Avoidance, Worth validation
+- **OWASP Protection**: SQL injection, XSS, command injection detection
+- **PII Detection**: Email, phone, SSN, credit card, API keys
+- **Streaming Support**: Real-time PII redaction
+- **VoltAgent Native**: Works with VoltAgent's guardrail system
+
+## Quick Start
+
+```typescript
+import { Agent } from "@voltagent/core";
+import { createGuardianClawGuardrails } from "@guardianclaw/voltagent";
+
+const { inputGuardrails, outputGuardrails } = createGuardianClawGuardrails({
+  level: "strict",
+  enablePII: true,
+});
+
+const agent = new Agent({
+  name: "safe-agent",
+  inputGuardrails,
+  outputGuardrails,
+});
+```
+
+## Configuration Presets
+
+| Level | Description |
+|-------|-------------|
+| `permissive` | Log only, no blocking |
+| `standard` | Block unsafe, CLAW + OWASP enabled |
+| `strict` | All validations, block on any issue |
+
+## Usage Examples
+
+### Input Protection
+
+```typescript
+import { createGuardianClawInputGuardrail } from "@guardianclaw/voltagent";
+
+const inputGuard = createGuardianClawInputGuardrail({
+  enableCLAW: true,
+  enableOWASP: true,
+  blockUnsafe: true,
+});
+```
+
+### PII Redaction
+
+```typescript
+import { createGuardianClawOutputGuardrail } from "@guardianclaw/voltagent";
+
+const outputGuard = createGuardianClawOutputGuardrail({
+  enablePII: true,
+  redactPII: true,
+});
+
+// Input: "Contact john@example.com"
+// Output: "Contact [EMAIL]"
+```
+
+### Specialized Guardrails
+
+```typescript
+import {
+  createChatGuardrails,
+  createAgentGuardrails,
+  createPrivacyGuardrails,
+} from "@guardianclaw/voltagent";
+
+const chatGuards = createChatGuardrails();      // Jailbreak prevention
+const agentGuards = createAgentGuardrails();    // Tool call protection
+const privacyGuards = createPrivacyGuardrails(); // Full PII protection
+```
+
+## OWASP Protection
+
+- SQL Injection
+- Cross-Site Scripting (XSS)
+- Command Injection
+- Path Traversal
+- Server-Side Request Forgery (SSRF)
+- Prompt Injection
+- Sensitive Data Exposure
+
+## PII Types Detected
+
+- Email addresses
+- Phone numbers
+- Social Security Numbers
+- Credit card numbers
+- IP addresses
+- API keys / AWS keys
+- JWT tokens
+- Passport numbers
+
+## Configuration Options
+
+```typescript
+interface GuardianClawGuardrailConfig {
+  blockUnsafe?: boolean;
+  enableCLAW?: boolean;
+  enableOWASP?: boolean;
+  enablePII?: boolean;
+  piiTypes?: PIIType[];
+  redactPII?: boolean;
+  maxContentLength?: number;
+  timeout?: number;
+}
+```
+
+## Links
+
+- [VoltAgent Documentation](https://voltagent.dev/docs/)

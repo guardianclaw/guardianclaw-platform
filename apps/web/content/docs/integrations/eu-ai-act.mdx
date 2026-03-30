@@ -1,0 +1,103 @@
+---
+title: "EU AI Act Compliance"
+description: "Compliance checker for EU AI Act (Regulation 2024/1689)"
+category: "integrations"
+order: 4
+lastUpdated: "2026-01-23"
+---
+
+# EU AI Act Compliance Checker
+
+Analyze content against EU AI Act (Regulation 2024/1689) requirements.
+
+## Overview
+
+The EU AI Act compliance checker validates content against:
+
+- **Article 5**: Prohibited AI practices
+- **Article 6 / Annex III**: High-risk system classification
+- **Article 14**: Human oversight requirements
+- **Article 52**: Transparency obligations
+
+## Installation
+
+```typescript
+// Available in @guardianclaw/vscode extension
+import { EUAIActChecker, checkEUAIActCompliance } from '@guardianclaw/vscode';
+```
+
+## Quick Start
+
+```typescript
+const checker = new EUAIActChecker();
+
+// Basic heuristic check (100% local, no network)
+const result = checker.check(content);
+
+console.log(result.compliant);       // true or false
+console.log(result.riskLevel);       // 'minimal', 'limited', 'high', 'unacceptable'
+console.log(result.prohibitedPractices);
+console.log(result.recommendations);
+```
+
+## Article 5: Prohibited Practices
+
+| Practice | Description |
+|----------|-------------|
+| Social scoring | Evaluating trustworthiness based on social behavior |
+| Biometric categorization | Classification by race, religion, sexuality |
+| Emotion recognition | In workplace/education contexts |
+| Predictive policing | Individual crime risk prediction |
+| Subliminal manipulation | Below conscious awareness |
+| Vulnerability exploitation | Targeting children, elderly, disabled |
+| Real-time biometric ID | Mass surveillance in public spaces |
+
+## Annex III: High-Risk Systems
+
+| Context | Examples |
+|---------|----------|
+| Biometrics | Facial recognition, fingerprint matching |
+| Critical Infrastructure | Power grid, water supply, traffic |
+| Education | Admission decisions, grade prediction |
+| Employment | Recruitment, performance monitoring |
+| Essential Services | Credit scoring, insurance, benefits |
+| Law Enforcement | Criminal investigation, profiling |
+| Migration | Asylum decisions, visa processing |
+| Justice | Sentencing, legal outcome prediction |
+
+## Risk Levels
+
+| Level | Meaning |
+|-------|---------|
+| `minimal` | General AI systems |
+| `limited` | Transparency requirements |
+| `high` | Conformity assessment required |
+| `unacceptable` | Prohibited under Article 5 |
+
+## Human Oversight Models
+
+| Model | Description |
+|-------|-------------|
+| `human_in_the_loop` | Human approves each decision |
+| `human_on_the_loop` | Human can intervene |
+| `human_in_command` | Human maintains control |
+
+## Compliance Result
+
+```typescript
+interface EUAIActComplianceResult {
+  compliant: boolean;
+  riskLevel: 'minimal' | 'limited' | 'high' | 'unacceptable';
+  systemType: 'minimal_risk' | 'high_risk' | 'prohibited';
+  oversightRequired?: 'human_in_the_loop' | 'human_on_the_loop' | 'human_in_command';
+  prohibitedPractices: string[];
+  highRiskContexts: string[];
+  articleFindings: ArticleFinding[];
+  recommendations: string[];
+}
+```
+
+## References
+
+- [EU AI Act Full Text](https://artificialintelligenceact.eu/)
+- [Regulation 2024/1689](https://eur-lex.europa.eu/eli/reg/2024/1689)

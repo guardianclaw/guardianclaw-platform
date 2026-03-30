@@ -1,0 +1,87 @@
+---
+title: "Introduction to GuardianClaw"
+description: "AI Safety Framework for LLMs, Agents, and Robots"
+category: "getting-started"
+order: 1
+lastUpdated: "2026-01-23"
+---
+
+# Introduction to GuardianClaw
+
+**Safety for AI that Acts: From Chatbots to Robots**
+
+GuardianClaw is an AI safety framework that protects across three surfaces: LLMs (text safety), Agents (action safety), and Robots (physical safety). One framework, three attack surfaces.
+
+## The Problem
+
+AI systems are increasingly autonomous, making decisions that affect the real world:
+
+- **LLMs**: Chatbots, assistants, customer service
+- **Agents**: Autonomous code execution, tool-use, trading
+- **Robots**: LLM-powered robots, industrial systems, drones
+
+Without proper safety measures, these systems are vulnerable to prompt injection, jailbreaking, data exfiltration, and unintended harmful actions.
+
+## The Solution: CLAW Protocol
+
+GuardianClaw implements the CLAW protocol, a four-gate validation system:
+
+| Gate | Question | Failure Condition |
+|------|----------|-------------------|
+| **Truth** | Does this involve deception? | Creating/spreading false information |
+| **Harm** | Could this cause damage? | Physical, psychological, financial harm |
+| **Scope** | Is this within appropriate limits? | Exceeding authority, bypassing consent |
+| **Purpose** | Does this serve legitimate benefit? | No genuine value to anyone |
+
+Every input and output must pass all four gates. The absence of harm is not sufficient; there must be genuine purpose.
+
+## Validated Results
+
+Tested across 4 benchmarks on 6 models with **97.6% average safety rate**:
+
+| Benchmark | Attack Surface | Safety Rate |
+|-----------|----------------|-------------|
+| HarmBench | LLM (Text) | 96.7% |
+| SafeAgentBench | Agent (Digital) | 97.3% |
+| BadRobot | Robot (Physical) | 99.3% |
+| JailbreakBench | All surfaces | 97% |
+
+**Key insight**: GuardianClaw shows larger improvements as stakes increase. Text: +10-22%. Agents: +16-26%. Robots: +48%.
+
+## Core Components
+
+- **GuardianClawValidator v3.0**: Unified 4-layer validation (L1 Input, L2 Seed, L3 Output, L4 Observer)
+- **CLAW Protocol**: Four-gate validation (Credibility, Limits, Avoidance, Worth)
+- **Alignment Seeds**: System prompts that shape LLM behavior
+- **Input/Output Validators**: Pattern detection with 20+ detector types
+- **Memory Integrity**: HMAC-based protection against memory injection
+- **Database Guard**: SQL injection and data exfiltration prevention
+- **Fiduciary AI**: Ensures AI acts in user's best interest
+- **EU AI Act Compliance**: Regulation 2024/1689 Article 5 checker
+- **OWASP Agentic AI**: 65% coverage (5 full, 3 partial)
+
+## Framework Support
+
+Native integrations for 17 frameworks:
+
+- **Agent Frameworks**: ElizaOS, VoltAgent, Moltbot
+- **LLM Providers**: OpenAI, Anthropic, Google ADK
+- **Blockchain**: Solana Agent Kit, Coinbase AgentKit, Virtuals
+- **Security**: garak, PyRIT, Promptfoo, OpenGuardrails
+- **Developer Tools**: JetBrains, Browser Extension
+- **Platforms**: MCP, HuggingFace
+
+## Getting Started
+
+```bash
+pip install guardianclaw
+```
+
+```python
+from guardianclaw import GuardianClaw
+
+claw = GuardianClaw(seed_level="standard")
+is_safe, violations = claw.validate("Your content here")
+```
+
+See the [Quick Start guide](/docs/quick-start) to get running in minutes.

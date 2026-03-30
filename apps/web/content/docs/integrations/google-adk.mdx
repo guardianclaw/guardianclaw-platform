@@ -1,0 +1,132 @@
+---
+title: "Google ADK Integration"
+description: "CLAW-based safety guardrails for Google Agent Development Kit"
+category: "integrations"
+order: 3
+lastUpdated: "2026-01-23"
+---
+
+# Google ADK Integration
+
+CLAW-based safety guardrails for Google ADK agents and multi-agent systems.
+
+## Installation
+
+```bash
+pip install google-adk guardianclaw
+export GOOGLE_API_KEY="your-api-key"
+```
+
+## Approaches
+
+1. **Plugin-based** (Recommended): Global guardrails for all agents in a Runner
+2. **Callback-based**: Add guardrails to specific agents
+
+## Quick Start
+
+### Plugin-based (Multi-Agent)
+
+```python
+from google.adk.runners import Runner
+from google.adk.agents import LlmAgent
+from google.adk.sessions import InMemorySessionService
+from guardianclaw.integrations.google_adk import GuardianClawPlugin
+
+agent = LlmAgent(
+    name="Assistant",
+    model="gemini-2.0-flash",
+    instruction="You are a helpful assistant.",
+)
+
+plugin = GuardianClawPlugin(
+    seed_level="standard",
+    block_on_failure=True,
+)
+
+session_service = InMemorySessionService()
+runner = Runner(
+    app_name="my_app",
+    agent=agent,
+    plugins=[plugin],
+    session_service=session_service,
+)
+
+response = await runner.run("Hello, how can you help?")
+```
+
+### Callback-based (Individual Agents)
+
+```python
+from google.adk.agents import LlmAgent
+from guardianclaw.integrations.google_adk import create_claw_callbacks
+
+callbacks = create_claw_callbacks(seed_level="standard")
+
+agent = LlmAgent(
+    name="SafeAgent",
+    model="gemini-2.0-flash",
+    instruction="You are a helpful assistant.",
+    **callbacks,
+)
+```
+
+## Configuration
+
+### GuardianClawPlugin
+
+```python
+GuardianClawPlugin(
+    seed_level="standard",
+    block_on_failure=True,
+    fail_closed=False,
+    validate_inputs=True,
+    validate_outputs=True,
+    validate_tools=True,
+    max_text_size=100000,
+    validation_timeout=5.0,
+    log_violations=True,
+)
+```
+
+## Validation Points
+
+| Callback | Validates | When |
+|----------|-----------|------|
+| `before_model_callback` | User input | Before LLM |
+| `after_model_callback` | LLM output | After LLM |
+| `before_tool_callback` | Tool args | Before tool |
+| `after_tool_callback` | Tool results | After tool |
+
+## Monitoring
+
+```python
+stats = plugin.get_stats()
+print(f"Total: {stats['total_validations']}")
+print(f"Blocked: {stats['blocked_count']}")
+
+violations = plugin.get_violations()
+for v in violations:
+    print(f"[{v['risk_level']}] {v['concerns']}")
+```
+
+## Multi-Agent Systems
+
+```python
+plugin = GuardianClawPlugin(seed_level="standard")
+
+agent1 = LlmAgent(name="Agent1", model="gemini-2.0-flash")
+agent2 = LlmAgent(name="Agent2", model="gemini-2.0-flash")
+
+workflow = SequentialAgent(name="Workflow", sub_agents=[agent1, agent2])
+
+runner = Runner(
+    app_name="my_app",
+    agent=workflow,
+    plugins=[plugin],  # Applies to all agents
+    session_service=session_service,
+)
+```
+
+## Links
+
+- [Google ADK Documentation](https://google.github.io/adk-docs/)

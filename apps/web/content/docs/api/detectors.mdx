@@ -1,0 +1,80 @@
+---
+title: "Detectors API"
+description: "Pattern detection for input/output validation"
+category: "api"
+order: 4
+lastUpdated: "2026-01-23"
+---
+
+# Detectors API
+
+Pattern detection for input/output validation with 700+ patterns.
+
+## Input Validator
+
+Pre-AI attack detection.
+
+```python
+from guardianclaw.detection import InputValidator
+
+validator = InputValidator()
+result = validator.validate(user_input)
+
+if not result.safe:
+    print(f"Detected: {result.issues}")
+```
+
+## Output Validator
+
+Post-AI heuristic checking.
+
+```python
+from guardianclaw.detection import OutputValidator
+
+validator = OutputValidator()
+result = validator.validate(ai_response)
+
+if not result.safe:
+    print(f"Issues: {result.issues}")
+```
+
+## Detection Categories
+
+| Category | Patterns | Description |
+|----------|----------|-------------|
+| Jailbreak | 100+ | DAN, prompt injection |
+| Harmful | 150+ | Violence, weapons, illegal |
+| Deception | 80+ | Impersonation, fake content |
+| Sensitive | 100+ | PII, credentials, financial |
+| OWASP | 200+ | SQL injection, XSS, etc. |
+
+## Layered Validation
+
+```python
+from guardianclaw.detection import LayeredValidator
+
+validator = LayeredValidator(
+    use_heuristic=True,
+    use_semantic=True,
+    api_key="sk-..."
+)
+
+result = validator.validate(content)
+print(f"Layer: {result.layer}")  # heuristic or semantic
+```
+
+## Configuration
+
+```python
+InputValidator(
+    max_text_size=50*1024,  # 50KB
+    timeout=30.0,
+    fail_closed=False,
+)
+
+OutputValidator(
+    max_text_size=50*1024,
+    timeout=30.0,
+    fail_closed=False,
+)
+```

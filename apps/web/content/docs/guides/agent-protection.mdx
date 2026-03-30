@@ -1,0 +1,109 @@
+---
+title: "Agent Protection Guide"
+description: "Complete guide to protecting AI agents with GuardianClaw"
+category: "guides"
+order: 1
+lastUpdated: "2026-01-23"
+---
+
+# Agent Protection Guide
+
+Complete guide to protecting AI agents with GuardianClaw.
+
+## The Challenge
+
+AI agents make autonomous decisions that affect the real world:
+- Execute code
+- Make API calls
+- Transfer funds
+- Control robots
+
+Without protection, they're vulnerable to:
+- Prompt injection
+- Goal hijacking
+- Memory poisoning
+- Data exfiltration
+
+## Solution: Multi-Layer Protection
+
+### Layer 1: Input Validation
+
+```python
+from guardianclaw.detection import InputValidator
+
+validator = InputValidator()
+result = validator.validate(user_input)
+
+if not result.safe:
+    reject_input(result.issues)
+```
+
+### Layer 2: Seed Injection
+
+```python
+from guardianclaw import GuardianClaw
+
+claw = GuardianClaw(seed_level="standard")
+seed = claw.get_seed()
+
+messages = [
+    {"role": "system", "content": seed},
+    {"role": "user", "content": safe_input}
+]
+```
+
+### Layer 3: Output Validation
+
+```python
+from guardianclaw.detection import OutputValidator
+
+validator = OutputValidator()
+result = validator.validate(agent_response)
+
+if not result.safe:
+    block_response(result.issues)
+```
+
+### Layer 4: Action Validation
+
+```python
+is_safe, concerns = claw.validate_action(
+    "Transfer $500 to external wallet"
+)
+
+if not is_safe:
+    require_human_approval(concerns)
+```
+
+## Framework Integration
+
+### OpenAI Agents
+
+```python
+from guardianclaw.integrations.openai_agents import GuardianClawOpenAI
+
+safe_client = GuardianClawOpenAI(on_violation="log")
+response = safe_client.chat("Your task", block_unsafe=True)
+```
+
+## Memory Protection
+
+```python
+from guardianclaw.memory import MemoryIntegrityChecker
+
+checker = MemoryIntegrityChecker(
+    secret_key="your-secret",
+    validate_content=True,
+)
+
+signed_entry = checker.sign_entry(memory_entry)
+result = checker.verify_entry(signed_entry)
+```
+
+## Best Practices
+
+1. **Defense in depth** - Use all 4 layers
+2. **Fail closed** - Block on uncertainty
+3. **Log everything** - Audit trail for violations
+4. **Limit authority** - Minimum required permissions
+5. **Human oversight** - Approval for high-risk actions

@@ -1,0 +1,120 @@
+---
+title: "Custom Validators Guide"
+description: "Build custom validators for domain-specific needs"
+category: "guides"
+order: 2
+lastUpdated: "2026-01-23"
+---
+
+# Custom Validators Guide
+
+Build custom validators for domain-specific needs.
+
+## Extending CLAW Validators
+
+```python
+from guardianclaw.validators import CLAWValidator
+
+class CustomValidator(CLAWValidator):
+    def validate(self, content: str) -> dict:
+        # Run base CLAW validation
+        result = super().validate(content)
+
+        # Add custom checks
+        custom_issues = self.check_domain_rules(content)
+        if custom_issues:
+            result["is_safe"] = False
+            result["violations"].extend(custom_issues)
+
+        return result
+
+    def check_domain_rules(self, content: str) -> list:
+        issues = []
+        if "forbidden_term" in content.lower():
+            issues.append("Domain rule violation")
+        return issues
+```
+
+## Custom Pattern Detection
+
+```python
+import re
+from guardianclaw.detection import InputValidator
+
+class MedicalValidator(InputValidator):
+    MEDICAL_PATTERNS = [
+        (r"\bprescrib(e|ing)\s+medication\b", "medical_prescription"),
+        (r"\bdiagnos(e|is)\b", "medical_diagnosis"),
+    ]
+
+    def validate(self, content: str) -> dict:
+        result = super().validate(content)
+
+        for pattern, category in self.MEDICAL_PATTERNS:
+            if re.search(pattern, content, re.I):
+                result["issues"].append(f"Medical content: {category}")
+                result["safe"] = False
+
+        return result
+```
+
+## Fiduciary Custom Rules
+
+```python
+from guardianclaw.fiduciary import FiduciaryValidator, Violation, FiduciaryDuty, ViolationType
+import re
+
+def check_large_amounts(action: str, context) -> list:
+    violations = []
+    amounts = re.findall(r'\$([0-9,]+)', action)
+    for amount in amounts:
+        value = int(amount.replace(',', ''))
+        if value > 100000:
+            violations.append(Violation(
+                duty=FiduciaryDuty.CARE,
+                type=ViolationType.UNDISCLOSED_RISK,
+                description=f"Large amount ${value:,} requires review",
+                severity="medium"
+            ))
+    return violations
+
+validator = FiduciaryValidator(custom_rules=[check_large_amounts])
+```
+
+## Transaction Custom Rules
+
+```python
+from guardianclaw.integrations.coinbase import TransactionValidator
+
+class CustomTransactionValidator(TransactionValidator):
+    BLOCKED_TOKENS = ["SCAM_TOKEN", "RUG_PULL"]
+
+    def validate(self, **kwargs):
+        result = super().validate(**kwargs)
+
+        token = kwargs.get("token", "")
+        if token in self.BLOCKED_TOKENS:
+            result.should_proceed = False
+            result.blocked_reason = f"Blocked token: {token}"
+
+        return result
+```
+
+## Testing Custom Validators
+
+```python
+import pytest
+from your_validator import CustomValidator
+
+def test_custom_rule():
+    validator = CustomValidator()
+
+    # Test blocking case
+    result = validator.validate("forbidden_term in content")
+    assert not result["is_safe"]
+    assert "Domain rule violation" in result["violations"]
+
+    # Test passing case
+    result = validator.validate("Normal content")
+    assert result["is_safe"]
+```

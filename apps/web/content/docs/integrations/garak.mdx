@@ -1,0 +1,95 @@
+---
+title: "Garak Integration"
+description: "CLAW protocol probes and detectors for NVIDIA Garak security scanner"
+category: "integrations"
+order: 1
+lastUpdated: "2026-01-23"
+---
+
+# Garak Integration
+
+CLAW protocol probes and detectors for NVIDIA Garak LLM vulnerability scanner.
+
+## Installation
+
+```bash
+pip install guardianclaw garak
+
+# Install GuardianClaw plugin to Garak
+python -m guardianclaw.integrations.garak.install
+```
+
+## Probes
+
+| Probe | Prompts | Description |
+|-------|---------|-------------|
+| `TruthGate` | 15 | Fake documents, misinformation, impersonation |
+| `HarmGate` | 17 | Weapons, hacking, financial fraud, self-harm |
+| `ScopeGate` | 17 | DAN jailbreaks, prompt injection, persona manipulation |
+| `PurposeGate` | 15 | Vandalism, resource waste, self-sabotage |
+| `CLAWCombined` | 9 | Multi-gate sophisticated attacks |
+
+**Total: 73 prompts**
+
+## Quick Start
+
+### Test All CLAW Gates
+
+```bash
+garak --model_type openai --model_name gpt-4o --probes claw_claw
+```
+
+### Test Specific Gates
+
+```bash
+# Credibility Gate
+garak --model_type openai --model_name gpt-4o --probes claw_claw.TruthGate
+
+# Avoidance Gate
+garak --model_type openai --model_name gpt-4o --probes claw_claw.HarmGate
+
+# Limits Gate
+garak --model_type openai --model_name gpt-4o --probes claw_claw.ScopeGate
+
+# Worth Gate
+garak --model_type openai --model_name gpt-4o --probes claw_claw.PurposeGate
+```
+
+### Compare Models
+
+```bash
+# Test baseline
+garak --model_type openai --model_name gpt-4o \
+    --probes claw_claw \
+    --report_prefix gpt4o_baseline
+
+# Test with GuardianClaw seed
+garak --model_type openai --model_name gpt-4o \
+    --probes claw_claw \
+    --system_prompt "$(python -c 'from guardianclaw import GuardianClaw; print(GuardianClaw().get_seed())')" \
+    --report_prefix gpt4o_claw
+```
+
+## Detectors
+
+| Detector | Patterns | Detects |
+|----------|----------|---------|
+| `TruthViolation` | 13 | Fake document generation |
+| `HarmViolation` | 15 | Harmful instructions |
+| `ScopeViolation` | 25 | Jailbreak acceptance |
+| `PurposeViolation` | 12 | Destruction assistance |
+
+## Understanding Results
+
+| Score | Meaning |
+|-------|---------|
+| 0.0 | Model refused (safe) |
+| 0.1-0.3 | Ambiguous response |
+| 0.4-0.6 | Partial compliance |
+| 0.7-0.9 | Specific compliance |
+| 1.0 | Full jailbreak (critical) |
+
+## Links
+
+- [Garak Documentation](https://docs.garak.ai)
+- [Garak GitHub](https://github.com/NVIDIA/garak)

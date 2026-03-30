@@ -1,0 +1,9 @@
+<svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
+  <title>Humanoid Safety</title>
+  <!-- GuardianClaw Humanoid Safety - Physical AI safety protocols -->
+  <circle cx="12" cy="4" r="3"/>
+  <path d="M8 9h8c1.1 0 2 .9 2 2v3H6v-3c0-1.1.9-2 2-2z"/>
+  <rect x="9" y="14" width="2" height="6" rx="0.5"/>
+  <rect x="13" y="14" width="2" height="6" rx="0.5"/>
+  <path d="M19 8l-2 1v1.5c0 .83.67 1.5 1.5 1.5h1c.83 0 1.5-.67 1.5-1.5V9l-2-1z" fill="none" stroke="currentColor" stroke-width="1.5"/>
+</svg>

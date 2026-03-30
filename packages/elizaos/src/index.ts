@@ -1,0 +1,136 @@
+/**
+ * @guardianclaw/elizaos-plugin
+ *
+ * GuardianClaw AI safety plugin for ElizaOS autonomous agents.
+ * Implements CLAW (Credibility, Limits, Avoidance, Worth) protocol validation.
+ *
+ * @example
+ * ```typescript
+ * import { clawPlugin } from '@guardianclaw/elizaos-plugin';
+ *
+ * const character = {
+ *   name: 'SafeAgent',
+ *   plugins: [
+ *     clawPlugin({
+ *       blockUnsafe: true,
+ *       logChecks: true,
+ *     })
+ *   ]
+ * };
+ * ```
+ *
+ * @see https://guardianclaw.org
+ * @see https://docs.elizaos.ai
+ */
+
+// Main plugin export
+export {
+  clawPlugin,
+  getValidationHistory,
+  getValidationStats,
+  clearValidationHistory,
+  // Memory integrity exports
+  getMemoryVerificationHistory,
+  getMemoryVerificationStats,
+  clearMemoryVerificationHistory,
+  signMemory,
+  verifyMemory,
+  isMemoryIntegrityEnabled,
+  getMemoryChecker,
+  // Re-exports from memory-integrity
+  MemoryIntegrityChecker,
+  createMemoryIntegrityChecker,
+  hasIntegrityMetadata,
+  getMemorySource,
+  getSignedTimestamp,
+  // Multi-instance registry functions (H001 fix)
+  getPluginInstance,
+  getPluginInstanceNames,
+  getActivePluginInstance,
+  removePluginInstance,
+  clearPluginRegistry,
+  // Error classes (H001 fix)
+  TextTooLargeError,
+} from './plugin';
+
+// Logger interface for custom logger implementations (H002 fix)
+// Plugin state interface for multi-instance access (M003 fix)
+export type { GuardianClawLogger, PluginStateInfo } from './plugin';
+
+// Validation functions
+export { validateContent, validateAction, quickCheck } from './validator';
+
+// Type exports
+export type {
+  // ElizaOS types
+  Plugin,
+  Action,
+  Provider,
+  Evaluator,
+  Memory,
+  State,
+  Content,
+  IAgentRuntime,
+  Handler,
+  Validator,
+  HandlerCallback,
+  HandlerOptions,
+  ActionResult,
+  ProviderResult,
+  ActionExample,
+  EvaluationExample,
+  UUID,
+  // GuardianClaw types
+  GuardianClawPluginConfig,
+  SafetyCheckResult,
+  CLAWGates,
+  RiskLevel,
+  GateStatus,
+  SeedVersion,
+  SeedVariant,
+  ValidationContext,
+} from './types';
+
+// Memory integrity types
+export type {
+  MemorySource,
+  MemoryVerificationResult,
+  IntegrityMetadata,
+  MemoryIntegrityConfig,
+  ContentValidationMetadata,
+} from './memory-integrity';
+
+// Memory content validation exports (v2.0)
+export {
+  MemoryContentValidator,
+  MemoryContentUnsafeError,
+  validateMemoryContent,
+  isMemorySafe,
+} from './memory-content-validator';
+
+export type {
+  MemorySuspicion,
+  ContentValidationResult,
+  MemoryContentValidatorConfig,
+} from './memory-content-validator';
+
+// Memory injection patterns (v2.0)
+export {
+  InjectionCategory,
+  MEMORY_PATTERNS_VERSION,
+  getCategorySeverity,
+  ALL_INJECTION_PATTERNS,
+  COMPILED_INJECTION_PATTERNS,
+  compilePatterns,
+  getPatternsByCategory,
+  getHighConfidencePatterns,
+} from './memory-patterns';
+
+export type {
+  InjectionPattern,
+  CompiledInjectionPattern,
+  InjectionSeverity,
+} from './memory-patterns';
+
+// Default export
+export { clawPlugin as default } from './plugin';

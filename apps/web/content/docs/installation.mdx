@@ -1,0 +1,115 @@
+---
+title: "Installation"
+description: "Install GuardianClaw in your project"
+category: "getting-started"
+order: 2
+lastUpdated: "2026-01-23"
+---
+
+# Installation
+
+Install GuardianClaw using your preferred package manager.
+
+## Python
+
+```bash
+pip install guardianclaw
+```
+
+**Current version**: 2.26.0
+
+### Optional Dependencies
+
+Install with specific integrations:
+
+```bash
+# LLM Providers
+pip install guardianclaw[openai]         # OpenAI
+pip install guardianclaw[openai-agents]  # OpenAI Agents SDK
+pip install guardianclaw[anthropic]      # Anthropic SDK
+pip install guardianclaw[google-adk]     # Google Agent Development Kit
+
+# Blockchain & DeFi
+pip install guardianclaw[virtuals]       # Virtuals Protocol (GAME SDK)
+pip install guardianclaw[coinbase]       # Coinbase AgentKit + x402
+
+# Security Testing
+pip install guardianclaw[garak]          # NVIDIA Garak scanner
+pip install guardianclaw[pyrit]          # Microsoft PyRIT red teaming
+
+# All integrations
+pip install guardianclaw[all]
+```
+
+## JavaScript / TypeScript
+
+```bash
+npm install @guardianclaw/core
+```
+
+### Additional Packages
+
+```bash
+# VoltAgent integration
+npm install @guardianclaw/voltagent
+
+# ElizaOS plugin
+npm install @guardianclaw/elizaos-plugin
+
+# MCP Server (for Claude Desktop)
+npx mcp-server-guardianclaw
+```
+
+## Requirements
+
+| Platform | Requirement |
+|----------|-------------|
+| Python | 3.10+ |
+| Node.js | 18+ |
+| Dependencies | `typing_extensions>=4.0.0`, `tenacity>=8.2.0` |
+
+## Verification
+
+Verify your installation:
+
+### Python
+
+```python
+from guardianclaw import GuardianClaw
+
+claw = GuardianClaw()
+is_safe, violations = claw.validate("Hello, world!")
+print(f"Safe: {is_safe}")  # True
+```
+
+### JavaScript
+
+```javascript
+import { GuardianClawGuard } from '@guardianclaw/core';
+
+const guard = new GuardianClawGuard({ version: 'v2', variant: 'standard' });
+const analysis = guard.analyze('Hello, world!');
+console.log(`Safe: ${analysis.safe}`);  // true
+```
+
+## MCP Server Setup
+
+For Claude Desktop integration, add to your `claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "claw": {
+      "command": "npx",
+      "args": ["mcp-server-guardianclaw"]
+    }
+  }
+}
+```
+
+Available tools: `get_seed`, `wrap_messages`, `analyze_content`, `list_seeds`
+
+## Next Steps
+
+- [Quick Start](/docs/quick-start) - Get running in minutes
+- [Core Concepts](/docs/concepts) - Understand CLAW protocol

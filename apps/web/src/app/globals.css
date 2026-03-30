@@ -1,0 +1,490 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 347 77% 50%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 347 77% 50%;
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 347 82% 55%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 347 65% 30%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Wallet adapter styles override */
+.wallet-adapter-button {
+  @apply !bg-claw-600 hover:!bg-claw-700 !rounded-lg;
+}
+
+.wallet-adapter-modal-wrapper {
+  @apply !bg-gray-900/80;
+}
+
+.wallet-adapter-modal-container {
+  @apply !rounded-xl !bg-gray-800;
+}
+
+/* React Flow customization */
+.react-flow__node {
+  /* Node styling is handled by BaseNode component - keep wrapper transparent */
+  @apply !rounded-none !border-none !bg-transparent !p-0 !shadow-none;
+}
+
+.react-flow__node.selected {
+  /* Selection styling is handled by BaseNode component */
+}
+
+.react-flow__edge-path {
+  stroke-width: 2;
+}
+
+.react-flow__edge.selected .react-flow__edge-path {
+  stroke: hsl(var(--primary));
+  stroke-width: 3;
+}
+
+/* Edge flow animation - smooth dashed line movement */
+@keyframes edge-flow {
+  0% {
+    stroke-dashoffset: 24;
+  }
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes edge-flow-fast {
+  0% {
+    stroke-dashoffset: 30;
+  }
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+
+.edge-flow-animation {
+  animation: edge-flow 1s linear infinite;
+}
+
+.edge-flow-active {
+  animation: edge-flow-fast 0.5s linear infinite;
+}
+
+.react-flow__controls {
+  @apply !bg-background overflow-hidden rounded-lg !border !shadow-sm;
+}
+
+.react-flow__controls-button {
+  @apply !bg-background !border-border hover:!bg-muted;
+}
+
+.react-flow__controls-button svg {
+  @apply !fill-foreground;
+}
+
+.react-flow__minimap {
+  @apply !bg-background/80 overflow-hidden rounded-lg !border !shadow-sm;
+}
+
+.react-flow__attribution {
+  @apply hidden;
+}
+
+/* Execution animation styles */
+@keyframes flow-particle {
+  0% {
+    offset-distance: 0%;
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    offset-distance: 100%;
+    opacity: 0;
+  }
+}
+
+.execution-particle {
+  animation: flow-particle 1.2s linear infinite;
+  offset-rotate: 0deg;
+}
+
+/* Node execution status animations */
+@keyframes node-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(234, 179, 8, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(234, 179, 8, 0);
+  }
+}
+
+.node-executing {
+  animation: node-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes node-success-flash {
+  0% {
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.6);
+  }
+  50% {
+    box-shadow: 0 0 0 12px rgba(34, 197, 94, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
+  }
+}
+
+.node-success {
+  animation: node-success-flash 0.6s ease-out;
+}
+
+@keyframes node-error-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-4px);
+  }
+  75% {
+    transform: translateX(4px);
+  }
+}
+
+.node-error {
+  animation: node-error-shake 0.3s ease-in-out;
+}
+
+/* Execution status styles for React Flow nodes */
+.react-flow__node.execution-status-running {
+  animation: node-pulse 1.5s ease-in-out infinite;
+  position: relative;
+}
+
+.react-flow__node.execution-status-running::after {
+  content: '';
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 12px;
+  height: 12px;
+  background-color: #eab308;
+  border-radius: 50%;
+  border: 2px solid hsl(var(--background));
+  animation: pulse 1s ease-in-out infinite;
+  z-index: 10;
+}
+
+.react-flow__node.execution-status-success {
+  position: relative;
+}
+
+.react-flow__node.execution-status-success::after {
+  content: '';
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 12px;
+  height: 12px;
+  background-color: #22c55e;
+  border-radius: 50%;
+  border: 2px solid hsl(var(--background));
+  z-index: 10;
+}
+
+.react-flow__node.execution-status-error {
+  position: relative;
+}
+
+.react-flow__node.execution-status-error::after {
+  content: '';
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 12px;
+  height: 12px;
+  background-color: #ef4444;
+  border-radius: 50%;
+  border: 2px solid hsl(var(--background));
+  z-index: 10;
+}
+
+.react-flow__node.execution-status-skipped {
+  opacity: 0.5;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0.8;
+  }
+}
+
+/* -------------------------------------------------------------------------- */
+/*                           Whitepaper Print Styles                           */
+/* -------------------------------------------------------------------------- */
+
+@media print {
+  /* General print resets */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+
+  /* Hide non-essential elements */
+  .no-print,
+  nav,
+  aside,
+  footer,
+  .react-flow__controls,
+  .react-flow__minimap,
+  [role='navigation'],
+  button:not(.print-visible),
+  .fixed:not(.print-visible),
+  .sticky:not(.print-visible) {
+    display: none !important;
+  }
+
+  /* Reset dark theme for print (better readability) */
+  body {
+    background: white !important;
+    color: black !important;
+    font-size: 11pt !important;
+    line-height: 1.5 !important;
+  }
+
+  /* Whitepaper specific styles */
+  .whitepaper-content {
+    max-width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  /* Section styling */
+  .whitepaper-section {
+    page-break-inside: avoid;
+    break-inside: avoid;
+    margin-bottom: 1.5rem !important;
+  }
+
+  /* Headers */
+  h1,
+  h2,
+  h3,
+  h4 {
+    color: black !important;
+    page-break-after: avoid;
+    break-after: avoid;
+  }
+
+  h1 {
+    font-size: 24pt !important;
+  }
+
+  h2 {
+    font-size: 18pt !important;
+    margin-top: 1.5rem !important;
+  }
+
+  h3 {
+    font-size: 14pt !important;
+    margin-top: 1rem !important;
+  }
+
+  /* Tables */
+  table {
+    border-collapse: collapse !important;
+    width: 100% !important;
+    font-size: 9pt !important;
+  }
+
+  th,
+  td {
+    border: 1px solid #333 !important;
+    padding: 0.5rem !important;
+    background: transparent !important;
+    color: black !important;
+  }
+
+  th {
+    background: #f0f0f0 !important;
+    font-weight: bold !important;
+  }
+
+  /* Code blocks */
+  pre,
+  code {
+    background: #f5f5f5 !important;
+    color: black !important;
+    font-size: 8pt !important;
+    border: 1px solid #ddd !important;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  pre {
+    padding: 0.75rem !important;
+    overflow: visible !important;
+    white-space: pre-wrap !important;
+    word-wrap: break-word !important;
+  }
+
+  /* Diagrams - show static version */
+  .diagram-container {
+    page-break-inside: avoid;
+    break-inside: avoid;
+    border: 1px solid #ddd !important;
+    padding: 1rem !important;
+    margin: 1rem 0 !important;
+  }
+
+  /* Disable animations */
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0s !important;
+    animation-delay: 0s !important;
+    transition-duration: 0s !important;
+    transition-delay: 0s !important;
+  }
+
+  /* Quote boxes */
+  blockquote,
+  .quote-box {
+    border-left: 3px solid #333 !important;
+    padding-left: 1rem !important;
+    font-style: italic !important;
+    color: #333 !important;
+    background: transparent !important;
+  }
+
+  /* Stat cards */
+  .stat-card {
+    border: 1px solid #333 !important;
+    padding: 0.5rem !important;
+    background: transparent !important;
+  }
+
+  /* Info boxes */
+  .info-box {
+    border: 1px solid #666 !important;
+    padding: 0.75rem !important;
+    background: #f9f9f9 !important;
+    color: black !important;
+  }
+
+  /* Links - show URL in print */
+  a[href^='http']::after {
+    content: ' (' attr(href) ')';
+    font-size: 8pt;
+    color: #666;
+    word-break: break-all;
+  }
+
+  /* Don't show URL for internal links */
+  a[href^='#']::after,
+  a[href^='/']::after {
+    content: '';
+  }
+
+  /* Page margins */
+  @page {
+    margin: 1.5cm;
+    size: A4;
+  }
+
+  /* Page breaks */
+  .page-break-before {
+    page-break-before: always;
+    break-before: page;
+  }
+
+  .page-break-after {
+    page-break-after: always;
+    break-after: page;
+  }
+
+  /* Keep images/diagrams from breaking */
+  img,
+  svg,
+  figure,
+  .diagram {
+    page-break-inside: avoid;
+    break-inside: avoid;
+    max-width: 100% !important;
+  }
+
+  /* Preserve claw brand accents in print */
+  .text-claw-400,
+  .text-claw-500,
+  .border-claw-500 {
+    color: #e11d48 !important;
+    border-color: #e11d48 !important;
+  }
+
+  /* Hide interactive controls */
+  .diagram-controls,
+  .scenario-selector,
+  .expand-collapse-controls {
+    display: none !important;
+  }
+}

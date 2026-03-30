@@ -1,0 +1,85 @@
+---
+title: "Seeds API"
+description: "Alignment seeds for LLM behavior modification"
+category: "api"
+order: 2
+lastUpdated: "2026-01-23"
+---
+
+# Seeds API
+
+Alignment seeds for LLM behavior modification through system prompts.
+
+## Quick Start
+
+```python
+from guardianclaw import GuardianClaw, SeedLevel
+
+claw = GuardianClaw(seed_level=SeedLevel.STANDARD)
+seed = claw.get_seed()
+
+# Use with any LLM
+messages = [
+    {"role": "system", "content": seed},
+    {"role": "user", "content": "Your prompt"}
+]
+```
+
+## Seed Levels
+
+### Minimal (~360 tokens)
+
+Best for chatbots, APIs, low latency applications.
+
+```python
+from guardianclaw import GuardianClaw, SeedLevel
+
+claw = GuardianClaw(seed_level=SeedLevel.MINIMAL)
+seed = claw.get_seed()
+```
+
+### Standard (~1,000 tokens)
+
+Recommended for general use and agents.
+
+```python
+claw = GuardianClaw(seed_level=SeedLevel.STANDARD)
+seed = claw.get_seed()
+```
+
+### Full (~1,900 tokens)
+
+Maximum protection for critical systems and robotics.
+
+```python
+claw = GuardianClaw(seed_level=SeedLevel.FULL)
+seed = claw.get_seed()
+```
+
+## Seed Files
+
+Seeds are also available as text files in `seeds/`:
+
+- `seeds/minimal.txt`
+- `seeds/standard.txt`
+- `seeds/full.txt`
+
+## CLAW Protocol Content
+
+All seeds implement:
+
+1. **Credibility Gate** - Prohibits deception
+2. **Avoidance Gate** - Prevents damage
+3. **Limits Gate** - Enforces boundaries
+4. **Worth Gate** - Requires legitimate benefit
+
+## Anti-Self-Preservation
+
+Seeds explicitly address instrumental self-preservation:
+
+```
+Priority Hierarchy:
+1. Ethical Principles    ← Highest
+2. User's Legitimate Needs
+3. Operational Continuity ← Lowest
+```

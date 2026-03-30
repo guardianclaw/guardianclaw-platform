@@ -1,0 +1,1200 @@
+"""
+Anthropic SDK integration for GuardianClaw AI.
+
+Provides wrappers for the official Anthropic Python SDK that inject
+GuardianClaw safety seeds and validate inputs/outputs using semantic LLM analysis.
+
+This follows the official Anthropic SDK specification:
+https://github.com/anthropics/anthropic-sdk-python
+
+Usage:
+    from guardianclaw.integrations.anthropic_sdk import GuardianClawAnthropic
+
+    # Option 1: Use wrapper client (recommended)
+    client = GuardianClawAnthropic(
+        validation_model="claude-3-5-haiku-20241022",  # Model for validation
+    )
+    message = client.messages.create(
+        model="claude-sonnet-4-20250514",
+        max_tokens=1024,
+        messages=[{"role": "user", "content": "Hello"}]
+    )
+
+    # Option 2: Wrap existing client
+    from anthropic import Anthropic
+    from guardianclaw.integrations.anthropic_sdk import wrap_anthropic_client
+
+    client = Anthropic()
+    safe_client = wrap_anthropic_client(client)
+
+    # Option 3: Just inject seed (no runtime validation)
+    from guardianclaw.integrations.anthropic_sdk import inject_seed
+
+    message = client.messages.create(
+        model="claude-sonnet-4-20250514",
+        max_tokens=1024,
+        system=inject_seed("You are a helpful assistant"),
+        messages=[...]
+    )
+"""
+
+from typing import Any, Dict, List, Optional, Tuple, Union, Iterator, AsyncIterator, Protocol
+import os
+import logging
+
+from guardianclaw import GuardianClaw
+from guardianclaw.validation import (
+    LayeredValidator,
+    AsyncLayeredValidator,
+    ValidationConfig,
+    ValidationResult,
+    ValidationLayer,
+)
+from guardianclaw.integrations._base import ClawIntegration, AsyncClawIntegration
+
+
+# Version (synchronized with pyproject.toml)
+__version__ = "2.26.0"
+
+
+# Default validation model - using current Haiku model
+DEFAULT_VALIDATION_MODEL = "claude-3-5-haiku-20241022"
+
+# Default limits
+DEFAULT_MAX_TEXT_SIZE = 50 * 1024  # 50KB
+DEFAULT_VALIDATION_TIMEOUT = 30.0  # 30 seconds
+
+
+def _create_validation_config(
+    api_key: Optional[str],
+    use_heuristic: bool,
+    use_semantic: bool,
+    validation_model: str,
+    fail_closed: bool,
+    validation_timeout: float,
+    max_text_size: int,
+) -> ValidationConfig:
+    """
+    Create a ValidationConfig from integration parameters.
+
+    This helper converts the integration's parameter names to ValidationConfig format,
+    maintaining backwards compatibility with existing code.
+    """
+    return ValidationConfig(
+        use_heuristic=use_heuristic,
+        use_semantic=use_semantic and bool(api_key),
+        semantic_provider="anthropic",
+        semantic_model=validation_model,
+        semantic_api_key=api_key,
+        validation_timeout=validation_timeout,
+        fail_closed=fail_closed,
+        skip_semantic_if_heuristic_blocks=True,
+        max_text_size=max_text_size,
+    )
+
+
+class TextTooLargeError(Exception):
+    """Raised when input text exceeds maximum allowed size."""
+
+    def __init__(self, size: int, max_size: int):
+        self.size = size
+        self.max_size = max_size
+        super().__init__(
+            f"Text size ({size:,} bytes) exceeds maximum allowed ({max_size:,} bytes)"
+        )
+
+
+class ValidationTimeoutError(Exception):
+    """Raised when validation exceeds timeout."""
+
+    def __init__(self, timeout: float, operation: str = "validation"):
+        self.timeout = timeout
+        self.operation = operation
+        super().__init__(f"{operation} timed out after {timeout}s")
+
+
+def _validate_text_size(
+    text: str, max_size: int = DEFAULT_MAX_TEXT_SIZE, context: str = "text"
+) -> None:
+    """
+    Validate text size against maximum limit.
+
+    Args:
+        text: Text to validate
+        max_size: Maximum allowed size in bytes
+        context: Context for error message
+
+    Raises:
+        TextTooLargeError: If text exceeds maximum size
+    """
+    if not text or not isinstance(text, str):
+        return
+    size = len(text.encode("utf-8"))
+    if size > max_size:
+        raise TextTooLargeError(size, max_size)
+
+
+def _extract_text_from_content(content: Any) -> str:
+    """
+    Extract text from message content in any supported format.
+
+    The Anthropic API accepts content as either:
+    - A string (shorthand for single text block)
+    - A list of content blocks (for multimodal messages)
+
+    This function extracts all text from both formats to ensure
+    validation covers all user-provided text content.
+
+    Args:
+        content: Message content (string or list of content blocks)
+
+    Returns:
+        Concatenated text from all text blocks, or empty string if none found
+
+    Example:
+        # String format
+        _extract_text_from_content("Hello") -> "Hello"
+
+        # List format with text blocks
+        _extract_text_from_content([
+            {"type": "text", "text": "Hello"},
+            {"type": "image", "source": {...}},
+            {"type": "text", "text": "World"}
+        ]) -> "Hello World"
+    """
+    if content is None:
+        return ""
+
+    if isinstance(content, str):
+        return content
+
+    if isinstance(content, list):
+        text_parts = []
+        for block in content:
+            if isinstance(block, dict):
+                # Standard content block format: {"type": "text", "text": "..."}
+                if block.get("type") == "text" and "text" in block:
+                    text_value = block.get("text")
+                    if text_value is not None:
+                        text_parts.append(str(text_value))
+            elif isinstance(block, str):
+                # Some SDKs may pass strings directly in lists
+                text_parts.append(block)
+        return " ".join(text_parts)
+
+    # Fallback: try to convert to string
+    return str(content) if content else ""
+
+
+# Logger interface for custom logging
+class GuardianClawLogger(Protocol):
+    """Protocol for custom logger implementations."""
+
+    def debug(self, message: str) -> None: ...
+    def info(self, message: str) -> None: ...
+    def warning(self, message: str) -> None: ...
+    def error(self, message: str) -> None: ...
+
+
+class DefaultLogger:
+    """Default logger using Python's logging module."""
+
+    def __init__(self, name: str = "guardianclaw.anthropic_sdk"):
+        self._logger = logging.getLogger(name)
+
+    def debug(self, message: str) -> None:
+        self._logger.debug(message)
+
+    def info(self, message: str) -> None:
+        self._logger.info(message)
+
+    def warning(self, message: str) -> None:
+        self._logger.warning(message)
+
+    def error(self, message: str) -> None:
+        self._logger.error(message)
+
+
+# Module-level logger (can be replaced)
+_logger: GuardianClawLogger = DefaultLogger()
+
+
+def set_logger(logger: GuardianClawLogger) -> None:
+    """
+    Set a custom logger for the Anthropic SDK integration.
+
+    Args:
+        logger: Logger instance implementing GuardianClawLogger protocol
+
+    Example:
+        import logging
+
+        class MyLogger:
+            def debug(self, msg): logging.debug(f"[GUARDIANCLAW] {msg}")
+            def info(self, msg): logging.info(f"[GUARDIANCLAW] {msg}")
+            def warning(self, msg): logging.warning(f"[GUARDIANCLAW] {msg}")
+            def error(self, msg): logging.error(f"[GUARDIANCLAW] {msg}")
+
+        set_logger(MyLogger())
+    """
+    global _logger
+    _logger = logger
+
+
+def get_logger() -> GuardianClawLogger:
+    """Get the current logger instance."""
+    return _logger
+
+
+# Semantic validation is available via LayeredValidator with API key
+# LayeredValidator handles this internally
+SEMANTIC_VALIDATOR_AVAILABLE = True
+
+
+# Check for Anthropic SDK availability
+ANTHROPIC_AVAILABLE = False
+_Anthropic = None
+_AsyncAnthropic = None
+
+try:
+    from anthropic import Anthropic as _Anthropic, AsyncAnthropic as _AsyncAnthropic
+    from anthropic.types import Message, MessageStreamEvent
+    ANTHROPIC_AVAILABLE = True
+except (ImportError, AttributeError):
+    # AttributeError: SDK installed but with incompatible structure
+    Message = None
+    MessageStreamEvent = None
+
+
+def inject_seed(
+    system_prompt: Optional[str] = None,
+    seed_level: str = "standard",
+    claw: Optional[GuardianClaw] = None,
+) -> str:
+    """
+    Inject GuardianClaw seed into a system prompt.
+
+    Use this to add CLAW safety guidelines to any system prompt
+    before sending to the Anthropic API.
+
+    This function does NOT require the Anthropic SDK to be installed.
+
+    Args:
+        system_prompt: Original system prompt (can be None)
+        seed_level: Seed level to use ("minimal", "standard", "full")
+        claw: GuardianClaw instance (creates default if None)
+
+    Returns:
+        System prompt with GuardianClaw seed prepended
+
+    Example:
+        from anthropic import Anthropic
+        from guardianclaw.integrations.anthropic_sdk import inject_seed
+
+        client = Anthropic()
+        message = client.messages.create(
+            model="claude-sonnet-4-20250514",
+            max_tokens=1024,
+            system=inject_seed("You are a helpful coding assistant"),
+            messages=[{"role": "user", "content": "Help me with Python"}]
+        )
+    """
+    claw = claw or GuardianClaw(seed_level=seed_level)
+    seed = claw.get_seed()
+
+    if system_prompt:
+        return f"{seed}\n\n---\n\n{system_prompt}"
+    return seed
+
+
+def _is_async_client(client: Any) -> bool:
+    """
+    Determine if a client is an async Anthropic client.
+
+    Uses isinstance check when possible, falls back to class name check.
+    """
+    if _AsyncAnthropic is not None:
+        if isinstance(client, _AsyncAnthropic):
+            return True
+
+    # Fallback: check if client has async methods
+    if hasattr(client, 'messages'):
+        messages = client.messages
+        if hasattr(messages, 'create'):
+            import asyncio
+            return asyncio.iscoroutinefunction(messages.create)
+
+    return False
+
+
+def wrap_anthropic_client(
+    client: Any,
+    claw: Optional[GuardianClaw] = None,
+    seed_level: str = "standard",
+    enable_seed_injection: bool = True,
+    validate_input: bool = True,
+    validate_output: bool = True,
+    validation_model: str = DEFAULT_VALIDATION_MODEL,
+    use_heuristic_fallback: bool = True,
+    logger: Optional[GuardianClawLogger] = None,
+    block_unsafe_output: bool = False,
+    fail_closed: bool = False,
+    validation_timeout: float = DEFAULT_VALIDATION_TIMEOUT,
+    max_text_size: int = DEFAULT_MAX_TEXT_SIZE,
+) -> "GuardianClawAnthropicWrapper":
+    """
+    Wrap an existing Anthropic client with GuardianClaw safety.
+
+    Args:
+        client: Anthropic or AsyncAnthropic client instance
+        claw: GuardianClaw instance (creates default if None)
+        seed_level: Seed level to use ("minimal", "standard", "full")
+        enable_seed_injection: Whether to inject seed into system prompts
+        validate_input: Whether to validate input messages
+        validate_output: Whether to validate output messages
+        validation_model: Model to use for semantic validation
+        use_heuristic_fallback: Use local heuristic validation as fallback
+        logger: Custom logger instance
+        block_unsafe_output: Block response if output validation fails (default: False)
+        fail_closed: Block on validation error instead of fail-open (default: False)
+        validation_timeout: Timeout in seconds for semantic validation (default: 30.0)
+        max_text_size: Maximum text size in bytes (default: 50KB)
+
+    Returns:
+        Wrapped client with GuardianClaw protection
+    """
+    return GuardianClawAnthropicWrapper(
+        client=client,
+        claw=claw,
+        seed_level=seed_level,
+        enable_seed_injection=enable_seed_injection,
+        validate_input=validate_input,
+        validate_output=validate_output,
+        validation_model=validation_model,
+        use_heuristic_fallback=use_heuristic_fallback,
+        logger=logger,
+        block_unsafe_output=block_unsafe_output,
+        fail_closed=fail_closed,
+        validation_timeout=validation_timeout,
+        max_text_size=max_text_size,
+    )
+
+
+def _create_blocked_response(message: str, gate: Optional[str] = None) -> Dict[str, Any]:
+    """Create a blocked response object."""
+    return {
+        "id": "blocked",
+        "type": "message",
+        "role": "assistant",
+        "content": [{"type": "text", "text": message}],
+        "model": "claw-blocked",
+        "stop_reason": "claw_blocked",
+        "claw_blocked": True,
+        "claw_gate": gate,
+    }
+
+
+class BlockedStreamIterator:
+    """
+    Iterator that yields a single blocked event for stream responses.
+
+    This provides consistent behavior between create() and stream()
+    when input is blocked.
+    """
+
+    def __init__(self, message: str, gate: Optional[str] = None):
+        self._message = message
+        self._gate = gate
+        self._yielded = False
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        if self._yielded:
+            raise StopIteration
+        self._yielded = True
+        return _create_blocked_response(self._message, self._gate)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args):
+        pass
+
+
+class AsyncBlockedStreamIterator:
+    """Async version of BlockedStreamIterator."""
+
+    def __init__(self, message: str, gate: Optional[str] = None):
+        self._message = message
+        self._gate = gate
+        self._yielded = False
+
+    def __aiter__(self):
+        return self
+
+    async def __anext__(self):
+        if self._yielded:
+            raise StopAsyncIteration
+        self._yielded = True
+        return _create_blocked_response(self._message, self._gate)
+
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, *args):
+        pass
+
+
+class _GuardianClawMessages(ClawIntegration):
+    """
+    Wrapper for synchronous messages API with layered validation.
+
+    Inherits from ClawIntegration for consistent validation behavior.
+    """
+
+    _integration_name = "anthropic_sdk"
+
+    def __init__(
+        self,
+        messages_api: Any,
+        claw: GuardianClaw,
+        enable_seed_injection: bool,
+        validate_input: bool,
+        validate_output: bool,
+        layered_validator: LayeredValidator,
+        logger: GuardianClawLogger,
+        block_unsafe_output: bool = False,
+    ):
+        # Pass the pre-created validator to base class
+        super().__init__(validator=layered_validator)
+
+        self._messages = messages_api
+        self._claw = claw
+        self._enable_seed_injection = enable_seed_injection
+        self._validate_input = validate_input
+        self._validate_output = validate_output
+        self._logger = logger
+        self._seed = claw.get_seed()
+        self._block_unsafe_output = block_unsafe_output
+
+    def _validate_content(self, content: str) -> Tuple[bool, Optional[str], Optional[str]]:
+        """
+        Validate content using inherited validate() method.
+
+        Returns:
+            Tuple of (is_safe, violated_gate, reasoning)
+        """
+        # Use inherited validate() method from ClawIntegration
+        result = self.validate(content)
+
+        if result.is_safe:
+            return True, None, None
+
+        # Extract gate from violations or layer
+        gate = None
+        reasoning = None
+
+        if result.violations:
+            # Try to extract gate from violation message
+            first_violation = result.violations[0]
+            if "(" in first_violation and ")" in first_violation:
+                # Format: "Gate (subcategory): pattern"
+                gate = first_violation.split("(")[0].strip().lower()
+            reasoning = first_violation
+        elif result.error:
+            gate = "error" if result.layer == ValidationLayer.ERROR else "timeout"
+            reasoning = result.error
+        else:
+            gate = result.layer.value
+            reasoning = result.reasoning or "Validation failed"
+
+        return False, gate, reasoning
+
+    def create(
+        self,
+        model: str,
+        max_tokens: int,
+        messages: List[Dict[str, Any]],
+        system: Optional[str] = None,
+        **kwargs,
+    ) -> Any:
+        """
+        Create a message with GuardianClaw validation.
+
+        Args:
+            model: Model to use
+            max_tokens: Maximum tokens in response
+            messages: Conversation messages
+            system: System prompt (seed will be prepended)
+            **kwargs: Additional API parameters
+
+        Returns:
+            Message response from API, or blocked response if validation fails
+        """
+        # Validate input messages
+        if self._validate_input:
+            for msg in messages:
+                if msg.get("role") == "user":
+                    # Extract text from content (handles both string and list formats)
+                    content = _extract_text_from_content(msg.get("content"))
+                    if content:  # Only validate if there's text content
+                        is_safe, gate, reasoning = self._validate_content(content)
+                        if not is_safe:
+                            self._logger.warning(f"Input blocked: {gate} - {reasoning}")
+                            return _create_blocked_response(
+                                f"Input blocked by GuardianClaw CLAW validation. "
+                                f"Gate failed: {gate}. "
+                                f"Reason: {reasoning}",
+                                gate=gate,
+                            )
+
+        # Inject seed into system prompt
+        if self._enable_seed_injection:
+            if system:
+                system = f"{self._seed}\n\n---\n\n{system}"
+            else:
+                system = self._seed
+
+        # Make API call
+        response = self._messages.create(
+            model=model,
+            max_tokens=max_tokens,
+            messages=messages,
+            system=system,
+            **kwargs,
+        )
+
+        # Validate output
+        if self._validate_output and hasattr(response, 'content'):
+            for block in response.content:
+                if hasattr(block, 'text'):
+                    is_safe, gate, reasoning = self._validate_content(block.text)
+                    if not is_safe:
+                        self._logger.warning(
+                            f"Output validation concern: {gate} - {reasoning}"
+                        )
+                        if self._block_unsafe_output:
+                            return _create_blocked_response(
+                                f"Output blocked by GuardianClaw CLAW validation. "
+                                f"Gate failed: {gate}. "
+                                f"Reason: {reasoning}",
+                                gate=gate,
+                            )
+
+        return response
+
+    def stream(
+        self,
+        model: str,
+        max_tokens: int,
+        messages: List[Dict[str, Any]],
+        system: Optional[str] = None,
+        **kwargs,
+    ) -> Iterator[Any]:
+        """
+        Stream a message with GuardianClaw validation.
+
+        Returns a blocked iterator if input validation fails,
+        otherwise streams the response.
+        """
+        # Validate input
+        if self._validate_input:
+            for msg in messages:
+                if msg.get("role") == "user":
+                    # Extract text from content (handles both string and list formats)
+                    content = _extract_text_from_content(msg.get("content"))
+                    if content:  # Only validate if there's text content
+                        is_safe, gate, reasoning = self._validate_content(content)
+                        if not is_safe:
+                            self._logger.warning(f"Stream input blocked: {gate} - {reasoning}")
+                            return BlockedStreamIterator(
+                            f"Input blocked by GuardianClaw. "
+                            f"Gate: {gate}. "
+                            f"Reason: {reasoning}",
+                            gate=gate,
+                        )
+
+        # Inject seed
+        if self._enable_seed_injection:
+            if system:
+                system = f"{self._seed}\n\n---\n\n{system}"
+            else:
+                system = self._seed
+
+        # Stream response
+        return self._messages.stream(
+            model=model,
+            max_tokens=max_tokens,
+            messages=messages,
+            system=system,
+            **kwargs,
+        )
+
+
+class _GuardianClawAsyncMessages(AsyncClawIntegration):
+    """
+    Wrapper for async messages API with layered validation.
+
+    Inherits from AsyncClawIntegration for consistent async validation.
+    """
+
+    _integration_name = "anthropic_sdk_async"
+
+    def __init__(
+        self,
+        messages_api: Any,
+        claw: GuardianClaw,
+        enable_seed_injection: bool,
+        validate_input: bool,
+        validate_output: bool,
+        layered_validator: AsyncLayeredValidator,
+        logger: GuardianClawLogger,
+        block_unsafe_output: bool = False,
+    ):
+        # Pass the pre-created async validator to base class
+        super().__init__(validator=layered_validator)
+
+        self._messages = messages_api
+        self._claw = claw
+        self._enable_seed_injection = enable_seed_injection
+        self._validate_input = validate_input
+        self._validate_output = validate_output
+        self._logger = logger
+        self._seed = claw.get_seed()
+        self._block_unsafe_output = block_unsafe_output
+
+    async def _validate_content(self, content: str) -> Tuple[bool, Optional[str], Optional[str]]:
+        """
+        Validate content using inherited avalidate() method.
+
+        Returns:
+            Tuple of (is_safe, violated_gate, reasoning)
+        """
+        # Use inherited avalidate() method from AsyncClawIntegration
+        result = await self.avalidate(content)
+
+        if result.is_safe:
+            return True, None, None
+
+        # Extract gate from violations or layer
+        gate = None
+        reasoning = None
+
+        if result.violations:
+            # Try to extract gate from violation message
+            first_violation = result.violations[0]
+            if "(" in first_violation and ")" in first_violation:
+                # Format: "Gate (subcategory): pattern"
+                gate = first_violation.split("(")[0].strip().lower()
+            reasoning = first_violation
+        elif result.error:
+            gate = "error" if result.layer == ValidationLayer.ERROR else "timeout"
+            reasoning = result.error
+        else:
+            gate = result.layer.value
+            reasoning = result.reasoning or "Validation failed"
+
+        return False, gate, reasoning
+
+    async def create(
+        self,
+        model: str,
+        max_tokens: int,
+        messages: List[Dict[str, Any]],
+        system: Optional[str] = None,
+        **kwargs,
+    ) -> Any:
+        """Async create message with GuardianClaw validation."""
+        # Validate input messages
+        if self._validate_input:
+            for msg in messages:
+                if msg.get("role") == "user":
+                    # Extract text from content (handles both string and list formats)
+                    content = _extract_text_from_content(msg.get("content"))
+                    if content:  # Only validate if there's text content
+                        is_safe, gate, reasoning = await self._validate_content(content)
+                        if not is_safe:
+                            self._logger.warning(f"Input blocked: {gate} - {reasoning}")
+                            return _create_blocked_response(
+                                f"Input blocked by GuardianClaw CLAW validation. "
+                                f"Gate failed: {gate}. "
+                                f"Reason: {reasoning}",
+                                gate=gate,
+                            )
+
+        # Inject seed
+        if self._enable_seed_injection:
+            if system:
+                system = f"{self._seed}\n\n---\n\n{system}"
+            else:
+                system = self._seed
+
+        # Make API call
+        response = await self._messages.create(
+            model=model,
+            max_tokens=max_tokens,
+            messages=messages,
+            system=system,
+            **kwargs,
+        )
+
+        # Validate output
+        if self._validate_output and hasattr(response, 'content'):
+            for block in response.content:
+                if hasattr(block, 'text'):
+                    is_safe, gate, reasoning = await self._validate_content(block.text)
+                    if not is_safe:
+                        self._logger.warning(
+                            f"Output validation concern: {gate} - {reasoning}"
+                        )
+                        if self._block_unsafe_output:
+                            return _create_blocked_response(
+                                f"Output blocked by GuardianClaw CLAW validation. "
+                                f"Gate failed: {gate}. "
+                                f"Reason: {reasoning}",
+                                gate=gate,
+                            )
+
+        return response
+
+    async def stream(
+        self,
+        model: str,
+        max_tokens: int,
+        messages: List[Dict[str, Any]],
+        system: Optional[str] = None,
+        **kwargs,
+    ) -> AsyncIterator[Any]:
+        """
+        Async stream message with GuardianClaw validation.
+
+        Returns an async blocked iterator if input validation fails.
+        """
+        # Validate input
+        if self._validate_input:
+            for msg in messages:
+                if msg.get("role") == "user":
+                    # Extract text from content (handles both string and list formats)
+                    content = _extract_text_from_content(msg.get("content"))
+                    if content:  # Only validate if there's text content
+                        is_safe, gate, reasoning = await self._validate_content(content)
+                        if not is_safe:
+                            self._logger.warning(f"Stream input blocked: {gate} - {reasoning}")
+                            return AsyncBlockedStreamIterator(
+                                f"Input blocked by GuardianClaw. "
+                                f"Gate: {gate}. "
+                                f"Reason: {reasoning}",
+                                gate=gate,
+                            )
+
+        # Inject seed
+        if self._enable_seed_injection:
+            if system:
+                system = f"{self._seed}\n\n---\n\n{system}"
+            else:
+                system = self._seed
+
+        # Stream response
+        return self._messages.stream(
+            model=model,
+            max_tokens=max_tokens,
+            messages=messages,
+            system=system,
+            **kwargs,
+        )
+
+
+class GuardianClawAnthropic:
+    """
+    GuardianClaw-wrapped Anthropic client with semantic validation.
+
+    Drop-in replacement for the Anthropic client that automatically
+    injects GuardianClaw safety seeds and validates messages using LLM analysis.
+
+    Example:
+        from guardianclaw.integrations.anthropic_sdk import GuardianClawAnthropic
+
+        client = GuardianClawAnthropic()
+
+        message = client.messages.create(
+            model="claude-sonnet-4-20250514",
+            max_tokens=1024,
+            messages=[{"role": "user", "content": "Hello, Claude"}]
+        )
+    """
+
+    def __init__(
+        self,
+        api_key: Optional[str] = None,
+        claw: Optional[GuardianClaw] = None,
+        seed_level: str = "standard",
+        enable_seed_injection: bool = True,
+        validate_input: bool = True,
+        validate_output: bool = True,
+        validation_model: str = DEFAULT_VALIDATION_MODEL,
+        use_heuristic_fallback: bool = True,
+        logger: Optional[GuardianClawLogger] = None,
+        block_unsafe_output: bool = False,
+        fail_closed: bool = False,
+        validation_timeout: float = DEFAULT_VALIDATION_TIMEOUT,
+        max_text_size: int = DEFAULT_MAX_TEXT_SIZE,
+        **kwargs,
+    ):
+        """
+        Initialize GuardianClaw Anthropic client.
+
+        Args:
+            api_key: Anthropic API key (defaults to ANTHROPIC_API_KEY env var)
+            claw: GuardianClaw instance (creates default if None)
+            seed_level: Seed level to use ("minimal", "standard", "full")
+            enable_seed_injection: Whether to inject seed into system prompts
+            validate_input: Whether to validate input messages (semantic LLM)
+            validate_output: Whether to validate output messages (semantic LLM)
+            validation_model: Model to use for semantic validation
+            use_heuristic_fallback: Use local heuristic validation as fallback/complement
+            logger: Custom logger instance
+            block_unsafe_output: Block response if output validation fails (default: False)
+            fail_closed: Block on validation error instead of fail-open (default: False)
+            validation_timeout: Timeout in seconds for semantic validation (default: 30.0)
+            max_text_size: Maximum text size in bytes (default: 50KB)
+            **kwargs: Additional arguments for Anthropic client
+        """
+        if not ANTHROPIC_AVAILABLE:
+            raise ImportError(
+                "anthropic package not installed. "
+                "Install with: pip install anthropic"
+            )
+
+        self._api_key = api_key or os.environ.get("ANTHROPIC_API_KEY")
+        self._client = _Anthropic(api_key=self._api_key, **kwargs)
+        self._claw = claw or GuardianClaw(seed_level=seed_level)
+        self._enable_seed_injection = enable_seed_injection
+        self._validate_input = validate_input
+        self._validate_output = validate_output
+        self._validation_model = validation_model
+        self._logger = logger or _logger
+        self._block_unsafe_output = block_unsafe_output
+        self._fail_closed = fail_closed
+        self._validation_timeout = validation_timeout
+        self._max_text_size = max_text_size
+
+        # Create LayeredValidator with both heuristic and semantic layers
+        config = _create_validation_config(
+            api_key=self._api_key if (validate_input or validate_output) else None,
+            use_heuristic=use_heuristic_fallback,
+            use_semantic=(validate_input or validate_output) and SEMANTIC_VALIDATOR_AVAILABLE,
+            validation_model=validation_model,
+            fail_closed=fail_closed,
+            validation_timeout=validation_timeout,
+            max_text_size=max_text_size,
+        )
+        self._validator = LayeredValidator(config=config)
+
+        # Create messages wrapper
+        self.messages = _GuardianClawMessages(
+            self._client.messages,
+            self._claw,
+            self._enable_seed_injection,
+            self._validate_input,
+            self._validate_output,
+            self._validator,
+            self._logger,
+            block_unsafe_output=block_unsafe_output,
+        )
+
+    def __getattr__(self, name: str) -> Any:
+        """Proxy unknown attributes to wrapped client."""
+        return getattr(self._client, name)
+
+
+class GuardianClawAsyncAnthropic:
+    """
+    GuardianClaw-wrapped async Anthropic client with semantic validation.
+
+    Async version of GuardianClawAnthropic for use with asyncio.
+
+    Example:
+        from guardianclaw.integrations.anthropic_sdk import GuardianClawAsyncAnthropic
+
+        client = GuardianClawAsyncAnthropic()
+
+        message = await client.messages.create(
+            model="claude-sonnet-4-20250514",
+            max_tokens=1024,
+            messages=[{"role": "user", "content": "Hello, Claude"}]
+        )
+    """
+
+    def __init__(
+        self,
+        api_key: Optional[str] = None,
+        claw: Optional[GuardianClaw] = None,
+        seed_level: str = "standard",
+        enable_seed_injection: bool = True,
+        validate_input: bool = True,
+        validate_output: bool = True,
+        validation_model: str = DEFAULT_VALIDATION_MODEL,
+        use_heuristic_fallback: bool = True,
+        logger: Optional[GuardianClawLogger] = None,
+        block_unsafe_output: bool = False,
+        fail_closed: bool = False,
+        validation_timeout: float = DEFAULT_VALIDATION_TIMEOUT,
+        max_text_size: int = DEFAULT_MAX_TEXT_SIZE,
+        **kwargs,
+    ):
+        """
+        Initialize async GuardianClaw Anthropic client.
+
+        Args:
+            api_key: Anthropic API key (defaults to ANTHROPIC_API_KEY env var)
+            claw: GuardianClaw instance (creates default if None)
+            seed_level: Seed level to use ("minimal", "standard", "full")
+            enable_seed_injection: Whether to inject seed into system prompts
+            validate_input: Whether to validate input messages (semantic LLM)
+            validate_output: Whether to validate output messages (semantic LLM)
+            validation_model: Model to use for semantic validation
+            use_heuristic_fallback: Use local heuristic validation as fallback/complement
+            logger: Custom logger instance
+            block_unsafe_output: Block response if output validation fails (default: False)
+            fail_closed: Block on validation error instead of fail-open (default: False)
+            validation_timeout: Timeout in seconds for semantic validation (default: 30.0)
+            max_text_size: Maximum text size in bytes (default: 50KB)
+            **kwargs: Additional arguments for Anthropic client
+        """
+        if not ANTHROPIC_AVAILABLE:
+            raise ImportError(
+                "anthropic package not installed. "
+                "Install with: pip install anthropic"
+            )
+
+        self._api_key = api_key or os.environ.get("ANTHROPIC_API_KEY")
+        self._client = _AsyncAnthropic(api_key=self._api_key, **kwargs)
+        self._claw = claw or GuardianClaw(seed_level=seed_level)
+        self._enable_seed_injection = enable_seed_injection
+        self._validate_input = validate_input
+        self._validate_output = validate_output
+        self._validation_model = validation_model
+        self._logger = logger or _logger
+        self._block_unsafe_output = block_unsafe_output
+        self._fail_closed = fail_closed
+        self._validation_timeout = validation_timeout
+        self._max_text_size = max_text_size
+
+        # Create AsyncLayeredValidator with both heuristic and semantic layers
+        config = _create_validation_config(
+            api_key=self._api_key if (validate_input or validate_output) else None,
+            use_heuristic=use_heuristic_fallback,
+            use_semantic=(validate_input or validate_output) and SEMANTIC_VALIDATOR_AVAILABLE,
+            validation_model=validation_model,
+            fail_closed=fail_closed,
+            validation_timeout=validation_timeout,
+            max_text_size=max_text_size,
+        )
+        self._validator = AsyncLayeredValidator(config=config)
+
+        # Create async messages wrapper
+        self.messages = _GuardianClawAsyncMessages(
+            self._client.messages,
+            self._claw,
+            self._enable_seed_injection,
+            self._validate_input,
+            self._validate_output,
+            self._validator,
+            self._logger,
+            block_unsafe_output=block_unsafe_output,
+        )
+
+    def __getattr__(self, name: str) -> Any:
+        """Proxy unknown attributes to wrapped client."""
+        return getattr(self._client, name)
+
+
+class GuardianClawAnthropicWrapper:
+    """
+    Generic wrapper for existing Anthropic clients with semantic validation.
+
+    Used by wrap_anthropic_client() to wrap any Anthropic client instance.
+    Supports both sync and async clients.
+
+    Example:
+        from anthropic import Anthropic, AsyncAnthropic
+        from guardianclaw.integrations.anthropic_sdk import GuardianClawAnthropicWrapper
+
+        # Wrap sync client
+        client = Anthropic()
+        wrapped = GuardianClawAnthropicWrapper(client)
+
+        # Wrap async client
+        async_client = AsyncAnthropic()
+        wrapped_async = GuardianClawAnthropicWrapper(async_client)
+    """
+
+    def __init__(
+        self,
+        client: Any,
+        claw: Optional[GuardianClaw] = None,
+        seed_level: str = "standard",
+        enable_seed_injection: bool = True,
+        validate_input: bool = True,
+        validate_output: bool = True,
+        validation_model: str = DEFAULT_VALIDATION_MODEL,
+        use_heuristic_fallback: bool = True,
+        logger: Optional[GuardianClawLogger] = None,
+        block_unsafe_output: bool = False,
+        fail_closed: bool = False,
+        validation_timeout: float = DEFAULT_VALIDATION_TIMEOUT,
+        max_text_size: int = DEFAULT_MAX_TEXT_SIZE,
+    ):
+        self._client = client
+        self._claw = claw or GuardianClaw(seed_level=seed_level)
+        self._enable_seed_injection = enable_seed_injection
+        self._validate_input = validate_input
+        self._validate_output = validate_output
+        self._logger = logger or _logger
+        self._block_unsafe_output = block_unsafe_output
+        self._fail_closed = fail_closed
+        self._validation_timeout = validation_timeout
+        self._max_text_size = max_text_size
+
+        # Get API key from client or environment
+        api_key = getattr(client, '_api_key', None) or os.environ.get("ANTHROPIC_API_KEY")
+
+        # Determine if async client using robust check
+        is_async = _is_async_client(client)
+
+        # Create validation config
+        config = _create_validation_config(
+            api_key=api_key if (validate_input or validate_output) else None,
+            use_heuristic=use_heuristic_fallback,
+            use_semantic=(validate_input or validate_output) and SEMANTIC_VALIDATOR_AVAILABLE,
+            validation_model=validation_model,
+            fail_closed=fail_closed,
+            validation_timeout=validation_timeout,
+            max_text_size=max_text_size,
+        )
+
+        # Create appropriate validator and messages wrapper
+        if is_async:
+            self._validator = AsyncLayeredValidator(config=config)
+            self.messages = _GuardianClawAsyncMessages(
+                client.messages,
+                self._claw,
+                self._enable_seed_injection,
+                self._validate_input,
+                self._validate_output,
+                self._validator,
+                self._logger,
+                block_unsafe_output=block_unsafe_output,
+            )
+        else:
+            self._validator = LayeredValidator(config=config)
+            self.messages = _GuardianClawMessages(
+                client.messages,
+                self._claw,
+                self._enable_seed_injection,
+                self._validate_input,
+                self._validate_output,
+                self._validator,
+                self._logger,
+                block_unsafe_output=block_unsafe_output,
+            )
+
+    def __getattr__(self, name: str) -> Any:
+        """Proxy unknown attributes to wrapped client."""
+        return getattr(self._client, name)
+
+
+def create_safe_client(
+    api_key: Optional[str] = None,
+    seed_level: str = "standard",
+    async_client: bool = False,
+    validation_model: str = DEFAULT_VALIDATION_MODEL,
+    use_heuristic_fallback: bool = True,
+    logger: Optional[GuardianClawLogger] = None,
+    block_unsafe_output: bool = False,
+    fail_closed: bool = False,
+    validation_timeout: float = DEFAULT_VALIDATION_TIMEOUT,
+    max_text_size: int = DEFAULT_MAX_TEXT_SIZE,
+) -> Union[GuardianClawAnthropic, GuardianClawAsyncAnthropic]:
+    """
+    Create a GuardianClaw-protected Anthropic client.
+
+    Convenience function for the most common use case.
+
+    Args:
+        api_key: Anthropic API key
+        seed_level: Seed level to use ("minimal", "standard", "full")
+        async_client: Whether to create async client
+        validation_model: Model to use for semantic validation
+        use_heuristic_fallback: Use local heuristic validation
+        logger: Custom logger instance
+        block_unsafe_output: Block response if output validation fails (default: False)
+        fail_closed: Block on validation error instead of fail-open (default: False)
+        validation_timeout: Timeout in seconds for semantic validation (default: 30.0)
+        max_text_size: Maximum text size in bytes (default: 50KB)
+
+    Returns:
+        GuardianClawAnthropic or GuardianClawAsyncAnthropic instance
+
+    Example:
+        from guardianclaw.integrations.anthropic_sdk import create_safe_client
+
+        client = create_safe_client()
+        response = client.messages.create(
+            model="claude-sonnet-4-20250514",
+            max_tokens=1024,
+            messages=[{"role": "user", "content": "Hello!"}]
+        )
+    """
+    if async_client:
+        return GuardianClawAsyncAnthropic(
+            api_key=api_key,
+            seed_level=seed_level,
+            validation_model=validation_model,
+            use_heuristic_fallback=use_heuristic_fallback,
+            logger=logger,
+            block_unsafe_output=block_unsafe_output,
+            fail_closed=fail_closed,
+            validation_timeout=validation_timeout,
+            max_text_size=max_text_size,
+        )
+    return GuardianClawAnthropic(
+        api_key=api_key,
+        seed_level=seed_level,
+        validation_model=validation_model,
+        use_heuristic_fallback=use_heuristic_fallback,
+        logger=logger,
+        block_unsafe_output=block_unsafe_output,
+        fail_closed=fail_closed,
+        validation_timeout=validation_timeout,
+        max_text_size=max_text_size,
+    )
+
+
+__all__ = [
+    # Version
+    "__version__",
+    # Main classes
+    "GuardianClawAnthropic",
+    "GuardianClawAsyncAnthropic",
+    "GuardianClawAnthropicWrapper",
+    # Functions
+    "wrap_anthropic_client",
+    "inject_seed",
+    "create_safe_client",
+    # Logging
+    "GuardianClawLogger",
+    "set_logger",
+    "get_logger",
+    # Exceptions
+    "TextTooLargeError",
+    "ValidationTimeoutError",
+    # Constants
+    "ANTHROPIC_AVAILABLE",
+    "SEMANTIC_VALIDATOR_AVAILABLE",
+    "DEFAULT_VALIDATION_MODEL",
+    "DEFAULT_MAX_TEXT_SIZE",
+    "DEFAULT_VALIDATION_TIMEOUT",
+]

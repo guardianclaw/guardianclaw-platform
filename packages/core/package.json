@@ -1,0 +1,57 @@
+{
+  "name": "@guardianclaw/core",
+  "version": "2.25.0",
+  "description": "Core validation module for GuardianClaw - CLAW Protocol implementation",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./patterns": {
+      "types": "./dist/patterns.d.ts",
+      "import": "./dist/patterns.mjs",
+      "require": "./dist/patterns.js"
+    },
+    "./memory-patterns": {
+      "types": "./dist/memory-patterns.d.ts",
+      "import": "./dist/memory-patterns.mjs",
+      "require": "./dist/memory-patterns.js"
+    }
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "tsup src/index.ts --format cjs,esm --dts",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "lint": "eslint src --ext .ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    
+    "ai-safety",
+    "claw",
+    "validation",
+    "jailbreak-detection"
+  ],
+  "author": "GuardianClaw Team",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.3.0",
+    "vitest": "^1.0.0"
+  },
+  "peerDependencies": {
+    "typescript": ">=4.7.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

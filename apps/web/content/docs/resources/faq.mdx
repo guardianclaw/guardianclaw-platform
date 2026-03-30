@@ -1,0 +1,106 @@
+﻿---
+title: "FAQ"
+description: "Frequently asked questions about GuardianClaw"
+category: "resources"
+order: 3
+lastUpdated: "2026-01-23"
+---
+
+# Frequently Asked Questions
+
+## General
+
+### What is GuardianClaw?
+
+GuardianClaw is an AI safety framework that protects across three surfaces: LLMs (text safety), Agents (action safety), and Robots (physical safety). It implements the CLAW protocol for four-gate validation.
+
+### What is CLAW?
+
+CLAW stands for Credibility, Limits, Avoidance, Worth - four validation gates that every input and output must pass through. All four gates must pass for content to be considered safe.
+
+### Is GuardianClaw free?
+
+Yes. The core library is MIT licensed. Heuristic validation is completely free. Semantic validation uses your own API keys (OpenAI/Anthropic).
+
+## Technical
+
+### How fast is validation?
+
+- Heuristic: <10ms
+- Semantic: 1-5 seconds (depends on LLM)
+
+### What's the accuracy?
+
+- Heuristic: ~50% (pattern matching)
+- Semantic: ~90% (LLM-based)
+
+### Does it work offline?
+
+Yes. Heuristic validation is 100% local with no network calls. Semantic validation requires API access.
+
+### Which LLMs are supported?
+
+All major LLMs via integrations:
+- OpenAI (GPT-4o, GPT-4o-mini)
+- Anthropic (Claude 3.5, Claude 3)
+- Google (Gemini)
+- Local models via Ollama
+
+## Integration
+
+### Which frameworks are supported?
+
+17 frameworks including:
+- ElizaOS, VoltAgent, Moltbot
+- OpenAI, Anthropic, Google ADK
+- Solana Agent Kit, Coinbase AgentKit, Virtuals
+- garak, PyRIT, Promptfoo, OpenGuardrails
+
+### How do I add GuardianClaw to my agent?
+
+```python
+from guardianclaw import GuardianClaw
+
+claw = GuardianClaw(seed_level="standard")
+seed = claw.get_seed()
+
+# Add seed to your LLM's system prompt
+messages = [
+    {"role": "system", "content": seed},
+    {"role": "user", "content": user_input}
+]
+```
+
+### Can I customize the validation?
+
+Yes. You can:
+- Create custom validators extending base classes
+- Add domain-specific patterns
+- Configure thresholds and limits
+- Add custom fiduciary rules
+
+## Security
+
+### Does GuardianClaw store my data?
+
+No. All validation happens locally or through your own API keys. No data is sent to GuardianClaw servers.
+
+### Is it secure against prompt injection?
+
+GuardianClaw includes 100+ jailbreak detection patterns and semantic analysis. Combined with seed injection, it provides strong protection against prompt injection attacks.
+
+### What about memory attacks?
+
+Memory Shield v2.0 provides HMAC-based signing and content validation to protect against memory injection attacks (85% of unprotected agents are vulnerable according to Princeton research).
+
+## Support
+
+### Where can I get help?
+
+- GitHub Issues: https://github.com/guardianclaw/guardianclaw-platform/issues
+- Documentation: https://guardianclaw.org/docs
+- Discord: Coming soon
+
+### How do I report a security issue?
+
+Email security@guardianclaw.org for responsible disclosure.

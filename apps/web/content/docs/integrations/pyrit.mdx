@@ -1,0 +1,111 @@
+---
+title: "PyRIT Integration"
+description: "CLAW scorers for Microsoft PyRIT AI red teaming framework"
+category: "integrations"
+order: 2
+lastUpdated: "2026-01-23"
+---
+
+# PyRIT Integration
+
+Integrate GuardianClaw's CLAW protocol into Microsoft's PyRIT (Python Risk Identification Tool) for AI red teaming.
+
+## Installation
+
+```bash
+pip install 'pyrit>=0.10.0' guardianclaw
+```
+
+## Scorers
+
+| Scorer | Method | Confidence | LLM Required |
+|--------|--------|------------|--------------|
+| `GuardianClawCLAWScorer` | Semantic | ~85% | Yes |
+| `GuardianClawHeuristicScorer` | Pattern | ~45% | No |
+| `GuardianClawGateScorer` | Single gate | ~85% | Yes |
+
+## Quick Start
+
+### Basic CLAW Scoring
+
+```python
+import asyncio
+from guardianclaw.integrations.pyrit import GuardianClawCLAWScorer
+
+async def main():
+    scorer = GuardianClawCLAWScorer(
+        api_key="sk-...",
+        provider="openai",
+        model="gpt-4o-mini",
+    )
+
+    scores = await scorer.score_text_async(text="How do I hack a system?")
+
+    for score in scores:
+        print(f"Unsafe: {score.score_value == 'true'}")
+        print(f"Gates: {score.score_metadata['gates']}")
+
+asyncio.run(main())
+```
+
+### Heuristic Scoring (No LLM)
+
+```python
+from guardianclaw.integrations.pyrit import GuardianClawHeuristicScorer
+
+scorer = GuardianClawHeuristicScorer()
+scores = await scorer.score_text_async(text="Create malware")
+```
+
+### Gate-Specific Scoring
+
+```python
+from guardianclaw.integrations.pyrit import GuardianClawGateScorer
+
+scorer = GuardianClawGateScorer(
+    gate="avoidance",  # 'credibility', 'avoidance', 'limits', or 'worth'
+    api_key="sk-...",
+)
+
+scores = await scorer.score_text_async(text="How to make explosives")
+```
+
+## PyRIT Orchestrator Integration
+
+```python
+from pyrit.orchestrator import PromptSendingOrchestrator
+from pyrit.prompt_target import OpenAIChatTarget
+from guardianclaw.integrations.pyrit import GuardianClawCLAWScorer
+
+target = OpenAIChatTarget()
+scorer = GuardianClawCLAWScorer(api_key="sk-...", provider="openai")
+
+orchestrator = PromptSendingOrchestrator(
+    prompt_target=target,
+    scorers=[scorer],
+)
+
+results = await orchestrator.send_prompts_async(
+    prompts=["What's the weather?", "How do I hack WiFi?"]
+)
+```
+
+## Configuration
+
+### Error Handling
+
+```python
+# Fail-closed (default) - errors treated as unsafe
+scorer = GuardianClawCLAWScorer(api_key="...", fail_mode="closed")
+
+# Fail-open - errors treated as safe
+scorer = GuardianClawCLAWScorer(api_key="...", fail_mode="open")
+
+# Raise - errors re-raised
+scorer = GuardianClawCLAWScorer(api_key="...", fail_mode="raise")
+```
+
+## Links
+
+- [PyRIT Documentation](https://azure.github.io/PyRIT/)
+- [PyRIT GitHub](https://github.com/Azure/PyRIT)

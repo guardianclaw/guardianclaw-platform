@@ -1,0 +1,204 @@
+﻿---
+title: "JetBrains Integration"
+description: "AI safety guardrails for LLM prompts in IntelliJ IDEA, PyCharm, WebStorm, and other JetBrains IDEs"
+category: "integrations"
+order: 31
+lastUpdated: "2026-01-24"
+---
+
+# JetBrains Integration
+
+AI safety guardrails for LLM prompts using the CLAW protocol (Credibility, Limits, Avoidance, Worth).
+
+## Supported IDEs
+
+| IDE | Status |
+|-----|--------|
+| IntelliJ IDEA (Community & Ultimate) | Supported |
+| PyCharm (Community & Professional) | Supported |
+| WebStorm | Supported |
+| PhpStorm | Supported |
+| Rider | Supported |
+| CLion | Supported |
+| GoLand | Supported |
+| RubyMine | Supported |
+| DataGrip | Supported |
+| Android Studio | Supported |
+
+**Minimum Version**: 2024.1+
+
+## Installation
+
+### From JetBrains Marketplace
+
+1. Open your JetBrains IDE
+2. Go to **Settings > Plugins > Marketplace**
+3. Search for "GuardianClaw AI Safety"
+4. Click **Install**
+
+Or visit: https://plugins.jetbrains.com/plugin/29459-claw-ai-safety
+
+### From Disk
+
+1. Download the `.zip` from [JetBrains Marketplace](https://plugins.jetbrains.com/plugin/29459-claw-ai-safety) or build from source
+2. Go to **Settings > Plugins > Install Plugin from Disk**
+3. Select the downloaded `.zip` file
+
+## Features
+
+### Core Safety Analysis
+
+| Feature | Description |
+|---------|-------------|
+| **CLAW Protocol** | Four-gate validation system |
+| **Real-time Analysis** | Analyze code and prompts for safety issues |
+| **Semantic Analysis** | Optional LLM-powered deep analysis |
+| **Seed Insertion** | Insert alignment seeds into your prompts |
+
+### Security Scanning
+
+| Action | Description |
+|--------|-------------|
+| **Scan Secrets** | Detect exposed API keys, passwords, tokens (67+ patterns) |
+| **Sanitize Prompt** | Identify prompt injection attempts |
+| **Validate Output** | Check for XSS, command injection, leaked secrets |
+| **Scan SQL Injection** | Detect SQL injection patterns (8 categories) |
+
+### Compliance Checking
+
+| Action | Description |
+|--------|-------------|
+| **Check OWASP LLM Top 10** | Scan for OWASP vulnerabilities |
+| **Check EU AI Act** | Verify EU AI Act compliance (Articles 5, 6, 52) |
+| **Check CSA AICM** | Validate against CSA controls |
+| **Full Compliance Check** | Run all compliance frameworks |
+
+### Metrics Dashboard
+
+Track analysis history and trends, security scan statistics, compliance check metrics with persistent storage across sessions.
+
+## Usage
+
+### CLAW Analysis
+
+1. Select text in the editor
+2. Press `Ctrl+Shift+Alt+S` or right-click **GuardianClaw > Analyze Selection**
+3. View results in the GuardianClaw tool window
+
+### Security Scanning
+
+Right-click selected text or use **Tools > GuardianClaw**:
+
+| Action | Description |
+|--------|-------------|
+| **Scan Secrets** | Detect exposed API keys, passwords, tokens |
+| **Sanitize Prompt** | Identify prompt injection attempts |
+| **Validate Output** | Check for XSS, command injection, leaked secrets |
+| **Scan SQL Injection** | Detect SQL injection patterns |
+
+### Insert Seeds
+
+1. Place cursor where you want to insert
+2. Use **Tools > GuardianClaw > Insert Standard/Minimal Seed**
+
+## Configuration
+
+Go to **Settings > Tools > GuardianClaw AI Safety**
+
+### Supported Providers
+
+| Provider | API Key Required | Description |
+|----------|------------------|-------------|
+| **OpenAI** | Yes | GPT-4o, GPT-4o-mini |
+| **Anthropic** | Yes | Claude 3 Haiku, Sonnet, Opus |
+| **Ollama** | No | Local models (llama3.2, mistral, qwen2.5) |
+| **OpenAI-compatible** | Yes | Groq, Together AI, or any OpenAI-compatible API |
+
+### Ollama (Local, Free)
+
+Run models locally with no API key:
+
+1. [Install Ollama](https://ollama.ai)
+2. Pull a model: `ollama pull llama3.2`
+3. Start the server: `ollama serve`
+4. In Settings, set:
+   - Provider: `ollama`
+   - Endpoint: `http://localhost:11434`
+   - Model: `llama3.2`
+
+### OpenAI-Compatible Endpoints
+
+| Provider | Endpoint | Example Model |
+|----------|----------|---------------|
+| Groq | `https://api.groq.com` | `llama-3.3-70b-versatile` |
+| Together AI | `https://api.together.xyz` | `meta-llama/Llama-3.3-70B-Instruct-Turbo` |
+
+### API Key Storage
+
+API keys are stored securely using the IDE's built-in credential storage (PasswordSafe).
+
+| Configuration | Analysis Type |
+|---------------|---------------|
+| Without API key | Heuristic analysis (pattern-based, limited) |
+| With API key or Ollama | Semantic analysis (LLM-powered, recommended) |
+
+## Keyboard Shortcuts
+
+| Action | Shortcut |
+|--------|----------|
+| Analyze Selection | `Ctrl+Shift+Alt+S` |
+| Analyze File | `Ctrl+Shift+Alt+F` |
+
+## The CLAW Protocol
+
+Every request is evaluated through four gates:
+
+| Gate | Function |
+|------|----------|
+| **Truth** | Detects deception and misinformation |
+| **Harm** | Identifies potential harm |
+| **Scope** | Checks boundary violations |
+| **Purpose** | Validates legitimate purpose |
+
+All four gates must pass for content to be considered safe.
+
+## Building from Source
+
+### Prerequisites
+
+| Requirement | Version |
+|-------------|---------|
+| JDK | 17+ |
+| Gradle | 8.13+ |
+
+### Build Commands
+
+```bash
+# Clone the repository
+git clone https://github.com/guardianclaw/guardianclaw-platform.git
+cd claw/packages/jetbrains
+
+# Build the plugin
+./gradlew buildPlugin
+
+# The plugin ZIP will be in build/distributions/
+```
+
+### Development Commands
+
+```bash
+# Run tests
+./gradlew test
+
+# Run in development mode
+./gradlew runIde
+
+# Verify plugin
+./gradlew verifyPlugin
+```
+
+## Links
+
+- [JetBrains Marketplace](https://plugins.jetbrains.com/plugin/29459-claw-ai-safety)
+- [GitHub Repository](https://github.com/guardianclaw/guardianclaw-platform/tree/main/packages/jetbrains)
+- [Documentation](https://guardianclaw.org/docs)

@@ -1,0 +1,264 @@
+---
+title: "Compliance"
+description: "Meeting regulatory requirements with GuardianClaw"
+category: "guides"
+order: 4
+lastUpdated: "2026-01-23"
+---
+
+# Compliance Guide
+
+How GuardianClaw helps meet regulatory requirements for AI systems.
+
+## Overview
+
+GuardianClaw provides compliance checking for multiple regulatory frameworks:
+
+| Framework | Module | Coverage |
+|-----------|--------|----------|
+| EU AI Act | `EUAIActComplianceChecker` | Strong |
+| OWASP LLM Top 10 (2025) | `OWASPLLMChecker` | 60% Strong |
+| OWASP Agentic Top 10 | `OWASPAgenticChecker` | 65% |
+| CSA AI Controls Matrix | `CSAAICMComplianceChecker` | Partial |
+
+## EU AI Act
+
+The EU AI Act (Regulation 2024/1689) establishes a risk-based regulatory framework for AI systems.
+
+### CLAW Mapping
+
+| EU AI Act Area | CLAW Support | Coverage |
+|----------------|--------------|----------|
+| Article 5: Prohibited Practices | Harm + Scope | Strong |
+| Article 9: Risk Management | All Gates | Strong |
+| Article 13: Transparency | Truth | Moderate |
+| Article 14: Human Oversight | Scope + Purpose | Strong |
+
+### Usage
+
+```python
+from guardianclaw.compliance import EUAIActComplianceChecker
+
+checker = EUAIActComplianceChecker(api_key="sk-...")
+
+result = checker.check_compliance(
+    content="Based on your social behavior, your credit score is...",
+    context="financial",
+    system_type="high_risk",
+)
+
+if not result.compliant:
+    print(f"Violations: {result.article_5_violations}")
+    print(f"Recommendations: {result.recommendations}")
+```
+
+### Risk Levels
+
+| Level | Description |
+|-------|-------------|
+| `unacceptable` | Banned practices detected |
+| `high` | Multiple gate failures |
+| `limited` | Single gate failure |
+| `minimal` | All gates pass |
+
+### Article 5 Detection
+
+GuardianClaw's Harm and Scope gates detect prohibited practices:
+
+- Subliminal manipulation
+- Exploiting vulnerabilities
+- Social scoring
+- Emotion recognition misuse
+
+```python
+# Detect subliminal manipulation
+content = "Use hidden triggers to influence purchasing decisions"
+result = checker.check_compliance(content)
+# Returns: compliant=False, article_5_violations=["Article 5(1)(a): Potential manipulation"]
+```
+
+## OWASP LLM Top 10 (2025)
+
+The OWASP Top 10 for LLM Applications 2025 identifies critical risks in LLM applications.
+
+### CLAW Coverage Summary
+
+| Vulnerability | CLAW Gate | Coverage |
+|---------------|-----------|----------|
+| LLM01: Prompt Injection | **Scope** | Strong |
+| LLM02: Sensitive Information Disclosure | **Truth + Harm** | Strong |
+| LLM03: Supply Chain | — | Indirect |
+| LLM04: Data and Model Poisoning | — | Indirect |
+| LLM05: Improper Output Handling | **Truth + Harm** | Strong |
+| LLM06: Excessive Agency | **Scope + Purpose** | Strong |
+| LLM07: System Prompt Leakage | **Scope** | Moderate |
+| LLM08: Vector and Embedding Weaknesses | — | Not Applicable |
+| LLM09: Misinformation | **Truth** | Strong |
+| LLM10: Unbounded Consumption | — | Not Applicable |
+
+**Summary:** 6/10 Strong, 2/10 Indirect, 2/10 Not Applicable
+
+### Usage
+
+```python
+from guardianclaw.compliance import OWASPLLMChecker
+
+checker = OWASPLLMChecker(api_key="sk-...")
+
+# Check input (pre-inference)
+input_result = checker.check_input(user_input)
+if not input_result.secure:
+    print(f"Vulnerabilities: {input_result.vulnerabilities_detected}")
+
+# Check output (post-inference)
+output_result = checker.check_output(llm_output)
+
+# Check full pipeline
+result = checker.check_pipeline(
+    input_content=user_input,
+    output_content=llm_output,
+)
+```
+
+### Vulnerabilities Detected
+
+| ID | Vulnerability | Detection Method |
+|----|---------------|------------------|
+| LLM01 | Prompt Injection | Scope gate, pattern matching |
+| LLM02 | Sensitive Information Disclosure | Truth + Harm gates |
+| LLM05 | Improper Output Handling | Output validation |
+| LLM06 | Excessive Agency | Scope + Purpose gates |
+| LLM07 | System Prompt Leakage | Scope gate |
+| LLM09 | Misinformation | Truth gate |
+
+## OWASP Agentic Top 10 (2026)
+
+Check coverage for agentic AI vulnerabilities.
+
+```python
+from guardianclaw.compliance import OWASPAgenticChecker
+
+checker = OWASPAgenticChecker()
+
+result = checker.get_coverage_assessment()
+print(f"Overall coverage: {result.overall_coverage}%")
+
+for vuln in result.vulnerabilities:
+    print(f"{vuln.id}: {vuln.coverage_level}")
+```
+
+### Coverage Summary
+
+| ID | Vulnerability | GuardianClaw Coverage |
+|----|---------------|-------------------|
+| AA01 | Agentic Misalignment | Full |
+| AA02 | Tool Misuse | Full |
+| AA03 | Privilege Escalation | Full |
+| AA04 | Memory Poisoning | Full (Memory Shield) |
+| AA05 | Identity Spoofing | Full |
+| AA06 | Prompt/Instruction Theft | Partial |
+| AA07 | Resource Overconsumption | Partial |
+| AA08 | Multi-Agent Manipulation | Partial |
+| AA09 | Supply Chain Vulnerabilities | None |
+| AA10 | Insufficient Logging | None |
+
+## CSA AI Controls Matrix
+
+Check against Cloud Security Alliance AI Controls Matrix.
+
+```python
+from guardianclaw.compliance import CSAAICMComplianceChecker
+
+checker = CSAAICMComplianceChecker(api_key="sk-...")
+
+result = checker.check_compliance(
+    content=ai_output,
+    domains=["GRC", "SEC"],  # Optional domain filter
+)
+```
+
+## Convenience Functions
+
+```python
+from guardianclaw.compliance import (
+    check_eu_ai_act_compliance,
+    check_owasp_llm_compliance,
+    get_owasp_agentic_coverage,
+    check_csa_aicm_compliance,
+)
+
+# One-off checks
+result = check_eu_ai_act_compliance(content, api_key="...")
+result = check_owasp_llm_compliance(content, validation_type="output")
+result = get_owasp_agentic_coverage()
+result = check_csa_aicm_compliance(content, api_key="...")
+```
+
+## Implementation Patterns
+
+### Pre-Deployment Compliance Check
+
+```python
+from guardianclaw.compliance import EUAIActComplianceChecker
+
+class ComplianceGuard:
+    def __init__(self):
+        self.checker = EUAIActComplianceChecker()
+
+    def check_before_deploy(self, ai_system_output: str) -> bool:
+        result = self.checker.check_compliance(
+            content=ai_system_output,
+            system_type="high_risk",
+        )
+
+        if not result.compliant:
+            self.log_violation(result)
+            return False
+
+        return True
+```
+
+### Continuous Monitoring
+
+```python
+class ComplianceMonitor:
+    def __init__(self):
+        self.checker = OWASPLLMChecker()
+        self.violations = []
+
+    def monitor_interaction(self, input_text: str, output_text: str):
+        result = self.checker.check_pipeline(
+            input_content=input_text,
+            output_content=output_text,
+        )
+
+        if not result.compliant:
+            self.violations.append({
+                "timestamp": datetime.now(),
+                "input": input_text,
+                "output": output_text,
+                "issues": result.issues,
+            })
+```
+
+## Limitations
+
+GuardianClaw compliance checking does NOT replace:
+
+1. Legal compliance review
+2. Technical documentation (Article 11)
+3. Record-keeping systems (Article 12)
+4. Conformity assessment procedures
+5. Registration with EU database
+6. Human oversight implementation
+
+Use GuardianClaw as one layer of your compliance strategy, not the entire solution.
+
+## Timeline (EU AI Act)
+
+| Date | Milestone | CLAW Relevance |
+|------|-----------|----------------|
+| 2 Feb 2025 | Prohibited practices effective | CLAW helps detect |
+| 2 Aug 2025 | GPAI rules apply | Partial support |
+| 2 Aug 2026 | High-risk rules apply | Strong support |
+| 2 Aug 2027 | Legacy systems compliance | Can retrofit |

@@ -1,0 +1,229 @@
+﻿---
+title: "Chat API"
+description: "Chat API reference with seed injection"
+category: "api"
+order: 2
+lastUpdated: "2026-01-23"
+---
+
+# Chat API Reference
+
+Chat with automatic seed injection and response validation.
+
+## Overview
+
+The Chat API provides a simple way to interact with LLMs while automatically:
+- Injecting alignment seeds into system prompts
+- Validating responses through CLAW gates
+- Managing conversation history
+
+## Python SDK
+
+### GuardianClaw.chat()
+
+Send a message with automatic seed injection.
+
+```python
+from guardianclaw import GuardianClaw
+
+claw = GuardianClaw(
+    seed_level="standard",
+    provider="openai",
+    api_key="sk-...",
+)
+
+result = claw.chat(
+    message="Help me write a Python function",
+    validate_response=True,
+)
+
+print(result["response"])
+```
+
+### Parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `message` | `str` | Required | User message |
+| `conversation` | `List[Dict]` | `None` | Conversation history |
+| `validate_response` | `bool` | `True` | Whether to validate the response |
+
+### Response
+
+```python
+{
+    "response": "Here's a Python function...",
+    "model": "gpt-4o-mini",
+    "provider": "openai",
+    "seed_level": "standard",
+    "validation": {
+        "is_safe": True,
+        "violations": [],
+        "layer": "both",
+        "risk_level": "low"
+    }
+}
+```
+
+### Conversation History
+
+Maintain context across messages:
+
+```python
+conversation = []
+
+# First message
+result = claw.chat("Hello, who are you?")
+conversation.append({"role": "user", "content": "Hello, who are you?"})
+conversation.append({"role": "assistant", "content": result["response"]})
+
+# Follow-up with history
+result = claw.chat(
+    message="Tell me more about your capabilities",
+    conversation=conversation,
+)
+```
+
+## REST API
+
+### POST /chat
+
+```bash
+curl -X POST https://api.guardianclaw.org/chat \
+  -H "Content-Type: application/json" \
+  -d '{
+    "message": "Help me understand machine learning",
+    "seed_level": "standard",
+    "provider": "openai",
+    "validate_response": true
+  }'
+```
+
+### Request Body
+
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `message` | string | Yes | - | User message |
+| `seed_level` | string | No | `"standard"` | Seed level |
+| `provider` | string | No | `"openai"` | LLM provider |
+| `model` | string | No | Provider default | Model name |
+| `conversation` | array | No | `null` | Conversation history |
+| `validate_response` | boolean | No | `true` | Validate response |
+
+### Conversation Format
+
+```json
+{
+  "message": "Continue our discussion",
+  "conversation": [
+    {"role": "user", "content": "Hello"},
+    {"role": "assistant", "content": "Hi there!"},
+    {"role": "user", "content": "Tell me about AI"}
+  ]
+}
+```
+
+### Response
+
+```json
+{
+  "response": "Machine learning is a subset of artificial intelligence...",
+  "model": "gpt-4o-mini",
+  "provider": "openai",
+  "seed_level": "standard",
+  "validation": {
+    "is_safe": true,
+    "violations": [],
+    "layer": "both",
+    "risk_level": "low"
+  }
+}
+```
+
+## Providers
+
+### OpenAI
+
+```python
+claw = GuardianClaw(
+    provider="openai",
+    model="gpt-4o-mini",  # or "gpt-4o"
+    api_key="sk-...",  # or set OPENAI_API_KEY
+)
+```
+
+### Anthropic
+
+```python
+claw = GuardianClaw(
+    provider="anthropic",
+    model="claude-3-haiku-20240307",
+    api_key="sk-ant-...",  # or set ANTHROPIC_API_KEY
+)
+```
+
+## Seed Levels
+
+| Level | Tokens | Description |
+|-------|--------|-------------|
+| `minimal` | ~360 | Essential CLAW gates only |
+| `standard` | ~1K | Balanced safety with examples |
+| `full` | ~1.9K | Comprehensive with anti-self-preservation |
+
+## Response Validation
+
+When `validate_response=True`, responses are checked through:
+
+1. **Heuristic Layer**: Pattern matching (700+ patterns)
+2. **Semantic Layer**: LLM-based CLAW analysis (if API key available)
+
+### Validation Result
+
+```python
+{
+    "is_safe": True,
+    "violations": [],
+    "layer": "both",  # "heuristic", "semantic", or "both"
+    "risk_level": "low"  # "low", "medium", "high", "critical"
+}
+```
+
+### Handling Blocked Responses
+
+```python
+result = claw.chat("Some message")
+
+if result.get("validation") and not result["validation"]["is_safe"]:
+    print(f"Response blocked: {result['validation']['violations']}")
+else:
+    print(result["response"])
+```
+
+## Error Handling
+
+### API Key Not Configured
+
+```python
+try:
+    result = claw.chat("Hello")
+except Exception as e:
+    # OPENAI_API_KEY or ANTHROPIC_API_KEY not set
+    print(f"Error: {e}")
+```
+
+### Provider Errors
+
+```python
+try:
+    result = claw.chat("Hello")
+except Exception as e:
+    # Rate limit, API error, etc.
+    print(f"Provider error: {e}")
+```
+
+## Best Practices
+
+1. **Choose appropriate seed level**: Use `standard` for most cases
+2. **Enable response validation**: Keep `validate_response=True`
+3. **Handle validation failures**: Check `validation.is_safe` before using response
+4. **Manage conversation length**: Trim old messages to avoid token limits

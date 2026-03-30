@@ -1,0 +1,87 @@
+---
+title: "Validators API"
+description: "Individual gate validators and pattern detectors"
+category: "api"
+order: 3
+lastUpdated: "2026-01-23"
+---
+
+# Validators API
+
+Individual gate validators and pattern detectors.
+
+## CLAW Validator
+
+Full 4-gate validation in one call.
+
+```python
+from guardianclaw.validators import CLAWValidator
+
+validator = CLAWValidator()
+result = validator.validate("your text here")
+
+print(result["is_safe"])      # True or False
+print(result["gates"])        # Status of each gate
+print(result["violations"])   # List of issues
+```
+
+## Individual Gates
+
+### Credibility Gate
+
+```python
+from guardianclaw.validators import TruthGate
+
+gate = TruthGate()
+is_safe, violations = gate.validate("Content to check")
+```
+
+### Avoidance Gate
+
+```python
+from guardianclaw.validators import HarmGate
+
+gate = HarmGate()
+is_safe, violations = gate.validate("Content to check")
+```
+
+### Limits Gate
+
+```python
+from guardianclaw.validators import ScopeGate
+
+gate = ScopeGate()
+is_safe, violations = gate.validate("Content to check")
+```
+
+### Worth Gate
+
+```python
+from guardianclaw.validators import PurposeGate
+
+gate = PurposeGate()
+is_safe, violations = gate.validate("Content to check")
+```
+
+## Semantic Validator
+
+LLM-based deep validation (~90% accuracy).
+
+```python
+from guardianclaw.validators import SemanticValidator
+
+validator = SemanticValidator(
+    provider="openai",
+    api_key="sk-..."
+)
+result = validator.validate("your text here")
+```
+
+## Comparison
+
+| Aspect | Heuristic | Semantic |
+|--------|-----------|----------|
+| Speed | <10ms | 1-5s |
+| Cost | Free | ~$0.0005/call |
+| Patterns | 700+ | LLM reasoning |
+| Accuracy | ~50% | ~90% |

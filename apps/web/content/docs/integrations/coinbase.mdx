@@ -1,0 +1,114 @@
+---
+title: "Coinbase Integration"
+description: "Security integration for Coinbase AgentKit and x402 payments"
+category: "integrations"
+order: 2
+lastUpdated: "2026-01-23"
+---
+
+# Coinbase Integration
+
+Comprehensive security integration for Coinbase ecosystem: AgentKit guardrails and x402 payment validation.
+
+## Installation
+
+```bash
+pip install guardianclaw coinbase-agentkit
+
+# For x402 support:
+pip install guardianclaw x402 httpx
+```
+
+## Features
+
+- **AgentKit Guardrails**: ActionProvider with CLAW validation
+- **x402 Payment Validation**: CLAW-based payment validation
+- **EVM Address Validation**: EIP-55 checksum validation
+- **Transaction Limits**: Configurable spending limits
+- **DeFi Risk Assessment**: Risk analysis for DeFi interactions
+
+## AgentKit Integration
+
+```python
+from coinbase_agentkit import AgentKit
+from guardianclaw.integrations.coinbase import claw_action_provider
+
+provider = claw_action_provider(security_profile="strict")
+agent = AgentKit(action_providers=[provider])
+
+# Actions available:
+# - claw_validate_transaction
+# - claw_validate_address
+# - claw_check_action_safety
+# - claw_assess_defi_risk
+```
+
+## Transaction Validation
+
+```python
+from guardianclaw.integrations.coinbase import (
+    TransactionValidator,
+    ChainType,
+    get_default_config,
+)
+
+config = get_default_config("standard")
+validator = TransactionValidator(config=config)
+
+result = validator.validate(
+    action="native_transfer",
+    from_address="0x123...",
+    to_address="0x456...",
+    amount=50.0,
+    chain=ChainType.BASE_MAINNET,
+    purpose="Payment for services",
+)
+
+if result.should_proceed:
+    # Execute transaction
+    pass
+```
+
+## x402 Payment Validation
+
+```python
+from guardianclaw.integrations.coinbase import GuardianClawX402Middleware
+
+middleware = GuardianClawX402Middleware()
+
+result = middleware.validate_payment(
+    endpoint="https://api.example.com/paid",
+    payment_requirements=payment_req,
+    wallet_address="0x123...",
+)
+```
+
+## Security Profiles
+
+| Profile | Max Single | Max Daily | Use Case |
+|---------|------------|-----------|----------|
+| `permissive` | $1,000 | $5,000 | Development |
+| `standard` | $100 | $500 | General usage |
+| `strict` | $25 | $100 | Production |
+| `paranoid` | $10 | $50 | Maximum security |
+
+## High-Risk Actions
+
+Actions requiring extra validation:
+- `native_transfer`, `transfer`, `approve`
+- `deploy_contract`, `deploy_token`
+- `trade`, `supply`, `withdraw`, `borrow`
+
+## Supported Networks
+
+- Ethereum (Mainnet, Sepolia)
+- Base (Mainnet, Sepolia)
+- Polygon (Mainnet, Amoy)
+- Arbitrum (Mainnet, Sepolia)
+- Optimism (Mainnet, Sepolia)
+- Avalanche (Mainnet, Fuji)
+
+## Links
+
+- [Coinbase AgentKit](https://github.com/coinbase/agentkit)
+- [x402 Protocol](https://github.com/coinbase/x402)

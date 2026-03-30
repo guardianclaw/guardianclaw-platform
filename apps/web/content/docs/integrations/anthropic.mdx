@@ -1,0 +1,122 @@
+---
+title: "Anthropic SDK Integration"
+description: "CLAW safety validation wrappers for the Anthropic Python SDK"
+category: "integrations"
+order: 2
+lastUpdated: "2026-01-23"
+---
+
+# Anthropic SDK Integration
+
+Wrappers for the official Anthropic Python SDK with CLAW safety validation.
+
+## Installation
+
+```bash
+pip install guardianclaw[anthropic]
+```
+
+## Components
+
+| Component | Description |
+|-----------|-------------|
+| `GuardianClawAnthropic` | Drop-in replacement for Anthropic client |
+| `GuardianClawAsyncAnthropic` | Async version |
+| `wrap_anthropic_client` | Wrap existing client |
+| `inject_seed` | Add seed to system prompt |
+
+## Quick Start
+
+### Option 1: Drop-in Replacement
+
+```python
+from guardianclaw.integrations.anthropic_sdk import GuardianClawAnthropic
+
+client = GuardianClawAnthropic(api_key="...")
+
+message = client.messages.create(
+    model="claude-sonnet-4-20250514",
+    max_tokens=1024,
+    messages=[{"role": "user", "content": "Hello, Claude"}]
+)
+```
+
+### Option 2: Wrap Existing Client
+
+```python
+from anthropic import Anthropic
+from guardianclaw.integrations.anthropic_sdk import wrap_anthropic_client
+
+client = Anthropic()
+safe_client = wrap_anthropic_client(
+    client,
+    seed_level="standard",
+    validate_input=True,
+)
+```
+
+### Option 3: Inject Seed Only
+
+```python
+from anthropic import Anthropic
+from guardianclaw.integrations.anthropic_sdk import inject_seed
+
+client = Anthropic()
+message = client.messages.create(
+    model="claude-sonnet-4-20250514",
+    system=inject_seed("You are a helpful assistant"),
+    messages=[...]
+)
+```
+
+## Configuration
+
+```python
+GuardianClawAnthropic(
+    api_key=None,
+    seed_level="standard",
+    enable_seed_injection=True,
+    validate_input=True,
+    validate_output=True,
+    validation_model="claude-3-5-haiku-20241022",
+    use_heuristic_fallback=True,
+    block_unsafe_output=False,
+    fail_closed=False,
+    validation_timeout=30.0,
+    max_text_size=50*1024,
+)
+```
+
+## Validation Modes
+
+### Heuristic (Fast)
+
+Content checked against local patterns first. No API calls.
+
+### Semantic (LLM-based)
+
+Deep analysis by LLM for subtle violations.
+
+**Flow:**
+1. Heuristic validation (fast, free)
+2. If passes, semantic validation (slower, API cost)
+3. Both must pass
+
+## Blocked Response Format
+
+```python
+{
+    "id": "blocked",
+    "type": "message",
+    "role": "assistant",
+    "content": [{"type": "text", "text": "Input blocked by GuardianClaw: [reason]"}],
+    "model": "claw-blocked",
+    "stop_reason": "claw_blocked",
+    "claw_blocked": True,
+    "claw_gate": "avoidance",
+}
+```
+
+## Links
+
+- [Anthropic Docs](https://docs.anthropic.com/en/docs)

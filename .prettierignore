@@ -1,0 +1,41 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+.next/
+dist/
+build/
+out/
+.turbo/
+
+# Coverage
+coverage/
+
+# IDE
+.idea/
+.vscode/
+
+# Environment files
+.env*
+!.env.example
+
+# Package manager
+package-lock.json
+pnpm-lock.yaml
+
+# Generated files
+*.generated.ts
+*.generated.tsx
+
+# Logs
+*.log
+
+# Cache
+.cache/
+.eslintcache
+
+# Public assets (may have specific formatting)
+public/
+
+# Migrations (SQL formatting should be preserved)
+supabase/migrations/

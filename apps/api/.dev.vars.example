@@ -1,0 +1,22 @@
+# GuardianClaw Platform - API Environment Variables (Cloudflare Workers)
+# Copy this file to .dev.vars for local development
+# For production, use: wrangler secret put <SECRET_NAME>
+#
+# Reference: SECURITY_SPEC.md Section 9.1
+
+# Supabase Configuration
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_SERVICE_KEY=your-service-role-key
+
+# Authentication
+JWT_SECRET=your-jwt-secret-min-32-chars-long
+
+# Security - IP Hashing (GDPR Compliance)
+# Used to hash IP addresses in logs with daily salt rotation.
+# Generate with: openssl rand -hex 32
+# Reference: SECURITY_SPEC.md Section 9.2.6
+IP_HASH_SECRET=your-ip-hash-secret-min-32-chars
+
+# Optional: External Services
+# OPENAI_API_KEY=
+# ANTHROPIC_API_KEY=

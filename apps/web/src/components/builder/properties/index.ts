@@ -1,0 +1,5 @@
+export { InputProperties } from './input-properties'
+export { ProcessProperties } from './process-properties'
+export { GuardianClawProperties } from './claw-properties'
+export { ToolProperties } from './tool-properties'
+export { OutputProperties } from './output-properties'

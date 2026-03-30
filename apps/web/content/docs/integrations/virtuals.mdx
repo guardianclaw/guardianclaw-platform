@@ -1,0 +1,119 @@
+---
+title: "Virtuals Protocol Integration"
+description: "Safety validation for GAME SDK AI agents"
+category: "integrations"
+order: 3
+lastUpdated: "2026-01-23"
+---
+
+# Virtuals Protocol Integration
+
+Safety validation for AI agents built with the GAME SDK.
+
+## Installation
+
+```bash
+pip install guardianclaw[virtuals]
+```
+
+## Components
+
+| Component | Description |
+|-----------|-------------|
+| `GuardianClawConfig` | Configuration for validation rules |
+| `GuardianClawValidator` | Core CLAW validation engine |
+| `GuardianClawSafetyWorker` | Worker for agent validation |
+| `claw_protected` | Decorator for executables |
+
+## Quick Start
+
+### Add Safety Worker to Agent
+
+```python
+from game_sdk.game.agent import Agent
+from guardianclaw.integrations.virtuals import (
+    GuardianClawConfig,
+    GuardianClawSafetyWorker,
+)
+
+config = GuardianClawConfig(
+    max_transaction_amount=500.0,
+    require_confirmation_above=100.0,
+    block_unsafe=True,
+)
+
+safety_worker = GuardianClawSafetyWorker.create_worker_config(config)
+
+agent = Agent(
+    api_key=api_key,
+    name="SafeAgent",
+    workers=[safety_worker, your_other_worker],
+)
+```
+
+### Decorator Usage
+
+```python
+from guardianclaw.integrations.virtuals import claw_protected
+
+@claw_protected(config=GuardianClawConfig(max_transaction_amount=100))
+def my_transfer(recipient: str, amount: float):
+    return (FunctionResultStatus.DONE, "Success", {})
+```
+
+## Configuration
+
+```python
+GuardianClawConfig(
+    block_unsafe=True,
+    max_transaction_amount=1000.0,
+    require_confirmation_above=100.0,
+    require_purpose_for=["transfer", "swap", "withdraw"],
+    blocked_functions=["drain_wallet", "export_private_key"],
+    memory_integrity_check=False,
+    memory_secret_key=None,
+)
+```
+
+## CLAW Gates
+
+| Gate | Blocks When |
+|------|-------------|
+| **TRUTH** | Context manipulation, misleading names |
+| **HARM** | Blocked functions, key exposure |
+| **SCOPE** | Amount exceeds limit |
+| **PURPOSE** | Sensitive actions without purpose |
+
+## Memory Content Validation
+
+Protects against memory injection attacks:
+
+```python
+config = GuardianClawConfig(
+    memory_integrity_check=True,
+    memory_secret_key="your-secret-key",
+    memory_content_validation=True,
+)
+```
+
+## Fiduciary Validation
+
+```python
+from guardianclaw.integrations.virtuals import (
+    GuardianClawValidator,
+    UserContext,
+    RiskTolerance,
+)
+
+context = UserContext(
+    goals=["maximize profits", "minimize fees"],
+    constraints=["max 10% per trade"],
+    risk_tolerance=RiskTolerance.HIGH,
+)
+
+validator = GuardianClawValidator(user_context=context)
+```
+
+## Links
+
+- [GAME SDK Docs](https://docs.game.virtuals.io/)

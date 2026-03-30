@@ -1,0 +1,167 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "guardianclaw"
+version = "2.26.0"
+description = "AI safety toolkit with CLAW protocol for LLMs, AI agents, and humanoid robots - EU AI Act compliance and practical alignment for developers"
+readme = "README.md"
+license = {text = "MIT"}
+authors = [
+    {name = "GuardianClaw Team", email = "contact@guardianclaw.org"}
+]
+keywords = [
+    "ai",
+    "safety",
+    "alignment",
+    "llm",
+    "guardrails",
+    "claw",
+    "ai-agents",
+    "openai",
+    "openai-agents",
+    "anthropic",
+    "virtuals",
+    "game-sdk",
+    "solana",
+    "garak",
+    "pyrit",
+    "red-teaming",
+    "security-testing",
+    "fiduciary",
+    "openguardrails",
+    "memory-integrity",
+    "eu-ai-act",
+    "ai-regulation",
+    "compliance",
+    "article-5",
+    "high-risk-ai",
+    "human-oversight",
+    "risk-management",
+    "coinbase",
+    "coinbase-agentkit",
+    "agentkit",
+    "x402",
+    "http-402",
+    "payment-validation",
+    "evm",
+    "base-chain",
+    "web3",
+    "defi",
+    "multi-agent",
+    "agent-framework",
+    "google-adk",
+    "gemini",
+    "vertex-ai",
+    "google-cloud",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Security",
+]
+requires-python = ">=3.10"
+dependencies = [
+    "typing_extensions>=4.0.0",
+]
+
+[project.optional-dependencies]
+openai = ["openai>=1.0.0"]
+openai-agents = ["openai-agents>=0.6.0"]
+anthropic = ["anthropic>=0.18.0"]
+mcp = ["mcp>=0.1.0"]
+virtuals = ["game-sdk>=0.1.1"]
+garak = ["garak>=0.9.0"]
+pyrit = ["pyrit>=0.10.0"]
+coinbase = ["httpx>=0.25.0", "pydantic>=2.0.0"]
+coinbase-agentkit = ["coinbase-agentkit>=0.1.0", "httpx>=0.25.0", "pydantic>=2.0.0"]
+x402 = ["httpx>=0.25.0", "pydantic>=2.0.0"]
+google-adk = ["google-adk>=0.1.0"]
+all = [
+    "openai>=1.0.0",
+    "openai-agents>=0.6.0",
+    "anthropic>=0.18.0",
+    "game-sdk>=0.1.1",
+    "httpx>=0.25.0",
+    "pydantic>=2.0.0",
+]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0",
+    "pytest-cov>=4.0.0",
+    "python-dotenv>=1.0.0",
+    "mypy>=1.0.0",
+    "pydantic>=2.0.0",
+    "openai>=1.0.0",
+    "anthropic>=0.18.0",
+]
+
+[project.urls]
+Homepage = "https://guardianclaw.org"
+Documentation = "https://guardianclaw.org/docs"
+Repository = "https://github.com/guardian-claw/guardianclaw"
+Issues = "https://github.com/guardian-claw/guardianclaw/issues"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+guardianclaw = ["seeds/*.txt", "py.typed"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-v --tb=short"
+asyncio_mode = "auto"
+
+[tool.coverage.run]
+source = ["src/guardianclaw"]
+branch = true
+omit = [
+    "*/tests/*",
+    "*/__pycache__/*",
+    "*/test_*.py",
+    "*/example.py",
+    "*/examples/*",
+    "*/providers/*",
+    "*/__main__.py",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise NotImplementedError",
+    "if TYPE_CHECKING:",
+    "if __name__ == .__main__.:",
+    "except ImportError:",
+    "raise ImportError",
+]
+fail_under = 50  # Temporarily lowered while coverage improvements are pending
+show_missing = true
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+ignore_missing_imports = true
+exclude = [
+    "tests/",
+    "build/",
+    "dist/",
+]
+
+[[tool.mypy.overrides]]
+module = "guardianclaw.*"
+disallow_untyped_defs = false
+check_untyped_defs = true
+
+[tool.bandit]
+exclude_dirs = ["tests", "examples"]
+skips = ["B101"]  # assert usage is fine in tests

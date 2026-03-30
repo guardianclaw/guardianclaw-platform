@@ -1,0 +1,9 @@
+<svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
+  <title>Fiduciary AI</title>
+  <!-- GuardianClaw Fiduciary AI - Purpose gate for financial agents -->
+  <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/>
+  <circle cx="12" cy="8" r="2" fill="none" stroke="currentColor" stroke-width="1.5"/>
+  <path d="M12 10v2"/>
+  <path d="M6 14h12" stroke="currentColor" stroke-width="1.5"/>
+  <path d="M7 14l2 4M17 14l-2 4" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+</svg>

@@ -1,0 +1,312 @@
+﻿<idea-plugin>
+    <id>dev.guardianclaw.jetbrains</id>
+    <name>GuardianClaw AI Safety</name>
+    <vendor email="contact@guardianclaw.org" url="https://guardianclaw.org">GuardianClaw Team</vendor>
+
+    <description><![CDATA[
+        <h2>AI Safety Guardrails for LLM Applications</h2>
+
+        <p>GuardianClaw AI Safety provides comprehensive security and compliance analysis for LLM prompts,
+        AI-generated content, and agent workflows. All scanning runs <strong>100% locally</strong> with
+        no data sent to external servers.</p>
+
+        <h3>Core Features</h3>
+        <ul>
+            <li><strong>CLAW Protocol</strong>: Four-gate validation system (Credibility, Limits, Avoidance, Worth)</li>
+            <li><strong>Security Scanning</strong>: Detect 67+ secret patterns, SQL injection, prompt injection</li>
+            <li><strong>Compliance Checking</strong>: EU AI Act, OWASP LLM Top 10, CSA AI Controls Matrix</li>
+            <li><strong>Output Validation</strong>: XSS, command injection, leaked secrets detection</li>
+            <li><strong>Metrics Dashboard</strong>: Track analysis history and trends</li>
+        </ul>
+
+        <h3>Security Scanning</h3>
+        <ul>
+            <li><strong>Scan Secrets</strong>: API keys (OpenAI, AWS, GitHub), tokens, credentials, PII</li>
+            <li><strong>Sanitize Prompt</strong>: Jailbreaks, DAN mode, instruction override, delimiter injection</li>
+            <li><strong>Validate Output</strong>: XSS, command injection, excessive agency, prompt leakage</li>
+            <li><strong>SQL Injection</strong>: 8 attack categories (destructive, UNION, auth bypass, blind)</li>
+        </ul>
+
+        <h3>Compliance Frameworks</h3>
+        <ul>
+            <li><strong>EU AI Act</strong>: Article 5 (prohibited), Article 6 (high-risk), Article 52 (transparency)</li>
+            <li><strong>OWASP LLM Top 10</strong>: LLM01 to LLM10 vulnerability patterns</li>
+            <li><strong>CSA AICM</strong>: Model Security, Data Governance, Application Security</li>
+        </ul>
+
+        <h3>Quick Start</h3>
+        <ol>
+            <li>Select text or open context menu in editor</li>
+            <li>Choose action from GuardianClaw menu</li>
+            <li>View results in GuardianClaw tool window</li>
+        </ol>
+
+        <h3>Optional: Semantic Analysis</h3>
+        <p>Enable LLM-powered deep analysis with OpenAI, Anthropic, or Ollama (local) in Settings.</p>
+
+        <p><a href="https://guardianclaw.org/docs">Documentation</a> |
+        <a href="https://github.com/guardian-claw/guardianclaw-platform">GitHub</a></p>
+    ]]></description>
+
+    <change-notes><![CDATA[
+        <h3>0.3.0 (Major Release)</h3>
+
+        <h4>Security Scanning Module</h4>
+        <ul>
+            <li><strong>Scan Secrets</strong>: 67+ patterns for API keys, tokens, credentials, PII</li>
+            <li><strong>Sanitize Prompt</strong>: Jailbreak detection, DAN mode, instruction override</li>
+            <li><strong>Validate Output</strong>: XSS, command injection, prompt leakage</li>
+            <li><strong>SQL Injection</strong>: 8 attack categories with severity classification</li>
+        </ul>
+
+        <h4>Compliance Checking Module</h4>
+        <ul>
+            <li><strong>EU AI Act</strong>: Article 5 (prohibited), Article 6 (high-risk), Article 52 (transparency)</li>
+            <li><strong>OWASP LLM Top 10</strong>: LLM01, LLM02, LLM05, LLM06, LLM07 patterns</li>
+            <li><strong>CSA AI Controls Matrix</strong>: Model Security, Data Governance, Application Security</li>
+        </ul>
+
+        <h4>Metrics Dashboard</h4>
+        <ul>
+            <li>Track analysis history and trends over time</li>
+            <li>Security scan and compliance check statistics</li>
+            <li>Persistent storage using IntelliJ PropertiesComponent</li>
+        </ul>
+
+        <h4>Quality Improvements</h4>
+        <ul>
+            <li>178 unit tests (100% passing)</li>
+            <li>ReDoS-safe regex patterns</li>
+            <li>Internationalization support (English, Portuguese)</li>
+            <li>CI/CD pipeline with GitHub Actions</li>
+        </ul>
+
+        <h3>0.2.1</h3>
+        <ul>
+            <li>Fix deprecated CredentialAttributes constructor (use named parameters)</li>
+            <li>Full compatibility with IntelliJ 2024.x and 2025.x</li>
+        </ul>
+
+        <h3>0.2.0</h3>
+        <ul>
+            <li>Add Ollama support for local, free semantic analysis</li>
+            <li>Add OpenAI-compatible endpoints (Groq, Together AI)</li>
+            <li>Four LLM providers now available: OpenAI, Anthropic, Ollama, Custom</li>
+            <li>Updated settings UI with provider-specific configuration</li>
+        </ul>
+
+        <h3>0.1.2</h3>
+        <ul>
+            <li>Use non-deprecated CredentialAttributes constructor with userName parameter</li>
+            <li>Full compatibility with IntelliJ 2024.x and 2025.x</li>
+        </ul>
+
+        <h3>0.1.1</h3>
+        <ul>
+            <li>Fix deprecated CredentialAttributes API usage</li>
+            <li>Improved compatibility with IntelliJ 2025.x</li>
+        </ul>
+
+        <h3>0.1.0</h3>
+        <ul>
+            <li>Initial release</li>
+            <li>CLAW protocol validation</li>
+            <li>Semantic analysis with OpenAI/Anthropic</li>
+            <li>Heuristic fallback mode</li>
+            <li>Seed insertion commands</li>
+            <li>Dedicated tool window</li>
+        </ul>
+    ]]></change-notes>
+
+    <depends>com.intellij.modules.platform</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <!-- Application Service for validation logic -->
+        <applicationService
+            serviceImplementation="dev.guardianclaw.jetbrains.services.GuardianClawService"/>
+
+        <!-- Security Service for scanning -->
+        <applicationService
+            serviceImplementation="dev.guardianclaw.jetbrains.services.SecurityService"/>
+
+        <!-- Compliance Service for framework checks -->
+        <applicationService
+            serviceImplementation="dev.guardianclaw.jetbrains.services.ComplianceService"/>
+
+        <!-- Metrics Service for tracking analyses -->
+        <applicationService
+            serviceImplementation="dev.guardianclaw.jetbrains.services.MetricsService"/>
+
+        <!-- Project-level settings state -->
+        <projectService
+            serviceImplementation="dev.guardianclaw.jetbrains.settings.GuardianClawProjectSettings"/>
+
+        <!-- Application-level settings state -->
+        <applicationService
+            serviceImplementation="dev.guardianclaw.jetbrains.settings.GuardianClawApplicationSettings"/>
+
+        <!-- Settings configurable in Preferences -->
+        <applicationConfigurable
+            id="claw.settings"
+            displayName="GuardianClaw AI Safety"
+            groupId="tools"
+            instance="dev.guardianclaw.jetbrains.settings.GuardianClawSettingsConfigurable"/>
+
+        <!-- Tool window for results -->
+        <toolWindow
+            id="GuardianClaw"
+            anchor="bottom"
+            icon="/icons/claw-13.svg"
+            factoryClass="dev.guardianclaw.jetbrains.ui.GuardianClawToolWindowFactory"/>
+
+        <!-- Status bar widget -->
+        <statusBarWidgetFactory
+            id="GuardianClawStatusWidget"
+            implementation="dev.guardianclaw.jetbrains.ui.GuardianClawStatusWidgetFactory"/>
+
+        <!-- Code inspections for real-time analysis -->
+        <localInspection
+            groupName="GuardianClaw AI Safety"
+            shortName="GuardianClawSafetyInspection"
+            displayName="CLAW Safety Analysis"
+            enabledByDefault="true"
+            level="WARNING"
+            implementationClass="dev.guardianclaw.jetbrains.inspections.GuardianClawInspection"/>
+
+        <!-- Notification group -->
+        <notificationGroup
+            id="GuardianClaw Notifications"
+            displayType="BALLOON"/>
+    </extensions>
+
+    <actions>
+        <!-- Main action group -->
+        <group id="GuardianClaw.ActionGroup"
+               text="GuardianClaw"
+               popup="true"
+               icon="/icons/claw-13.svg">
+
+            <action id="GuardianClaw.AnalyzeSelection"
+                    class="dev.guardianclaw.jetbrains.actions.AnalyzeSelectionAction"
+                    text="Analyze Selection"
+                    description="Analyze selected text for safety issues"
+                    icon="AllIcons.Actions.Checked">
+                <keyboard-shortcut keymap="$default" first-keystroke="ctrl shift alt S"/>
+            </action>
+
+            <action id="GuardianClaw.AnalyzeFile"
+                    class="dev.guardianclaw.jetbrains.actions.AnalyzeFileAction"
+                    text="Analyze File"
+                    description="Analyze entire file for safety issues"
+                    icon="AllIcons.Actions.CheckMultiple">
+                <keyboard-shortcut keymap="$default" first-keystroke="ctrl shift alt F"/>
+            </action>
+
+            <separator/>
+
+            <action id="GuardianClaw.InsertSeedStandard"
+                    class="dev.guardianclaw.jetbrains.actions.InsertSeedAction"
+                    text="Insert Standard Seed"
+                    description="Insert the standard GuardianClaw alignment seed"
+                    icon="AllIcons.Actions.AddFile"/>
+
+            <action id="GuardianClaw.InsertSeedMinimal"
+                    class="dev.guardianclaw.jetbrains.actions.InsertMinimalSeedAction"
+                    text="Insert Minimal Seed"
+                    description="Insert the minimal GuardianClaw alignment seed"
+                    icon="AllIcons.Actions.AddFile"/>
+
+            <separator/>
+
+            <action id="GuardianClaw.ShowStatus"
+                    class="dev.guardianclaw.jetbrains.actions.ShowStatusAction"
+                    text="Show Status"
+                    description="Show GuardianClaw analysis status"
+                    icon="AllIcons.General.Information"/>
+
+            <action id="GuardianClaw.OpenSettings"
+                    class="dev.guardianclaw.jetbrains.actions.OpenSettingsAction"
+                    text="Settings..."
+                    description="Open GuardianClaw settings"
+                    icon="AllIcons.General.Settings"/>
+
+            <separator/>
+
+            <!-- Security Scanning Actions -->
+            <action id="GuardianClaw.ScanSecrets"
+                    class="dev.guardianclaw.jetbrains.actions.ScanSecretsAction"
+                    text="Scan Secrets"
+                    description="Scan for API keys, tokens, and credentials"
+                    icon="AllIcons.Ide.HectorOff"/>
+
+            <action id="GuardianClaw.SanitizePrompt"
+                    class="dev.guardianclaw.jetbrains.actions.SanitizePromptAction"
+                    text="Sanitize Prompt"
+                    description="Detect prompt injection attempts"
+                    icon="AllIcons.Actions.Lightning"/>
+
+            <action id="GuardianClaw.ValidateOutput"
+                    class="dev.guardianclaw.jetbrains.actions.ValidateOutputAction"
+                    text="Validate Output"
+                    description="Validate LLM output for security issues"
+                    icon="AllIcons.Actions.PreviewDetails"/>
+
+            <action id="GuardianClaw.ScanSQLInjection"
+                    class="dev.guardianclaw.jetbrains.actions.ScanSQLInjectionAction"
+                    text="SQL Injection Scan"
+                    description="Detect SQL injection patterns"
+                    icon="AllIcons.Providers.Postgresql"/>
+
+            <separator/>
+
+            <!-- Compliance Checking Actions -->
+            <action id="GuardianClaw.CheckComplianceAll"
+                    class="dev.guardianclaw.jetbrains.actions.CheckComplianceAllAction"
+                    text="Check All Compliance"
+                    description="Check against all compliance frameworks"
+                    icon="AllIcons.Actions.ListFiles"/>
+
+            <action id="GuardianClaw.CheckEUAIAct"
+                    class="dev.guardianclaw.jetbrains.actions.CheckEUAIActAction"
+                    text="Check EU AI Act"
+                    description="Check against EU AI Act requirements"
+                    icon="AllIcons.Nodes.SecurityRole"/>
+
+            <action id="GuardianClaw.CheckOWASP"
+                    class="dev.guardianclaw.jetbrains.actions.CheckOWASPAction"
+                    text="Check OWASP LLM"
+                    description="Check against OWASP LLM Top 10"
+                    icon="AllIcons.General.Shield"/>
+
+            <action id="GuardianClaw.CheckCSA"
+                    class="dev.guardianclaw.jetbrains.actions.CheckCSAAction"
+                    text="Check CSA AICM"
+                    description="Check against CSA AI Controls Matrix"
+                    icon="AllIcons.Nodes.Artifact"/>
+
+            <separator/>
+
+            <!-- Metrics Dashboard Actions -->
+            <action id="GuardianClaw.ShowMetrics"
+                    class="dev.guardianclaw.jetbrains.actions.ShowMetricsAction"
+                    text="Show Metrics Dashboard"
+                    description="Display analysis statistics and metrics"
+                    icon="AllIcons.Toolwindows.ToolWindowAnalyzeDataflow"/>
+
+            <action id="GuardianClaw.ClearMetrics"
+                    class="dev.guardianclaw.jetbrains.actions.ClearMetricsAction"
+                    text="Clear Metrics"
+                    description="Clear all stored analysis metrics"
+                    icon="AllIcons.Actions.GC"/>
+
+            <!-- Add to editor popup menu -->
+            <add-to-group group-id="EditorPopupMenu" anchor="last"/>
+        </group>
+
+        <!-- Add to Tools menu -->
+        <group id="GuardianClaw.ToolsMenu">
+            <reference ref="GuardianClaw.ActionGroup"/>
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+        </group>
+    </actions>
+</idea-plugin>
