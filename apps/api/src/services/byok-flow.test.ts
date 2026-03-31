@@ -13,7 +13,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { execute, ExecutionOptions } from './execution'
 
 // Track what parameters execute() receives
-const _lastExecuteOptions: ExecutionOptions | null = null
+let _lastExecuteOptions: ExecutionOptions | null = null
 
 // Mock fetch for OpenAI calls
 const mockFetch = vi.fn()

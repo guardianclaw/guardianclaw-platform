@@ -32,7 +32,7 @@ describe('Prices Service', () => {
     })
 
     it('should have correct GCLAW address', () => {
-      expect(TOKEN_ADDRESSES.GCLAW).toBe(process.env.NEXT_PUBLIC_GCLAW_MINT || '')
+      expect(TOKEN_ADDRESSES.GCLAW).toBe(process.env.GCLAW_MINT || '')
     })
   })
 

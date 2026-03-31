@@ -134,7 +134,7 @@ function createTestApp() {
   // Inject bindings for all requests
   app.use('*', async (c, next) => {
     // Mock environment bindings
-    ;(c.env as Record<string, string>) = {
+    (c.env as Record<string, string>) = {
       ...c.env,
       SUPABASE_URL: 'https://test.supabase.co',
       SUPABASE_SERVICE_KEY: 'test-service-key',

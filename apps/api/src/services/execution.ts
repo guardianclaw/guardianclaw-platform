@@ -1276,7 +1276,7 @@ export async function execute(options: ExecutionOptions): Promise<ExecutionResul
 
       // Attach graph warnings to trace
       if (warnings.length > 0 && result.trace) {
-        ;(result.trace as ExecutionTrace & { warnings?: string[] }).warnings = warnings
+        (result.trace as ExecutionTrace & { warnings?: string[] }).warnings = warnings
       }
 
       return finalizeResult(result)

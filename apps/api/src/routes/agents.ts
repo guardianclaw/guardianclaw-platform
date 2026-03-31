@@ -175,7 +175,7 @@ export function validateFlowProtection(flow: {
   const nodes = flow.nodes || []
 
   const clawNodeCount = nodes.filter((n: Record<string, unknown>) => {
-    const type = (n.type || '').toLowerCase()
+    const type = String(n.type || '').toLowerCase()
     return type === 'claw'
   }).length
 

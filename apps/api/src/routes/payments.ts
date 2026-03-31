@@ -24,7 +24,7 @@ export const paymentsRoutes = new Hono<{ Bindings: Bindings; Variables: Variable
 // Token mint addresses (Solana mainnet)
 const TOKEN_MINTS = {
   USDC: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
-  GCLAW: process.env.NEXT_PUBLIC_GCLAW_MINT || '',
+  GCLAW: process.env.GCLAW_MINT || '',
 } as const
 
 // Token decimals

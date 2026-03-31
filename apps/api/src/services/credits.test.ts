@@ -32,7 +32,7 @@ describe('Credits Service', () => {
 
     it('should have correct token mints', () => {
       expect(TOKEN_MINTS.USDC).toBe('EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v')
-      expect(TOKEN_MINTS.GCLAW).toBe(process.env.NEXT_PUBLIC_GCLAW_MINT || '')
+      expect(TOKEN_MINTS.GCLAW).toBe(process.env.GCLAW_MINT || '')
     })
 
     it('should have correct token decimals', () => {

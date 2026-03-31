@@ -12,7 +12,7 @@
 export const TOKEN_ADDRESSES = {
   SOL: 'So11111111111111111111111111111111111111112', // Wrapped SOL
   USDC: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
-  GCLAW: process.env.NEXT_PUBLIC_GCLAW_MINT || '',
+  GCLAW: process.env.GCLAW_MINT || '',
 } as const
 
 export type TokenSymbol = keyof typeof TOKEN_ADDRESSES
