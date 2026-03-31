@@ -101,11 +101,10 @@ jobs:
 
       - name: Deploy prebuilt
         run: |
-          # Deploy from a clean directory without .git to avoid
-          # Vercel Hobby plan git author verification (seatBlock)
-          deploy_dir=$(mktemp -d)
-          cp -r .vercel "$deploy_dir/.vercel"
-          cd "$deploy_dir"
+          # Remove .git so Vercel CLI can't read git commit author metadata.
+          # This avoids the Hobby plan seatBlock (TEAM_ACCESS_REQUIRED) that
+          # rejects deploys when git author email != Vercel team member email.
+          rm -rf .git
           vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
 
   notify:
