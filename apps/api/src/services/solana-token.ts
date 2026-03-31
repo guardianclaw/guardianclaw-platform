@@ -8,7 +8,8 @@
 import { Connection, PublicKey } from '@solana/web3.js'
 
 // $GCLAW token mint — set via GCLAW_MINT env var
-export const GCLAW_MINT = new PublicKey(process.env.GCLAW_MINT || '11111111111111111111111111111111')
+// Placeholder until $GCLAW token is deployed — system program address
+export const GCLAW_MINT = new PublicKey('11111111111111111111111111111111')
 
 // Token decimals (SPL tokens typically use 6 or 9 decimals)
 // This should be verified on-chain, but 6 is common for pump.fun tokens

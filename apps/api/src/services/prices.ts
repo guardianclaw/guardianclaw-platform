@@ -12,7 +12,7 @@
 export const TOKEN_ADDRESSES = {
   SOL: 'So11111111111111111111111111111111111111112', // Wrapped SOL
   USDC: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
-  GCLAW: process.env.GCLAW_MINT || '',
+  GCLAW: '', // Set when $GCLAW token is deployed
 } as const
 
 export type TokenSymbol = keyof typeof TOKEN_ADDRESSES

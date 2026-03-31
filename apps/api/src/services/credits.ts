@@ -18,7 +18,7 @@ export const MIN_DEPOSIT_USD = 3.0 // Minimum deposit ~1000 executions
 // Token configuration
 export const TOKEN_MINTS = {
   USDC: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
-  GCLAW: process.env.GCLAW_MINT || '',
+  GCLAW: '', // Set when $GCLAW token is deployed
 } as const
 
 export const TOKEN_DECIMALS = {

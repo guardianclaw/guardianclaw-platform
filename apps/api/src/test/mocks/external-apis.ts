@@ -205,7 +205,7 @@ export interface SolanaRPCResponse<T> {
 }
 
 export function createSolanaRPCMock() {
-  const GCLAW_MINT = process.env.GCLAW_MINT || ''
+  const GCLAW_MINT = ''
   const TOKEN_DECIMALS = 6
 
   return {

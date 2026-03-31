@@ -11,7 +11,7 @@ vi.mock('../services/prices', () => ({
   TOKEN_ADDRESSES: {
     SOL: 'So11111111111111111111111111111111111111112',
     USDC: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
-    GCLAW: process.env.GCLAW_MINT || '',
+    GCLAW: '',
   },
 }))
 
@@ -310,7 +310,7 @@ describe('Prices Routes', () => {
       expect(data.success).toBe(true)
       expect(data.data.SOL).toBe('So11111111111111111111111111111111111111112')
       expect(data.data.USDC).toBe('EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v')
-      expect(data.data.GCLAW).toBe(process.env.GCLAW_MINT || '')
+      expect(data.data.GCLAW).toBe('')
     })
 
     it('should have long cache header for addresses', async () => {
