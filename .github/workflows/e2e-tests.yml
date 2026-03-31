@@ -42,10 +42,8 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
-          cache-dependency-path: 'apps/web/package-lock.json'
 
       - name: Install dependencies
-        working-directory: apps/web
         run: npm ci
 
       - name: Install Playwright browsers

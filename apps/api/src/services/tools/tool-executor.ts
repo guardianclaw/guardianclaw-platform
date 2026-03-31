@@ -14,7 +14,7 @@
  * const result = await executeTool(toolConfig, context, credentials)
  */
 
-import { type createClient } from '@supabase/supabase-js'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import { executeWebSearch } from './web-search'
 import {
   executeApiRequest,
@@ -71,7 +71,8 @@ export interface ToolExecutionResult {
  * Credentials context for tool execution.
  */
 export interface ToolCredentialsContext {
-  supabase: ReturnType<typeof createClient>
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  supabase: SupabaseClient<any>
   walletAddress: string
   serverSecret: string
 }

@@ -20,7 +20,7 @@
 
 import { Hono } from 'hono'
 import { z } from 'zod'
-import { createClient } from '@supabase/supabase-js'
+import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import { authMiddleware } from '../middleware/auth'
 import { walletRateLimitMiddleware } from '../middleware/rate-limit'
 import { encryptWebhookSecret, decryptWebhookSecret } from '../lib/webhook-crypto'
@@ -665,7 +665,8 @@ interface CredentialRpcRow {
 }
 
 export async function getDecryptedCredential(
-  supabase: ReturnType<typeof createClient>,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  supabase: SupabaseClient<any>,
   walletAddress: string,
   toolType: ToolType,
   serverSecret: string
@@ -710,7 +711,8 @@ export async function getDecryptedCredential(
  * Use when you need a specific credential (e.g., from flow node config).
  */
 export async function getDecryptedCredentialById(
-  supabase: ReturnType<typeof createClient>,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  supabase: SupabaseClient<any>,
   walletAddress: string,
   credentialId: string,
   serverSecret: string
