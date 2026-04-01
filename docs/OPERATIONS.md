@@ -16,8 +16,8 @@ Operational procedures for the GuardianClaw Platform.
 
 ```
 ┌─────────────────┐     ┌──────────────────┐     ┌─────────────────┐
-│  Cloudflare     │────▶│  Cloudflare      │────▶│  Modal.com      │
-│  Pages (Web)    │     │  Workers (API)   │     │  (LLM Runtime)  │
+│  Vercel         │────▶│  Cloudflare      │────▶│  Modal.com      │
+│  (Web)          │     │  Workers (API)   │     │  (LLM Runtime)  │
 └─────────────────┘     └──────────────────┘     └─────────────────┘
                                │
                                ▼
@@ -31,7 +31,7 @@ Operational procedures for the GuardianClaw Platform.
 
 | Component | Technology | Region | Purpose |
 |-----------|------------|--------|---------|
-| Web Frontend | Next.js on Cloudflare Pages | Global (Edge) | User interface |
+| Web Frontend | Next.js on Vercel | Global (Edge) | User interface |
 | API | Hono on Cloudflare Workers | Global (Edge) | Backend API |
 | Database | Supabase (PostgreSQL) | AWS us-east-1 | Data persistence |
 | LLM Runtime | Modal.com | AWS us-east-1 | AI inference |
@@ -70,16 +70,13 @@ npm run deploy:staging
 npm run deploy:production
 ```
 
-#### Web (Cloudflare Pages)
+#### Web (Vercel)
 
 ```bash
-cd apps/web
+# Build and deploy via Vercel CLI
+vercel deploy --prod
 
-# Build
-npm run build
-
-# Deploy via Wrangler
-npx wrangler pages deploy .next --project-name=guardianclaw-platform
+# Or use the CI/CD pipeline (push to main triggers deploy)
 ```
 
 ### Pre-Deployment Checklist
@@ -121,11 +118,11 @@ wrangler rollback --env production
 
 #### Web Rollback
 
-Via Cloudflare Dashboard:
-1. Go to Pages > guardianclaw-platform
+Via Vercel Dashboard:
+1. Go to vercel.com > guardianclaw-platform
 2. Click "Deployments"
 3. Find previous working deployment
-4. Click "Rollback to this deployment"
+4. Click the three-dot menu > "Promote to Production"
 
 ---
 
@@ -318,12 +315,13 @@ mv *-results.json performance-baselines/$(date +%Y-%m)/
 | `MODAL_RUNTIME_URL` | Modal.com endpoint | No |
 | `OPENAI_API_KEY` | OpenAI fallback key | No |
 
-#### Web (Cloudflare Pages)
+#### Web (Vercel)
 
 | Variable | Description | Required |
 |----------|-------------|----------|
 | `NEXT_PUBLIC_API_URL` | API base URL | Yes |
-| `NEXT_PUBLIC_SOLANA_RPC_URL` | Solana RPC endpoint | Yes |
+| `NEXT_PUBLIC_SOLANA_RPC` | Solana RPC endpoint | Yes |
+| `NEXT_PUBLIC_SOLANA_NETWORK` | Solana network (mainnet-beta) | Yes |
 
 ### Useful Commands
 

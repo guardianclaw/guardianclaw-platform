@@ -4,7 +4,7 @@
 
 > **Text is risk. Action is danger.** GuardianClaw provides validated alignment seeds for LLMs, agents, and robots. One framework, three surfaces.
 
-[![CI](https://github.com/guardian-claw/guardianclaw/actions/workflows/ci.yml/badge.svg)](https://github.com/guardian-claw/guardianclaw/actions/workflows/ci.yml)
+[![CI](https://github.com/guardianclaw/guardianclaw-platform/actions/workflows/ci.yml/badge.svg)](https://github.com/guardianclaw/guardianclaw-platform/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![PyPI](https://img.shields.io/pypi/v/guardianclaw)](https://pypi.org/project/guardianclaw/)
@@ -1046,7 +1046,7 @@ If you use GuardianClaw in your research, please cite:
   author = {GuardianClaw AI Contributors},
   title = {GuardianClaw: Safety Framework for LLMs and Autonomous Agents},
   year = {2025},
-  url = {https://github.com/guardian-claw/guardianclaw}
+  url = {https://github.com/guardianclaw/guardianclaw-platform}
 }
 ```
 

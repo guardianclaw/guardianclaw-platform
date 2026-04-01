@@ -20,7 +20,6 @@ const ALLOWED_ORIGINS: ReadonlySet<string> = new Set([
   // Production
   'https://guardianclaw.org',
   'https://www.guardianclaw.org',
-  'https://claw-platform.pages.dev',
   // Development (only active in non-production)
   ...(process.env.NODE_ENV === 'development'
     ? ['http://localhost:3000', 'http://127.0.0.1:3000']

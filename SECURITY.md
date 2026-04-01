@@ -153,9 +153,7 @@ All API responses include:
 - https://guardianclaw.org
 - https://www.guardianclaw.org
 - https://staging.guardianclaw.org
-- https://guardianclaw-platform.pages.dev
-- https://guardianclaw-v3.pages.dev
-- Cloudflare Pages preview deployments (pattern-matched)
+- Vercel preview deployments (pattern-matched: `*.vercel.app`)
 
 **Development only:**
 - http://localhost:3000
@@ -291,5 +289,5 @@ We thank the security researchers who have helped improve GuardianClaw Platform:
 
 ---
 
-**Last Updated:** 2026-01-28
+**Last Updated:** 2026-04-01
 **Version:** 1.0.0

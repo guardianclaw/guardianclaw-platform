@@ -1,31 +1,30 @@
-# GuardianClaw Platform v3
+# GuardianClaw Platform
 
-> Build, Deploy, and Protect AI Agents — The Decision Firewall for Safe AI
+> The Decision Firewall for AI Agents — Build, Deploy, and Protect
 
 ## Overview
 
-GuardianClaw Platform v3 is a complete rewrite of the GuardianClaw web platform featuring a visual N8N-style agent builder with CLAW (Credibility, Limits, Avoidance, Worth) protection gates.
+GuardianClaw Platform is a monorepo containing the web platform, API, and browser extension for the GuardianClaw safety framework. Features a visual N8N-style agent builder with CLAW (Credibility, Limits, Avoidance, Worth) protection gates.
 
 ### Tech Stack
 
-- **Next.js 15** — App Router, Server Components, Static Export
+- **Next.js 15** — App Router, Server Components
 - **React Flow (@xyflow/react)** — Visual node-based flow editor
 - **Zustand** — State management for flow builder
-- **Cloudflare Pages** — Static hosting with edge functions
+- **Vercel** — Frontend hosting with CI/CD
 - **Cloudflare Workers** — Edge API with Hono.js
 - **Supabase** — PostgreSQL database with RLS
 - **Solana Wallet Adapter** — Sign-In With Solana (SIWS)
 - **Tailwind CSS + shadcn/ui** — UI components
+- **Turborepo** — Monorepo orchestration
 
 ## Current Status
 
 **Live URLs:**
 - Frontend: https://guardianclaw.org
-- API: https://api.guardianclaw.org
+- API: https://claw-api-production.guardianclaw.workers.dev/health
 
-**Build Status:** ✅ **Successful** (as of 2026-01-12)
-
-**Test Status:** ✅ **1137 tests passing** (818 API + 316 Web + 3 E2E)
+**CI/CD:** GitHub Actions (Lint, TypeCheck, Test, Build, Deploy)
 
 ### Implemented Features
 
@@ -81,10 +80,6 @@ GuardianClaw Platform v3 is a complete rewrite of the GuardianClaw web platform 
 - [x] Wallet-based authentication for actions
 - [x] Balance snapshot at voting open (anti-double-vote via archival RPC)
 
-#### Chamber (AI Testing Arena)
-- [x] Multi-model comparison interface
-- [x] Seed testing with different LLMs
-
 #### Security (Phase 7)
 - [x] ES256 JWT authentication with HS256 fallback
 - [x] GDPR compliance endpoints (export, deletion)
@@ -138,7 +133,6 @@ guardianclaw-platform/
 │   │   │   │   │   ├── alerts/   # Alert management
 │   │   │   │   │   ├── support/  # User lookup
 │   │   │   │   │   └── settings/ # Role management
-│   │   │   │   ├── chamber/      # AI testing arena
 │   │   │   │   ├── dashboard/    # User dashboard
 │   │   │   │   ├── docs/         # Documentation
 │   │   │   │   └── governance/   # DAO governance
@@ -174,8 +168,16 @@ guardianclaw-platform/
 │           └── routes/           # API endpoints
 │
 ├── packages/
-│   ├── database/                 # Supabase schema
-│   └── shared/                   # Shared types & constants
+│   ├── core/                     # @guardianclaw/core
+│   ├── shared/                   # @guardianclaw/shared
+│   ├── moltbot/                  # @guardianclaw/moltbot
+│   ├── voltagent/                # @guardianclaw/voltagent
+│   ├── elizaos/                  # @guardianclaw/elizaos-plugin
+│   ├── goat-plugin/              # @goat-sdk/plugin-claw
+│   ├── vscode/                   # VS Code extension
+│   └── runtime/                  # Modal.com runtime
+│
+├── sdk/                          # Python SDK (guardianclaw)
 │
 └── turbo.json                    # Monorepo config
 ```
@@ -251,23 +253,29 @@ git commit --no-verify -m "message"  # Skip hooks (not recommended)
 ### Building for Production
 
 ```bash
-# Build static export
-cd apps/web
+# Build all apps
 npm run build
 
-# Output in apps/web/out/
+# Build web only
+npm run build:web
 ```
 
 ### Deployment
 
-#### Cloudflare Pages (Frontend)
+Deployments are automated via GitHub Actions on push to `main`:
+
+- **Frontend (Vercel):** Prebuilt locally in CI, then deployed via `vercel deploy --prebuilt --prod`
+- **API (Cloudflare Workers):** Deployed via `wrangler deploy --env production`
+
+For manual deployment:
 
 ```bash
-# Using Wrangler CLI
-npx wrangler pages deploy apps/web/out --project-name=guardianclaw-platform
-```
+# API
+cd apps/api && npm run deploy:production
 
-Or connect your GitHub repository to Cloudflare Pages for automatic deployments.
+# Web (requires Vercel CLI)
+vercel deploy --prod
+```
 
 ## Node Types Reference
 
@@ -315,8 +323,8 @@ Or connect your GitHub repository to Cloudflare Pages for automatic deployments.
 
 | Level | Gates Enabled | Use Case |
 |-------|--------------|----------|
-| Minimal | Harm only | Low latency, basic safety |
-| Standard | Truth, Harm, Scope | Balanced protection |
+| Minimal | Avoidance | Low latency, basic safety |
+| Standard | Credibility, Limits, Avoidance | Balanced protection |
 | Maximum | All (CLAW) | Highest safety |
 | Custom | User-selected | Fine-grained control |
 
@@ -343,5 +351,5 @@ MIT
 
 ---
 
-**Last Updated:** 2026-01-28
-**Version:** 3.0.0
+**Last Updated:** 2026-04-01
+**Version:** 0.1.0

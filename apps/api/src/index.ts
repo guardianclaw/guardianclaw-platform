@@ -112,8 +112,6 @@ app.use(
         'https://guardianclaw.org',
         'https://www.guardianclaw.org',
         'https://staging.guardianclaw.org',
-        'https://guardianclaw-platform.pages.dev',
-        'https://guardianclaw-v3.pages.dev',
       ]
 
       // Development origin (only in non-production)
@@ -126,10 +124,10 @@ app.use(
         return origin
       }
 
-      // Allow Cloudflare Pages preview deployments (must be HTTPS)
+      // Allow Vercel preview deployments (must be HTTPS)
       if (
         origin &&
-        /^https:\/\/[a-z0-9-]+\.(guardianclaw-platform|guardianclaw-v3)\.pages\.dev$/.test(origin)
+        /^https:\/\/guardianclaw-platform[a-z0-9-]*\.vercel\.app$/.test(origin)
       ) {
         return origin
       }
