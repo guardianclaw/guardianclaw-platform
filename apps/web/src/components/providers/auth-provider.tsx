@@ -55,39 +55,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const isAuthenticated = !!token && !!profile
 
-  // Check for existing token on mount (only once)
+  // Check for existing session on mount via cookie (only once)
   useEffect(() => {
     if (initialCheckDone.current) return
     initialCheckDone.current = true
 
     const checkAuth = async () => {
-      const savedToken = localStorage.getItem('claw_token')
-      if (!savedToken) {
-        setIsLoading(false)
-        return
-      }
-
       try {
+        // Cookie is sent automatically with credentials: 'include'
         const res = await fetch(`${API_URL}/auth/me`, {
-          headers: { Authorization: `Bearer ${savedToken}` },
+          credentials: 'include',
         })
 
         if (res.ok) {
           const data = await res.json()
-          setToken(savedToken)
+          setToken('authenticated') // boolean flag, actual token is in httpOnly cookie
           setProfile(data.profile)
         } else if (res.status === 401) {
-          // Token expired or invalid — clear it so stale tokens
-          // don't get reused by api.ts for subsequent requests
-          console.log('Token expired, clearing session')
-          localStorage.removeItem('claw_token')
+          console.log('Session expired or invalid')
         } else {
-          // Other server errors — keep token, might be transient
-          console.log('Token validation failed, status:', res.status)
+          console.log('Session validation failed, status:', res.status)
         }
       } catch (err) {
-        // Network error - keep the token, user might be offline temporarily
-        console.log('Token check failed, keeping token:', err)
+        console.log('Session check failed:', err)
       } finally {
         setIsLoading(false)
       }
@@ -127,7 +117,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Still disconnected after delay — treat as explicit user disconnect
         if (!disconnectTimer.current) return
         console.log('Wallet disconnected, clearing session')
-        localStorage.removeItem('claw_token')
         setToken(null)
         setProfile(null)
         wasConnected.current = false
@@ -160,7 +149,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // If the connected wallet doesn't match the authenticated profile, clear session
       if (connectedWallet !== profileWallet) {
         console.log('Wallet mismatch detected: connected wallet differs from authenticated profile')
-        localStorage.removeItem('claw_token')
         setToken(null)
         setProfile(null)
         wasConnected.current = false
@@ -180,7 +168,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     try {
       // 1. Get nonce from server
-      const nonceRes = await fetch(`${API_URL}/auth/nonce?wallet=${publicKey.toBase58()}`)
+      const nonceRes = await fetch(`${API_URL}/auth/nonce?wallet=${publicKey.toBase58()}`, {
+        credentials: 'include',
+      })
 
       if (!nonceRes.ok) {
         const errorData = await nonceRes.json()
@@ -194,15 +184,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const signature = await signMessage(messageBytes)
       const signatureBase58 = bs58.encode(signature)
 
-      // 3. Verify signature and get JWT (send original message for verification)
+      // 3. Verify signature and get JWT (cookie set automatically via Set-Cookie)
       const verifyRes = await fetch(`${API_URL}/auth/verify`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({
           wallet: publicKey.toBase58(),
           signature: signatureBase58,
           nonce,
-          message, // Send original message so server can verify with exact same message
+          message,
         }),
       })
 
@@ -211,22 +202,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw new Error(errorData.error || 'Verification failed')
       }
 
-      const { token: newToken } = await verifyRes.json()
+      await verifyRes.json()
 
-      // 4. Get user profile
+      // 4. Get user profile (cookie sent automatically)
       const profileRes = await fetch(`${API_URL}/auth/me`, {
-        headers: { Authorization: `Bearer ${newToken}` },
+        credentials: 'include',
       })
 
       const { profile: newProfile } = await profileRes.json()
 
-      // 5. Store token and update state
-      localStorage.setItem('claw_token', newToken)
-      setToken(newToken)
+      // 5. Update state (token lives in httpOnly cookie)
+      setToken('authenticated')
       setProfile(newProfile)
       setError(null)
 
-      return newToken
+      return 'authenticated'
     } catch (err) {
       let errorMessage = 'Authentication failed'
 
@@ -306,7 +296,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [connected, isAuthenticated, isLoading, signMessage, login, pathname, autoConnectTimedOut])
 
   const logout = useCallback(async () => {
-    localStorage.removeItem('claw_token')
+    // Call logout endpoint to clear httpOnly cookie server-side
+    try {
+      await fetch(`${API_URL}/auth/logout`, {
+        method: 'POST',
+        credentials: 'include',
+      })
+    } catch {
+      // Best-effort — cookie will expire on its own
+    }
     setToken(null)
     setProfile(null)
     setError(null)

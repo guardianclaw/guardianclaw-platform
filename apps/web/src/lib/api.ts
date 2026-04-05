@@ -25,13 +25,11 @@ const RETRYABLE_STATUS_CODES = new Set([502, 503, 504])
 async function api<T>(endpoint: string, options: ApiOptions = {}): Promise<T> {
   const { method = 'GET', body, headers = {} } = options
 
-  const token = typeof window !== 'undefined' ? localStorage.getItem('claw_token') : null
-
   const config: RequestInit = {
     method,
+    credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...headers,
     },
   }
@@ -55,10 +53,9 @@ async function api<T>(endpoint: string, options: ApiOptions = {}): Promise<T> {
       }
 
       if (!response.ok) {
-        // Clear expired/invalid token on 401 to prevent stale auth state
+        // Signal token expiration to clear React state
         if (response.status === 401) {
           if (typeof window !== 'undefined') {
-            localStorage.removeItem('claw_token')
             window.dispatchEvent(new Event('claw:token-expired'))
           }
         }

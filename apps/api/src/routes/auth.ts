@@ -19,10 +19,15 @@ import { z } from 'zod'
 import { createClient } from '@supabase/supabase-js'
 import * as ed25519 from '@noble/ed25519'
 import bs58 from 'bs58'
+import { setCookie } from 'hono/cookie'
 import { createSecureLogger, hashWallet } from '../lib/secure-logger'
 import { getJWTManager } from '../lib/jwt-manager'
 import { createTokenRevocationList } from '../lib/token-revocation'
 import { createSessionSecurityManager, SESSION_LIMITS } from '../lib/session-security'
+
+// Cookie config for session token
+const SESSION_COOKIE_NAME = 'claw_session'
+const COOKIE_MAX_AGE = 3600 // 1 hour
 
 type Bindings = {
   SUPABASE_URL: string
@@ -327,6 +332,17 @@ authRoutes.post('/verify', async (c) => {
     wallet
   )
 
+  // Set httpOnly cookie for browser clients
+  setCookie(c, SESSION_COOKIE_NAME, token, {
+    httpOnly: true,
+    secure: true,
+    sameSite: 'Lax',
+    domain: '.guardianclaw.org',
+    path: '/',
+    maxAge: COOKIE_MAX_AGE,
+  })
+
+  // Keep token in body for backward compat (SDK/API clients)
   return c.json({
     token,
     expires_at: new Date(expiresAt).toISOString(),
@@ -340,11 +356,16 @@ authRoutes.post('/logout', async (c) => {
   const clientIP = getClientIP(c)
   const authHeader = c.req.header('Authorization')
 
-  if (!authHeader?.startsWith('Bearer ')) {
+  // Accept token from Bearer header or cookie
+  const { getCookie } = await import('hono/cookie')
+  const cookieToken = getCookie(c, SESSION_COOKIE_NAME)
+  const bearerToken = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null
+
+  if (!bearerToken && !cookieToken) {
     return c.json({ error: 'Missing token' }, 401)
   }
 
-  const token = authHeader.slice(7)
+  const token = bearerToken || cookieToken!
 
   try {
     const jwtManager = await getJWTManager({
@@ -385,6 +406,16 @@ authRoutes.post('/logout', async (c) => {
       clientIP,
       result.payload.sub
     )
+
+    // Clear session cookie
+    setCookie(c, SESSION_COOKIE_NAME, '', {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'Lax',
+      domain: '.guardianclaw.org',
+      path: '/',
+      maxAge: 0,
+    })
 
     return c.json({ success: true, message: 'Logged out successfully' })
   } catch {
@@ -435,6 +466,16 @@ authRoutes.post('/logout-all', async (c) => {
       wallet
     )
 
+    // Clear session cookie
+    setCookie(c, SESSION_COOKIE_NAME, '', {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'Lax',
+      domain: '.guardianclaw.org',
+      path: '/',
+      maxAge: 0,
+    })
+
     return c.json({ success: true, message: 'All sessions logged out' })
   } catch {
     return c.json({ error: 'Logout failed' }, 500)
@@ -447,12 +488,17 @@ authRoutes.get('/me', async (c) => {
   const clientIP = getClientIP(c)
   const authHeader = c.req.header('Authorization')
 
-  if (!authHeader?.startsWith('Bearer ')) {
+  // Accept token from Bearer header (priority) or cookie
+  const { getCookie } = await import('hono/cookie')
+  const cookieToken = getCookie(c, SESSION_COOKIE_NAME)
+  const bearerToken = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null
+
+  if (!bearerToken && !cookieToken) {
     await secureLogger.security('auth_failure', { reason: 'missing_token' }, clientIP)
     return c.json({ error: 'Missing token' }, 401)
   }
 
-  const token = authHeader.slice(7)
+  const token = bearerToken || cookieToken!
 
   try {
     const jwtManager = await getJWTManager({
@@ -512,11 +558,16 @@ authRoutes.get('/me', async (c) => {
 authRoutes.get('/sessions', async (c) => {
   const authHeader = c.req.header('Authorization')
 
-  if (!authHeader?.startsWith('Bearer ')) {
+  // Accept token from Bearer header (priority) or cookie
+  const { getCookie } = await import('hono/cookie')
+  const cookieToken = getCookie(c, SESSION_COOKIE_NAME)
+  const bearerToken = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null
+
+  if (!bearerToken && !cookieToken) {
     return c.json({ error: 'Missing token' }, 401)
   }
 
-  const token = authHeader.slice(7)
+  const token = bearerToken || cookieToken!
 
   try {
     const jwtManager = await getJWTManager({

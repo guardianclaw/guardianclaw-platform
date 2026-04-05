@@ -13,9 +13,13 @@
  */
 
 import { createMiddleware } from 'hono/factory'
+import { getCookie } from 'hono/cookie'
 import { getJWTManager } from '../lib/jwt-manager'
 import { createTokenRevocationList } from '../lib/token-revocation'
+import { createSessionSecurityManager } from '../lib/session-security'
 import { hashWallet, createSecureLogger } from '../lib/secure-logger'
+
+const SESSION_COOKIE_NAME = 'claw_session'
 
 type Env = {
   Bindings: {
@@ -68,11 +72,14 @@ async function hashIP(ip: string, secret: string): Promise<string> {
 export const authMiddleware = createMiddleware<Env>(async (c, next) => {
   const authHeader = c.req.header('Authorization')
 
-  if (!authHeader?.startsWith('Bearer ')) {
+  // Bearer header takes priority over cookie (SDK/API clients use header)
+  const bearerToken = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null
+  const cookieToken = getCookie(c, SESSION_COOKIE_NAME)
+  const token = bearerToken || cookieToken
+
+  if (!token) {
     return c.json({ error: 'Missing or invalid authorization header' }, 401)
   }
-
-  const token = authHeader.slice(7)
 
   try {
     // Initialize JWT manager
@@ -110,25 +117,49 @@ export const authMiddleware = createMiddleware<Env>(async (c, next) => {
       }
     }
 
-    // Check for suspicious activity (IP change during session)
+    // Suspicious activity detection with blocking
     if (payload.ipHash && c.env.IP_HASH_SECRET) {
       const currentIpHash = await hashIP(getClientIP(c.req), c.env.IP_HASH_SECRET)
 
       if (currentIpHash !== payload.ipHash) {
-        // IP changed during session - log but don't block (could be VPN, mobile network, etc.)
-        const logger = createSecureLogger({ IP_HASH_SECRET: c.env.IP_HASH_SECRET })
-        await logger.security(
-          'suspicious_activity',
-          {
-            reason: 'ip_changed_during_session',
-            // Don't log actual IPs, just that a change occurred
-          },
-          getClientIP(c.req),
-          payload.sub
+        const sessionSecurity = createSessionSecurityManager(
+          c.env.RATE_LIMIT_KV || null,
+          c.env.IP_HASH_SECRET
+        )
+        const walletHash = await hashWallet(payload.sub)
+
+        const suspiciousResult = await sessionSecurity.detectSuspiciousActivity(
+          walletHash,
+          currentIpHash,
+          payload.ipHash
         )
 
-        // For now, allow but could implement challenge flow in future
-        // The session security module already tracks this for more sophisticated detection
+        if (suspiciousResult.action === 'block') {
+          const logger = createSecureLogger({ IP_HASH_SECRET: c.env.IP_HASH_SECRET })
+          await logger.security(
+            'session_blocked',
+            { reasons: suspiciousResult.reasons },
+            getClientIP(c.req),
+            payload.sub
+          )
+          return c.json(
+            {
+              error: 'Session blocked due to suspicious activity. Please re-authenticate.',
+              code: 'SESSION_SUSPICIOUS',
+            },
+            401
+          )
+        }
+
+        if (suspiciousResult.action === 'challenge') {
+          const logger = createSecureLogger({ IP_HASH_SECRET: c.env.IP_HASH_SECRET })
+          await logger.security(
+            'suspicious_activity',
+            { reasons: suspiciousResult.reasons },
+            getClientIP(c.req),
+            payload.sub
+          )
+        }
       }
     }
 
@@ -158,13 +189,16 @@ export const authMiddleware = createMiddleware<Env>(async (c, next) => {
 export const optionalAuthMiddleware = createMiddleware<Env>(async (c, next) => {
   const authHeader = c.req.header('Authorization')
 
-  // No auth header - continue without user context
-  if (!authHeader?.startsWith('Bearer ')) {
+  // Accept Bearer header (priority) or cookie
+  const bearerToken = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null
+  const cookieToken = getCookie(c, SESSION_COOKIE_NAME)
+  const token = bearerToken || cookieToken
+
+  // No token - continue without user context
+  if (!token) {
     await next()
     return
   }
-
-  const token = authHeader.slice(7)
 
   try {
     const jwtManager = await getJWTManager({
