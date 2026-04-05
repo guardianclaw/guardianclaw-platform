@@ -2,11 +2,13 @@
  * Auth Provider Tests
  *
  * Tests for session persistence and wallet mismatch detection.
+ * Auth is now cookie-based (httpOnly) — no localStorage involved.
+ *
  * These tests verify that:
- * 1. Token persists when wallet temporarily disconnects (navigation)
+ * 1. Session is restored from cookie on mount (via /auth/me)
  * 2. Session is cleared when a different wallet connects
- * 3. Logout explicitly clears all session data
- * 4. Token is restored from localStorage on mount
+ * 3. Logout clears session state and calls server-side cookie clear
+ * 4. Token expiration (401 from /auth/me) clears auth state
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
@@ -35,31 +37,6 @@ vi.mock('@solana/wallet-adapter-react', () => ({
 // Mock fetch
 const mockFetch = vi.fn()
 global.fetch = mockFetch
-
-// Mock localStorage
-const localStorageMock = (() => {
-  let store: Record<string, string> = {}
-  return {
-    getItem: vi.fn((key: string) => store[key] || null),
-    setItem: vi.fn((key: string, value: string) => {
-      store[key] = value
-    }),
-    removeItem: vi.fn((key: string) => {
-      delete store[key]
-    }),
-    clear: vi.fn(() => {
-      store = {}
-    }),
-    get length() {
-      return Object.keys(store).length
-    },
-    key: vi.fn((index: number) => Object.keys(store)[index] || null),
-  }
-})()
-
-Object.defineProperty(window, 'localStorage', {
-  value: localStorageMock,
-})
 
 // Test component to access auth context
 function TestConsumer({ onAuth }: { onAuth: (auth: ReturnType<typeof useAuth>) => void }) {
@@ -107,7 +84,6 @@ function createMockProfileResponse(walletAddress: string) {
 describe('AuthProvider', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    localStorageMock.clear()
 
     // Reset wallet state
     mockWalletState.publicKey = null
@@ -115,7 +91,7 @@ describe('AuthProvider', () => {
     mockWalletState.signMessage = vi.fn()
     mockWalletState.disconnect = vi.fn()
 
-    // Default fetch mock
+    // Default fetch mock — no valid session
     mockFetch.mockResolvedValue({
       ok: false,
       status: 401,
@@ -128,7 +104,7 @@ describe('AuthProvider', () => {
   })
 
   describe('Initial State', () => {
-    it('should start with isAuthenticated false when no token exists', async () => {
+    it('should start with isAuthenticated false when no session cookie exists', async () => {
       let authState: ReturnType<typeof useAuth> | null = null
 
       renderWithAuth((auth) => {
@@ -144,14 +120,10 @@ describe('AuthProvider', () => {
       expect(authState?.profile).toBeNull()
     })
 
-    it('should restore session from localStorage on mount', async () => {
+    it('should restore session from cookie on mount', async () => {
       const walletAddress = 'TestWallet123456789'
-      const savedToken = 'valid-jwt-token'
 
-      // Set up localStorage with existing token
-      localStorageMock.setItem('claw_token', savedToken)
-
-      // Mock successful /auth/me response
+      // Mock successful /auth/me response (cookie sent automatically)
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: () => Promise.resolve(createMockProfileResponse(walletAddress)),
@@ -168,25 +140,23 @@ describe('AuthProvider', () => {
       })
 
       expect(authState?.isAuthenticated).toBe(true)
-      expect(authState?.token).toBe(savedToken)
+      expect(authState?.token).toBe('authenticated')
       expect(authState?.profile?.wallet_address).toBe(walletAddress)
     })
   })
 
   describe('Wallet Disconnect Behavior', () => {
-    it('should NOT clear token when wallet disconnects', async () => {
+    it('should NOT immediately clear session when wallet disconnects', async () => {
       const walletAddress = 'TestWallet123456789'
-      const savedToken = 'valid-jwt-token'
 
-      // Set up authenticated state
-      localStorageMock.setItem('claw_token', savedToken)
-      mockWalletState.publicKey = createMockPublicKey(walletAddress)
-      mockWalletState.connected = true
-
+      // Set up authenticated state via cookie
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: () => Promise.resolve(createMockProfileResponse(walletAddress)),
       })
+
+      mockWalletState.publicKey = createMockPublicKey(walletAddress)
+      mockWalletState.connected = true
 
       let authState: ReturnType<typeof useAuth> | null = null
       const { rerender } = renderWithAuth((auth) => {
@@ -213,24 +183,21 @@ describe('AuthProvider', () => {
         </AuthProvider>
       )
 
-      // Token should still exist
-      expect(localStorageMock.removeItem).not.toHaveBeenCalledWith('claw_token')
-      expect(authState?.token).toBe(savedToken)
+      // Token should still exist (disconnect timer is 2s)
+      expect(authState?.token).toBe('authenticated')
     })
 
     it('should maintain session during temporary wallet disconnect (navigation)', async () => {
       const walletAddress = 'TestWallet123456789'
-      const savedToken = 'valid-jwt-token'
 
-      // Set up authenticated state
-      localStorageMock.setItem('claw_token', savedToken)
-      mockWalletState.publicKey = createMockPublicKey(walletAddress)
-      mockWalletState.connected = true
-
+      // Set up authenticated state via cookie
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: () => Promise.resolve(createMockProfileResponse(walletAddress)),
       })
+
+      mockWalletState.publicKey = createMockPublicKey(walletAddress)
+      mockWalletState.connected = true
 
       let authState: ReturnType<typeof useAuth> | null = null
       const { rerender } = renderWithAuth((auth) => {
@@ -273,8 +240,7 @@ describe('AuthProvider', () => {
       )
 
       // Session should still be valid
-      expect(authState?.token).toBe(savedToken)
-      expect(localStorageMock.removeItem).not.toHaveBeenCalledWith('claw_token')
+      expect(authState?.token).toBe('authenticated')
     })
   })
 
@@ -282,17 +248,15 @@ describe('AuthProvider', () => {
     it('should clear session when a different wallet connects', async () => {
       const originalWallet = 'OriginalWallet123'
       const differentWallet = 'DifferentWallet456'
-      const savedToken = 'valid-jwt-token'
 
       // Set up authenticated state with original wallet
-      localStorageMock.setItem('claw_token', savedToken)
-      mockWalletState.publicKey = createMockPublicKey(originalWallet)
-      mockWalletState.connected = true
-
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: () => Promise.resolve(createMockProfileResponse(originalWallet)),
       })
+
+      mockWalletState.publicKey = createMockPublicKey(originalWallet)
+      mockWalletState.connected = true
 
       let authState: ReturnType<typeof useAuth> | null = null
       const { rerender } = renderWithAuth((auth) => {
@@ -323,24 +287,21 @@ describe('AuthProvider', () => {
         expect(authState?.isAuthenticated).toBe(false)
       })
 
-      expect(localStorageMock.removeItem).toHaveBeenCalledWith('claw_token')
       expect(authState?.token).toBeNull()
       expect(authState?.profile).toBeNull()
     })
 
     it('should NOT clear session when same wallet reconnects', async () => {
       const walletAddress = 'TestWallet123456789'
-      const savedToken = 'valid-jwt-token'
 
       // Set up authenticated state
-      localStorageMock.setItem('claw_token', savedToken)
-      mockWalletState.publicKey = createMockPublicKey(walletAddress)
-      mockWalletState.connected = true
-
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: () => Promise.resolve(createMockProfileResponse(walletAddress)),
       })
+
+      mockWalletState.publicKey = createMockPublicKey(walletAddress)
+      mockWalletState.connected = true
 
       let authState: ReturnType<typeof useAuth> | null = null
       const { rerender } = renderWithAuth((auth) => {
@@ -380,26 +341,23 @@ describe('AuthProvider', () => {
       )
 
       // Session should remain valid
-      expect(authState?.token).toBe(savedToken)
-      expect(localStorageMock.removeItem).not.toHaveBeenCalledWith('claw_token')
+      expect(authState?.token).toBe('authenticated')
     })
   })
 
   describe('Explicit Logout', () => {
     it('should clear all session data on logout', async () => {
       const walletAddress = 'TestWallet123456789'
-      const savedToken = 'valid-jwt-token'
 
       // Set up authenticated state
-      localStorageMock.setItem('claw_token', savedToken)
-      mockWalletState.publicKey = createMockPublicKey(walletAddress)
-      mockWalletState.connected = true
-      mockWalletState.disconnect = vi.fn().mockResolvedValue(undefined)
-
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: () => Promise.resolve(createMockProfileResponse(walletAddress)),
       })
+
+      mockWalletState.publicKey = createMockPublicKey(walletAddress)
+      mockWalletState.connected = true
+      mockWalletState.disconnect = vi.fn().mockResolvedValue(undefined)
 
       let authState: ReturnType<typeof useAuth> | null = null
       renderWithAuth((auth) => {
@@ -410,28 +368,37 @@ describe('AuthProvider', () => {
         expect(authState?.isAuthenticated).toBe(true)
       })
 
+      // Mock the logout endpoint
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({}),
+      })
+
       // Call logout
       await act(async () => {
         await authState?.logout()
       })
 
       // Everything should be cleared
-      expect(localStorageMock.removeItem).toHaveBeenCalledWith('claw_token')
       expect(authState?.token).toBeNull()
       expect(authState?.profile).toBeNull()
       expect(authState?.isAuthenticated).toBe(false)
       expect(mockWalletState.disconnect).toHaveBeenCalled()
+
+      // Should have called /auth/logout to clear httpOnly cookie
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('/auth/logout'),
+        expect.objectContaining({
+          method: 'POST',
+          credentials: 'include',
+        })
+      )
     })
   })
 
   describe('Token Expiration Handling', () => {
-    it('should clear token on 401 from auth/me (expired token)', async () => {
-      const savedToken = 'expired-jwt-token'
-
-      // Set up localStorage with expired token
-      localStorageMock.setItem('claw_token', savedToken)
-
-      // Mock /auth/me returning 401 (token expired)
+    it('should not authenticate on 401 from auth/me (expired cookie)', async () => {
+      // Mock /auth/me returning 401 (cookie expired)
       mockFetch.mockResolvedValueOnce({
         ok: false,
         status: 401,
@@ -447,19 +414,14 @@ describe('AuthProvider', () => {
         expect(authState?.isLoading).toBe(false)
       })
 
-      // Token should be removed on 401 so stale tokens don't persist
-      expect(localStorageMock.removeItem).toHaveBeenCalledWith('claw_token')
-
-      // isAuthenticated should be false (profile is null)
+      // isAuthenticated should be false (no valid session)
       expect(authState?.isAuthenticated).toBe(false)
+      expect(authState?.token).toBeNull()
     })
   })
 
   describe('Error Handling', () => {
     it('should handle network errors gracefully', async () => {
-      const savedToken = 'valid-jwt-token'
-      localStorageMock.setItem('claw_token', savedToken)
-
       // Mock network error
       mockFetch.mockRejectedValueOnce(new Error('Network error'))
 
@@ -472,8 +434,8 @@ describe('AuthProvider', () => {
         expect(authState?.isLoading).toBe(false)
       })
 
-      // Should not crash, token kept for retry
-      expect(localStorageMock.removeItem).not.toHaveBeenCalledWith('claw_token')
+      // Should not crash, no authentication
+      expect(authState?.isAuthenticated).toBe(false)
     })
   })
 })
