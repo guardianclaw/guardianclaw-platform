@@ -274,6 +274,7 @@ export type SecurityEventType =
   | 'webhook_trigger_error'
   // General
   | 'suspicious_activity'
+  | 'session_blocked'
 
 /**
  * Security log entry structure.
