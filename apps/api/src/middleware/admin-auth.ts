@@ -217,11 +217,18 @@ export const adminAuthMiddleware = createMiddleware<Env>(async (c, next) => {
       actions: ACTION_PERMISSIONS[role] || [],
     }
 
-    // Apply custom permission overrides if any
+    // Apply custom permission overrides if any, validating against known actions
     const customPermissions = adminRole.permissions || {}
+    const allValidActions = new Set(Object.values(ACTION_PERMISSIONS).flat())
+    const allValidDashboards = new Set(Object.values(DASHBOARD_ACCESS).flat())
+
     const finalPermissions = {
-      dashboards: customPermissions.dashboards || basePermissions.dashboards,
-      actions: customPermissions.actions || basePermissions.actions,
+      dashboards: (customPermissions.dashboards || basePermissions.dashboards).filter((d: string) =>
+        allValidDashboards.has(d)
+      ),
+      actions: (customPermissions.actions || basePermissions.actions).filter((a: string) =>
+        allValidActions.has(a)
+      ),
     }
 
     // Set context variables

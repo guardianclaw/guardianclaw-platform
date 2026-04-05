@@ -125,10 +125,7 @@ app.use(
       }
 
       // Allow Vercel preview deployments (must be HTTPS)
-      if (
-        origin &&
-        /^https:\/\/guardianclaw-platform[a-z0-9-]*\.vercel\.app$/.test(origin)
-      ) {
+      if (origin && /^https:\/\/guardianclaw-platform[a-z0-9-]*\.vercel\.app$/.test(origin)) {
         return origin
       }
 
@@ -171,6 +168,21 @@ app.use(
 // SECURITY_SPEC Section 3.1.2
 // Runs after CORS so error responses (429) still include CORS headers
 app.use('*', rateLimitMiddleware({ skipPaths: ['/health', '/metrics'] }))
+
+// Request body size limit (2MB) — first line of defense before route-level validation
+app.use('*', async (c, next) => {
+  if (c.req.method === 'GET' || c.req.method === 'HEAD' || c.req.method === 'OPTIONS') {
+    return next()
+  }
+  const contentLength = c.req.header('content-length')
+  if (contentLength) {
+    const size = parseInt(contentLength, 10)
+    if (!isNaN(size) && size > 2_097_152) {
+      return c.json({ error: 'Request body too large', code: 'PAYLOAD_TOO_LARGE' }, 413)
+    }
+  }
+  return next()
+})
 
 // Routes
 app.route('/health', healthRoutes)

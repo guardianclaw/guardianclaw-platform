@@ -463,11 +463,16 @@ function normalizeIP(ip: string): string {
 
 /**
  * Check if an IP is within a CIDR range.
- * Basic implementation for IPv4 only.
+ * Supports both IPv4 and IPv6.
  */
 function isIPInCIDR(ip: string, cidr: string): boolean {
   const [range, bits] = cidr.split('/')
   const mask = parseInt(bits, 10)
+
+  // Detect IPv6 CIDR
+  if (range.includes(':')) {
+    return isIPv6InCIDR(ip, range, mask)
+  }
 
   if (isNaN(mask) || mask < 0 || mask > 32) {
     return false
@@ -492,4 +497,52 @@ function isIPInCIDR(ip: string, cidr: string): boolean {
   const maskNum = ~((1 << (32 - mask)) - 1) >>> 0
 
   return (ipNum & maskNum) === (rangeNum & maskNum)
+}
+
+/**
+ * Convert an IPv6 address to BigInt for CIDR comparison.
+ * Handles :: shorthand expansion.
+ */
+function ipv6ToBigInt(ip: string): bigint | null {
+  // Expand :: shorthand
+  let parts: string[]
+  if (ip.includes('::')) {
+    const [left, right] = ip.split('::')
+    const leftParts = left ? left.split(':') : []
+    const rightParts = right ? right.split(':') : []
+    const missing = 8 - leftParts.length - rightParts.length
+    if (missing < 0) return null
+    parts = [...leftParts, ...Array(missing).fill('0'), ...rightParts]
+  } else {
+    parts = ip.split(':')
+  }
+
+  if (parts.length !== 8) return null
+
+  let result = 0n
+  for (const part of parts) {
+    const val = parseInt(part, 16)
+    if (isNaN(val) || val < 0 || val > 0xffff) return null
+    result = (result << 16n) | BigInt(val)
+  }
+  return result
+}
+
+/**
+ * Check if an IPv6 address is within a CIDR range using BigInt arithmetic.
+ */
+function isIPv6InCIDR(ip: string, range: string, mask: number): boolean {
+  if (isNaN(mask) || mask < 0 || mask > 128) return false
+  if (mask === 0) return true
+
+  // Only match IPv6 against IPv6
+  if (!ip.includes(':')) return false
+
+  const ipNum = ipv6ToBigInt(ip)
+  const rangeNum = ipv6ToBigInt(range)
+
+  if (ipNum === null || rangeNum === null) return false
+
+  const shift = BigInt(128 - mask)
+  return ipNum >> shift === rangeNum >> shift
 }

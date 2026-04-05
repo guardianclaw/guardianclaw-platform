@@ -133,16 +133,22 @@ export function createSafeErrorResponse(
  * Blocked IP ranges for SSRF prevention.
  */
 const BLOCKED_IP_RANGES = [
-  // Private networks
+  // IPv4 private networks
   /^10\./,
   /^172\.(1[6-9]|2[0-9]|3[0-1])\./,
   /^192\.168\./,
-  // Loopback
+  // IPv4 loopback
   /^127\./,
-  // Link-local
+  // IPv4 link-local
   /^169\.254\./,
   // Cloud metadata
   /^169\.254\.169\.254/,
+  // IPv6 loopback
+  /^::1$/,
+  // IPv6 unique local (fc00::/7)
+  /^f[cd]/i,
+  // IPv6 link-local (fe80::/10)
+  /^fe80:/i,
 ]
 
 /**
@@ -176,14 +182,13 @@ export function validateExternalUrl(url: string): { valid: boolean; error?: stri
       return { valid: false, error: 'Internal hostnames are not allowed' }
     }
 
-    // Check if hostname is an IP address
-    const ipv4Match = hostname.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/)
-    if (ipv4Match) {
-      // Check against blocked IP ranges
-      for (const range of BLOCKED_IP_RANGES) {
-        if (range.test(hostname)) {
-          return { valid: false, error: 'Internal IP addresses are not allowed' }
-        }
+    // Check if hostname is an IP address (IPv4 or IPv6)
+    // URL parser wraps IPv6 in brackets: [::1] -> strip them
+    const bareHost = hostname.startsWith('[') ? hostname.slice(1, -1) : hostname
+
+    for (const range of BLOCKED_IP_RANGES) {
+      if (range.test(bareHost)) {
+        return { valid: false, error: 'Internal IP addresses are not allowed' }
       }
     }
 
