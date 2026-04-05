@@ -212,7 +212,7 @@ export const adminAuditMiddleware = createMiddleware<Env>(async (c, next) => {
   // Process the request
   await next()
 
-  // After request: log the action
+  // After request: log the action with outcome
   const walletHash = c.get('walletHash')
   const requestId = c.get('requestId') || null
 
@@ -223,6 +223,10 @@ export const adminAuditMiddleware = createMiddleware<Env>(async (c, next) => {
     ipHash = await hashIP(ip, c.env.IP_HASH_SECRET)
   }
 
+  // Get status code from response
+  const statusCode = c.res?.status || 200
+  const outcome = statusCode >= 200 && statusCode < 400 ? 'success' : 'failure'
+
   // Build safe details
   const details = scrubDetails({
     method,
@@ -231,10 +235,9 @@ export const adminAuditMiddleware = createMiddleware<Env>(async (c, next) => {
     body: body ? scrubDetails(body) : undefined,
     duration_ms: Date.now() - startTime,
     admin_role: c.get('adminRole'),
+    status: statusCode,
+    outcome,
   })
-
-  // Get status code from response
-  const statusCode = c.res?.status || 200
 
   // Log to database
   const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)

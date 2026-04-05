@@ -463,13 +463,14 @@ webhookRoutes.post(
     const secret = generateWebhookSecret()
     const { encrypted, iv, prefix } = await encryptNewWebhookSecret(secret, c.env.JWT_SECRET)
 
-    // Update webhook with new secret
+    // Update webhook with new secret and track rotation
     const { data: webhook, error } = await supabase
       .from('webhooks')
       .update({
         secret_encrypted: encrypted,
         secret_iv: iv,
         secret_prefix: prefix,
+        rotated_at: new Date().toISOString(),
       })
       .eq('id', webhookId)
       .eq('agent_id', agentId)
