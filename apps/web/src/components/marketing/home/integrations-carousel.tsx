@@ -77,8 +77,7 @@ export function IntegrationsCarousel() {
                       alt={integration.name}
                       width={32}
                       height={32}
-                      className="h-8 w-8 object-contain opacity-60 transition-opacity group-hover:opacity-100"
-                      style={{ filter: 'brightness(0) invert(1)' }}
+                      className="h-8 w-8 object-contain"
                       loading="lazy"
                       unoptimized
                     />
