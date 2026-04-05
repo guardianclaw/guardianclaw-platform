@@ -5,7 +5,39 @@ import { ArrowLeft, ArrowRight, Book } from 'lucide-react'
 import { getAllDocSlugs, getDocNavigation } from '@/lib/docs'
 import { getDocPageServer } from '@/lib/docs/server'
 import { DocsSidebar } from '@/components/docs/sidebar'
-import { cn } from '@/lib/utils'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
+import rehypeHighlight from 'rehype-highlight'
+import rehypeSlug from 'rehype-slug'
+import type { Components } from 'react-markdown'
+
+// Blocked URI schemes that could execute code
+const DANGEROUS_PROTOCOLS = /^(javascript|data|vbscript):/i
+
+// Custom components for react-markdown with safe link handling
+const markdownComponents: Components = {
+  a: ({ href, children, ...props }) => {
+    if (href && DANGEROUS_PROTOCOLS.test(href)) {
+      return <span>{children}</span>
+    }
+
+    const isExternal = href?.startsWith('http://') || href?.startsWith('https://')
+
+    if (isExternal) {
+      return (
+        <a href={href} target="_blank" rel="noopener noreferrer" {...props}>
+          {children}
+        </a>
+      )
+    }
+
+    return (
+      <Link href={href || '#'} {...props}>
+        {children}
+      </Link>
+    )
+  },
+}
 
 interface PageProps {
   params: Promise<{ slug?: string[] }>
@@ -80,7 +112,13 @@ export default async function DocsPage({ params }: PageProps) {
 
         {/* Content */}
         <div className="prose prose-gray dark:prose-invert max-w-none">
-          <div dangerouslySetInnerHTML={{ __html: renderMarkdown(page.content) }} />
+          <ReactMarkdown
+            remarkPlugins={[remarkGfm]}
+            rehypePlugins={[rehypeHighlight, rehypeSlug]}
+            components={markdownComponents}
+          >
+            {page.content}
+          </ReactMarkdown>
         </div>
 
         {/* Navigation */}
@@ -172,103 +210,4 @@ function DocsIndex() {
       </div>
     </div>
   )
-}
-
-// Simple markdown renderer (in production, use a proper markdown library)
-function renderMarkdown(content: string): string {
-  // Step 1: Extract code blocks and replace with placeholders to protect their content
-  const codeBlocks: string[] = []
-  let result = content.replace(/```(\w+)?\n([\s\S]*?)```/g, (_, lang, code) => {
-    const placeholder = `__CODE_BLOCK_${codeBlocks.length}__`
-    codeBlocks.push(
-      `<pre class="bg-gray-950 rounded-xl p-4 overflow-x-auto my-4"><code class="text-sm font-mono language-${lang || 'text'}">${escapeHtml(code.trim())}</code></pre>`
-    )
-    return placeholder
-  })
-
-  // Step 2: Process tables as complete blocks
-  const tableRegex = /(\|[^\n]+\|\n)+/g
-  result = result.replace(tableRegex, (tableBlock) => {
-    const lines = tableBlock.trim().split('\n')
-    if (lines.length < 2) return tableBlock
-
-    const rows: string[] = []
-    let isHeader = true
-
-    for (const line of lines) {
-      // Skip separator line (|---|---|)
-      if (line.match(/^\|[\s-:|]+\|$/)) {
-        isHeader = false
-        continue
-      }
-
-      const cells = line
-        .split('|')
-        .slice(1, -1)
-        .map((c) => c.trim())
-      const tag = isHeader ? 'th' : 'td'
-      const cellClass = isHeader
-        ? 'border border-border px-4 py-2 text-left font-semibold bg-muted/50'
-        : 'border border-border px-4 py-2 text-left'
-      rows.push(
-        `<tr>${cells.map((c) => `<${tag} class="${cellClass}">${c}</${tag}>`).join('')}</tr>`
-      )
-
-      if (isHeader) isHeader = false
-    }
-
-    return `<div class="overflow-x-auto my-6"><table class="w-full border-collapse border border-border rounded-lg">${rows.join('')}</table></div>`
-  })
-
-  // Step 3: Apply markdown transformations (safe now that code blocks are protected)
-  result = result
-    // Headers
-    .replace(/^### (.*$)/gm, '<h3 class="text-lg font-semibold mt-8 mb-4">$1</h3>')
-    .replace(/^## (.*$)/gm, '<h2 class="text-xl font-semibold mt-10 mb-4">$1</h2>')
-    .replace(/^# (.*$)/gm, '<h1 class="text-3xl font-bold mb-6">$1</h1>')
-    // Inline code
-    .replace(
-      /`([^`]+)`/g,
-      '<code class="px-1.5 py-0.5 rounded bg-muted text-sm font-mono">$1</code>'
-    )
-    // Bold
-    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
-    // Links
-    .replace(
-      /\[([^\]]+)\]\(([^)]+)\)/g,
-      '<a href="$2" class="text-claw-600 dark:text-claw-400 hover:underline">$1</a>'
-    )
-    // Lists - wrap consecutive items
-    .replace(/(^- .*$\n?)+/gm, (match) => {
-      const items = match
-        .trim()
-        .split('\n')
-        .map((line) => `<li class="ml-4">${line.replace(/^- /, '')}</li>`)
-        .join('')
-      return `<ul class="list-disc my-4 space-y-1">${items}</ul>`
-    })
-    // Blockquotes
-    .replace(
-      /^> (.*$)/gm,
-      '<blockquote class="border-l-4 border-claw-500 pl-4 italic text-muted-foreground my-4">$1</blockquote>'
-    )
-    // Paragraphs - only wrap lines that aren't already HTML or placeholders
-    .replace(/^(?!<|__CODE_BLOCK)([^\n]+)$/gm, (match) => {
-      if (match.trim().length === 0) return ''
-      return `<p class="my-4">${match}</p>`
-    })
-    // Clean up extra paragraph tags around block elements
-    .replace(/<p class="my-4">(<(?:h[1-6]|pre|ul|ol|table|div|blockquote)[^>]*>)/g, '$1')
-    .replace(/(<\/(?:h[1-6]|pre|ul|ol|table|div|blockquote)>)<\/p>/g, '$1')
-
-  // Step 4: Restore code blocks
-  codeBlocks.forEach((block, i) => {
-    result = result.replace(`__CODE_BLOCK_${i}__`, block)
-  })
-
-  return result
-}
-
-function escapeHtml(text: string): string {
-  return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 }
