@@ -45,8 +45,16 @@ supabase/.temp/
 # Python
 __pycache__/
 *.py[cod]
+*.egg-info/
+*.egg
 .venv/
 venv/
+.coverage
+.coverage.*
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
 .vercel
 
 # Windows /dev/null artifact
