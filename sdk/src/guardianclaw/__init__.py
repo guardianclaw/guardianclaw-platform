@@ -93,6 +93,7 @@ GitHub: https://github.com/guardian-claw/guardianclaw
 """
 
 import warnings
+from importlib.metadata import version as _pkg_version, PackageNotFoundError as _PackageNotFoundError
 
 # Core - always available
 from guardianclaw.core import GuardianClaw, SeedLevel
@@ -164,7 +165,12 @@ from guardianclaw.database import (
     is_safe_query,
 )
 
-__version__ = "2.26.0"
+try:
+    __version__ = _pkg_version("guardianclaw")
+except _PackageNotFoundError:
+    # Fallback for development installs where the package is imported
+    # before `pip install -e .` has registered its metadata.
+    __version__ = "0.0.0+unknown"
 
 # Deprecated exports - kept for backwards compatibility
 # These will be removed in version 3.0.0
