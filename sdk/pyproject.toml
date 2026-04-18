@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "guardianclaw"
-version = "2.26.0"
+version = "3.0.0rc1"
 description = "AI safety toolkit with CLAW protocol for LLMs, AI agents, and humanoid robots - EU AI Act compliance and practical alignment for developers"
 readme = "README.md"
 license = {text = "MIT"}
