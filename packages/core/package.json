@@ -1,6 +1,6 @@
 {
   "name": "@guardianclaw/core",
-  "version": "2.25.0",
+  "version": "3.0.0-rc.1",
   "description": "Core validation module for GuardianClaw - CLAW Protocol implementation",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
