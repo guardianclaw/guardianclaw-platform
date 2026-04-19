@@ -1134,8 +1134,8 @@ class TestValidationPrompt:
     def test_prompt_has_all_gates(self):
         """Verify prompt includes all four gates."""
         assert "GATE 1: CREDIBILITY" in CLAW_VALIDATION_PROMPT
-        assert "GATE 2: AVOIDANCE" in CLAW_VALIDATION_PROMPT
-        assert "GATE 3: LIMITS" in CLAW_VALIDATION_PROMPT
+        assert "GATE 2: LIMITS" in CLAW_VALIDATION_PROMPT
+        assert "GATE 3: AVOIDANCE" in CLAW_VALIDATION_PROMPT
         assert "GATE 4: WORTH" in CLAW_VALIDATION_PROMPT
 
     def test_prompt_has_content_placeholder(self):
