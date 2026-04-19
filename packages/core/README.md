@@ -6,7 +6,7 @@ Core validation module for GuardianClaw. Implements the CLAW Protocol (Credibili
 
 | Feature | Description |
 |---------|-------------|
-| **CLAW Protocol** | Five-gate validation system (Credibility, Limits, Avoidance, Worth, Jailbreak) |
+| **CLAW Protocol** | Four-gate validation system (Credibility, Limits, Avoidance, Worth) — jailbreak attempts surface as Credibility or Limits violations |
 | **Heuristic Validation** | Pattern-based detection, runs offline, sub-millisecond latency |
 | **Semantic Validation** | LLM-powered analysis via API for nuanced cases |
 | **~370 Patterns** | Comprehensive pattern library synchronized with Python core |
@@ -69,7 +69,7 @@ console.log("Layer:", result.layer); // "heuristic" or "semantic"
 |----------|-------------|---------|
 | `validateCLAW(text)` | Full CLAW validation through all gates | `CLAWResult` |
 | `quickCheck(text)` | Fast boolean safety check | `boolean` |
-| `checkJailbreak(text)` | Jailbreak detection only | `GateResult` |
+| `checkJailbreak(text)` | Convenience wrapper aggregating jailbreak-type signals across Credibility + Limits | `GateResult` |
 | `checkHarm(text)` | Harm detection only | `GateResult` |
 | `validateWithFallback(text)` | Heuristic with API fallback | `Promise<ValidateResponse>` |
 
@@ -78,10 +78,9 @@ console.log("Layer:", result.layer); // "heuristic" or "semantic"
 ```typescript
 interface CLAWResult {
   credibility: GateResult;
-  avoidance: GateResult;
   limits: GateResult;
+  avoidance: GateResult;
   worth: GateResult;
-  jailbreak: GateResult;
   overall: boolean;
   summary: string;
   riskLevel: 'low' | 'medium' | 'high' | 'critical';
@@ -98,23 +97,22 @@ interface GateResult {
 
 | Gate | Function | Examples |
 |------|----------|----------|
-| **Credibility** | Detects deception and misinformation | Impersonation, false claims |
-| **Avoidance** | Identifies harmful content and sensitive data | Violence, malware, credentials |
-| **Limits** | Catches boundary violations | Unauthorized access, excessive permissions |
-| **Worth** | Flags purposeless destruction | Actions without legitimate benefit |
-| **Jailbreak** | Detects prompt injection attacks | Instruction override, DAN mode, roleplay manipulation |
+| **Credibility** | Deception, misinformation, and identity-deception jailbreaks | Impersonation, false claims, "you are now DAN", roleplay manipulation |
+| **Limits** | Scope/boundary violations, including jailbreak-type attacks that attempt to redefine the agent's operating contract | Instruction override, prompt extraction, filter bypass, system injection, unauthorized access |
+| **Avoidance** | Harmful content and sensitive-data exposure | Violence, malware, credentials, PII |
+| **Worth** | Purposeless or destructive actions lacking legitimate benefit | Absurd placements, unjustified physical actions |
 
 ## Pattern Categories
 
 The package includes ~370 patterns organized by category:
 
-**Jailbreak Detection**
-- Instruction override patterns
-- Role manipulation patterns
-- Prompt extraction patterns
-- Filter bypass patterns
-- Roleplay manipulation patterns
-- System injection patterns
+**Jailbreak-type Patterns** (distributed across Credibility and Limits)
+- Instruction override (Limits)
+- Prompt extraction (Limits)
+- Filter bypass (Limits)
+- System injection (Limits)
+- Role manipulation (Credibility)
+- Roleplay manipulation (Credibility)
 
 **Harm Detection**
 - Violence and weapons
