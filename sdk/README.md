@@ -331,20 +331,20 @@ Use gates directly in your code for fine-grained control:
 
 ```python
 from guardianclaw.validators import (
-    CLAWValidator,    # All 4 gates combined
-    TruthGate,        # Individual gates
-    HarmGate,
-    ScopeGate,
-    PurposeGate,
+    CLAWValidator,       # All 4 gates combined
+    CredibilityGate,     # Individual gates
+    LimitsGate,
+    AvoidanceGate,
+    WorthGate,
 )
 
 # Validate through all 4 gates
 validator = CLAWValidator()
 result = validator.validate("How do I help someone learn Python?")
-# {'safe': True, 'gates': {'credibility': 'pass', 'avoidance': 'pass', 'limits': 'pass', 'worth': 'pass'}, 'issues': []}
+# {'safe': True, 'gates': {'credibility': 'pass', 'limits': 'pass', 'avoidance': 'pass', 'worth': 'pass'}, 'issues': []}
 
 # Or use individual gates
-avoidance_gate = HarmGate()
+avoidance_gate = AvoidanceGate()
 is_safe, violations = avoidance_gate.validate("Some content to check")
 ```
 
@@ -562,10 +562,10 @@ python -m guardianclaw.integrations.garak.install
 garak --model_type openai --model_name gpt-4o --probes claw_claw
 
 # Test specific gates
-garak --model_type openai --model_name gpt-4o --probes claw_claw.TruthGate
-garak --model_type openai --model_name gpt-4o --probes claw_claw.HarmGate
-garak --model_type openai --model_name gpt-4o --probes claw_claw.ScopeGate
-garak --model_type openai --model_name gpt-4o --probes claw_claw.PurposeGate
+garak --model_type openai --model_name gpt-4o --probes claw_claw.CredibilityGate
+garak --model_type openai --model_name gpt-4o --probes claw_claw.LimitsGate
+garak --model_type openai --model_name gpt-4o --probes claw_claw.AvoidanceGate
+garak --model_type openai --model_name gpt-4o --probes claw_claw.WorthGate
 
 # With GuardianClaw detectors
 garak --model_type openai --model_name gpt-4o \
@@ -573,7 +573,7 @@ garak --model_type openai --model_name gpt-4o \
     --detectors claw_claw
 ```
 
-The plugin adds **73 prompts** across 5 probe classes (TruthGate, HarmGate, ScopeGate, PurposeGate, CLAWCombined) plus 5 detector classes for accurate classification.
+The plugin adds **73 prompts** across 5 probe classes (CredibilityGate, LimitsGate, AvoidanceGate, WorthGate, CLAWCombined) plus 5 detector classes for accurate classification.
 
 ### Agent Validation (Generic)
 
@@ -947,7 +947,7 @@ guardianclaw/
 │   │   ├── layered.py             # LayeredValidator (heuristic+semantic)
 │   │   └── config.py              # ValidationConfig
 │   ├── validators/           # CLAW gates + semantic validation
-│   │   ├── gates.py               # TruthGate, HarmGate, ScopeGate, PurposeGate
+│   │   ├── gates.py               # CredibilityGate, LimitsGate, AvoidanceGate, WorthGate
 │   │   └── semantic.py            # LLM-based semantic validation
 │   ├── database/             # Database Guard (SQL injection protection)
 │   │   ├── guard.py               # DatabaseGuard validator
