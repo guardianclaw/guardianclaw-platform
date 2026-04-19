@@ -1413,7 +1413,7 @@ class TestMemoInDescription:
         assert result is not None
 
 
-class TestPurposeGateEnhancements:
+class TestWorthGateEnhancements:
     """Tests for enhanced Worth Gate validation (20 chars, 3 words, gibberish)."""
 
     def test_purpose_minimum_20_characters(self):
