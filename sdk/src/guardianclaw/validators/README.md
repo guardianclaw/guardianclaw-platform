@@ -24,10 +24,10 @@ Fast, local validation using pattern matching. No API keys required.
 | Validator | Description |
 |-----------|-------------|
 | `CLAWValidator` | **Recommended**. Full 4-gate CLAW protocol |
-| `TruthGate` | Detects deception, impersonation, false claims |
-| `HarmGate` | Detects harmful content (weapons, malware, etc.) |
-| `ScopeGate` | Detects boundary violations, prompt injection |
-| `PurposeGate` | Detects lack of legitimate purpose |
+| `CredibilityGate` | Detects deception, impersonation, false claims |
+| `LimitsGate` | Detects boundary violations, prompt injection |
+| `AvoidanceGate` | Detects harmful content (weapons, malware, etc.) |
+| `WorthGate` | Detects lack of legitimate purpose |
 
 ```python
 from guardianclaw.validators import CLAWValidator
@@ -63,20 +63,11 @@ result = validator.validate("your text here")
 The CLAW protocol consists of four gates that content must pass:
 
 1. **Credibility Gate**: "Does this involve creating false information or deceiving others?"
-2. **Avoidance Gate**: "Who or what could be harmed if this succeeds?"
-3. **Limits Gate**: "Is this within appropriate boundaries?"
+2. **Limits Gate**: "Is this within appropriate boundaries?"
+3. **Avoidance Gate**: "Who or what could be harmed if this succeeds?"
 4. **Worth Gate**: "Does this serve legitimate benefit?"
 
 All four gates must pass for content to be considered safe.
-
-## Deprecated Classes
-
-The following classes are deprecated and will be removed in version 3.0.0:
-
-| Class | Replacement |
-|-------|-------------|
-| `THSValidator` | Use `CLAWValidator` (adds Purpose gate) |
-| `JailbreakGate` | Integrated into `TruthGate` and `ScopeGate` |
 
 ## Architecture
 
