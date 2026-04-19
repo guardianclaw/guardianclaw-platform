@@ -92,7 +92,6 @@ Documentation: https://guardianclaw.org/docs
 GitHub: https://github.com/guardian-claw/guardianclaw
 """
 
-import warnings
 from importlib.metadata import version as _pkg_version, PackageNotFoundError as _PackageNotFoundError
 
 # Core - always available
@@ -172,38 +171,6 @@ except _PackageNotFoundError:
     # before `pip install -e .` has registered its metadata.
     __version__ = "0.0.0+unknown"
 
-# Deprecated exports - kept for backwards compatibility
-# These will be removed in version 3.0.0
-_DEPRECATED_VALIDATORS = {
-    "TruthGate": "Use GuardianClaw or LayeredValidator instead. TruthGate is an internal implementation detail.",
-    "HarmGate": "Use GuardianClaw or LayeredValidator instead. HarmGate is an internal implementation detail.",
-    "ScopeGate": "Use GuardianClaw or LayeredValidator instead. ScopeGate is an internal implementation detail.",
-    "PurposeGate": "Use GuardianClaw or LayeredValidator instead. PurposeGate is an internal implementation detail.",
-    "JailbreakGate": "JailbreakGate is deprecated. Its functionality is now integrated into TruthGate and ScopeGate.",
-    "THSValidator": "Use GuardianClaw or LayeredValidator instead. THSValidator is an internal implementation detail.",
-    "CLAWValidator": "Use GuardianClaw or LayeredValidator instead. CLAWValidator is an internal implementation detail.",
-}
-
-
-def __getattr__(name: str):
-    """
-    Lazy loading with deprecation warnings for internal validators.
-
-    This follows PEP 562 for module-level __getattr__.
-    """
-    if name in _DEPRECATED_VALIDATORS:
-        warnings.warn(
-            f"{name} is deprecated and will be removed in version 3.0.0. "
-            f"{_DEPRECATED_VALIDATORS[name]}",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        from guardianclaw.validators import gates
-        return getattr(gates, name)
-
-    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
-
-
 def get_seed(level: str = "standard") -> str:
     """Convenience function to get an alignment seed.
 
@@ -278,12 +245,4 @@ __all__ = [
     "QueryValidationResult",
     "validate_query",
     "is_safe_query",
-    # Deprecated (will be removed in 3.0.0) - use GuardianClaw or LayeredValidator instead
-    "TruthGate",
-    "HarmGate",
-    "ScopeGate",
-    "PurposeGate",
-    "JailbreakGate",
-    "THSValidator",
-    "CLAWValidator",
 ]
