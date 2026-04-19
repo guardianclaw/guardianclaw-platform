@@ -73,12 +73,12 @@ from .types import (
 
 # Validators
 from .validators import (
-    HarmGateValidator,
+    AvoidanceGateValidator,
     PaymentValidator,
-    PurposeGateValidator,
-    ScopeGateValidator,
+    WorthGateValidator,
+    LimitsGateValidator,
     CLAWPaymentValidator,
-    TruthGateValidator,
+    CredibilityGateValidator,
 )
 
 # Middleware
@@ -127,10 +127,10 @@ __all__ = [
     "SupportedNetwork",
     # Validators
     "PaymentValidator",
-    "TruthGateValidator",
-    "HarmGateValidator",
-    "ScopeGateValidator",
-    "PurposeGateValidator",
+    "CredibilityGateValidator",
+    "AvoidanceGateValidator",
+    "LimitsGateValidator",
+    "WorthGateValidator",
     "CLAWPaymentValidator",
     # Middleware
     "GuardianClawX402Middleware",
