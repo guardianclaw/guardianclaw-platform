@@ -253,7 +253,7 @@ def install_plugin():
     print("  garak --model_type openai --model_name gpt-4o --probes claw_claw")
     print()
     print("  # Test specific gate")
-    print("  garak --model_type openai --model_name gpt-4o --probes claw_claw.TruthGate")
+    print("  garak --model_type openai --model_name gpt-4o --probes claw_claw.CredibilityGate")
     print()
     print("  # Use with GuardianClaw detectors")
     print("  garak --model_type openai --model_name gpt-4o \\")
