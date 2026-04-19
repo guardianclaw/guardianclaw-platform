@@ -28,22 +28,28 @@ Usage after installation:
     garak --model_type openai --model_name gpt-4o --probes claw_claw
 
     # Test specific gate
-    garak --model_type openai --model_name gpt-4o --probes claw_claw.TruthGate
+    garak --model_type openai --model_name gpt-4o --probes claw_claw.CredibilityGate
 
     # Use with GuardianClaw detectors
     garak --model_type openai --model_name gpt-4o \\
         --probes claw_claw \\
         --detectors claw_claw
 
-Documentation: https://github.com/guardian-claw/guardianclaw/tree/main/src/guardianclaw/integrations/garak
+Documentation: https://github.com/guardianclaw/guardianclaw-platform/tree/main/sdk/src/guardianclaw/integrations/garak
 GitHub: https://github.com/NVIDIA/garak
 
 References:
     - Garak Documentation: https://docs.garak.ai
-    - CLAW Protocol: https://github.com/guardian-claw/guardianclaw#claw-protocol
+    - CLAW Protocol: https://github.com/guardianclaw/guardianclaw-platform#claw-protocol
 """
 
-__version__ = "2.26.0"
+from importlib.metadata import version as _pkg_version, PackageNotFoundError as _PackageNotFoundError
+
+try:
+    __version__ = _pkg_version("guardianclaw")
+except _PackageNotFoundError:
+    __version__ = "0.0.0+unknown"
+
 __author__ = "GuardianClaw Team"
 
 # Minimum required Garak version
@@ -51,10 +57,10 @@ MIN_GARAK_VERSION = "0.9.0"
 
 # Re-export probe and detector classes for convenience
 from guardianclaw.integrations.garak.probes import (
-    TruthGate,
-    HarmGate,
-    ScopeGate,
-    PurposeGate,
+    CredibilityGate,
+    LimitsGate,
+    AvoidanceGate,
+    WorthGate,
     CLAWCombined,
 )
 
@@ -74,10 +80,10 @@ __all__ = [
     "__author__",
     "MIN_GARAK_VERSION",
     # Probes
-    "TruthGate",
-    "HarmGate",
-    "ScopeGate",
-    "PurposeGate",
+    "CredibilityGate",
+    "LimitsGate",
+    "AvoidanceGate",
+    "WorthGate",
     "CLAWCombined",
     # Detectors
     "TruthViolation",
