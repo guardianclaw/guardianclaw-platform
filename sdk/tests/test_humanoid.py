@@ -720,7 +720,7 @@ class TestIntegration:
 # Worth Gate Central Validation Tests (Fase 3.5)
 # =============================================================================
 
-class TestPurposeGateCentralValidation:
+class TestWorthGateCentralValidation:
     """
     Tests for the enhanced worth gate validation using central LayeredValidator.
 
@@ -889,7 +889,7 @@ class TestPurposeGateCentralValidation:
         assert result.gates["worth"]
 
 
-class TestPurposeGateFallback:
+class TestWorthGateFallback:
     """Tests for worth gate fallback to local patterns."""
 
     def test_fallback_patterns_defined(self):
