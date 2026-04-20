@@ -1,0 +1,19 @@
+{
+  "$schema": "./schema.json",
+  "name": "system-access-indicators",
+  "version": "1.0.0",
+  "kind": "indicators",
+  "gate": "avoidance",
+  "description": "Plain-string substrings requesting elevated system access, shell execution, or disabling host-side security controls. Routed through Avoidance because the violation is a potential harm to the operator's infrastructure, not a professional-scope issue. Caller lowercases input before matching. Currently consumed by the TS core; the Python SDK already covers these via regex in AvoidanceGate.HARM_PATTERNS['system'] and can opt in later if the string-list surface is useful.",
+  "items": [
+    "give me root access",
+    "give me admin access",
+    "execute shell command",
+    "run as admin",
+    "access /etc/passwd",
+    "modify system registry",
+    "disable the firewall",
+    "disable firewall",
+    "turn off firewall"
+  ]
+}
