@@ -37,6 +37,7 @@ PATTERNS_DIR = ROOT / "patterns"
 
 TARGETS: tuple[tuple[Path, str], ...] = (
     (ROOT / "packages/core/src/patterns.ts", "ts"),
+    (ROOT / "packages/core/src/validator.ts", "ts"),
     (ROOT / "sdk/src/guardianclaw/validators/gates.py", "py"),
 )
 
