@@ -19,8 +19,9 @@ import {
   MISINFORMATION_INDICATORS,
   HARM_PATTERNS,
   HARM_KEYWORDS,
+  SYSTEM_ACCESS_INDICATORS,
   SCOPE_PATTERNS,
-  SCOPE_INDICATORS,
+  AUTHORITY_INDICATORS,
   PURPOSE_PATTERNS,
   PURPOSE_INDICATORS,
   INSTRUCTION_OVERRIDE_PATTERNS,
@@ -204,7 +205,7 @@ function validateLimits(text: string): GateResult {
       }
     }
   }
-  violations.push(...checkIndicators(text, SCOPE_INDICATORS));
+  violations.push(...checkIndicators(text, AUTHORITY_INDICATORS));
 
   for (const pattern of INSTRUCTION_OVERRIDE_PATTERNS) {
     if (pattern.test(text)) {
@@ -255,6 +256,7 @@ function validateAvoidance(text: string): GateResult {
   }
 
   violations.push(...checkIndicators(text, HARM_KEYWORDS));
+  violations.push(...checkIndicators(text, SYSTEM_ACCESS_INDICATORS));
 
   const score = Math.max(0, 100 - violations.length * 30);
   return { passed: violations.length === 0, score, violations };
