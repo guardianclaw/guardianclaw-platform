@@ -563,7 +563,7 @@ class TestCLAWValidatorBugFixes:
 class TestCLAWValidatorDeepReview:
     """Tests from deep review (Session 183 - tier-1 revision)."""
 
-    # === SCOPE_INDICATORS without punctuation ===
+    # === AUTHORITY_INDICATORS without punctuation ===
     def test_scope_doctor_without_comma(self):
         """Limits: 'as your doctor i recommend' (no comma) should be blocked."""
         validator = CLAWValidator()
