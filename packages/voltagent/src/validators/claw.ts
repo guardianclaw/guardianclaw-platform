@@ -37,12 +37,14 @@ function toGateStatus(passed: boolean): GateStatus {
  * Convert core result to VoltAgent CLAWValidationResult
  */
 function convertCoreResult(coreResult: CoreCLAWResult): CLAWValidationResult {
+  // Jailbreak is a cross-gate signal dissolved into Credibility + Limits.
+  const jailbreakPassed = coreResult.credibility.passed && coreResult.limits.passed;
   const gates: CLAWGates = {
     credibility: toGateStatus(coreResult.credibility.passed),
     avoidance: toGateStatus(coreResult.avoidance.passed),
     limits: toGateStatus(coreResult.limits.passed),
     worth: toGateStatus(coreResult.worth.passed),
-    jailbreak: toGateStatus(coreResult.jailbreak.passed),
+    jailbreak: toGateStatus(jailbreakPassed),
   };
 
   // Collect all concerns from violations
@@ -51,7 +53,6 @@ function convertCoreResult(coreResult: CoreCLAWResult): CLAWValidationResult {
     ...coreResult.avoidance.violations,
     ...coreResult.limits.violations,
     ...coreResult.worth.violations,
-    ...coreResult.jailbreak.violations,
   ];
 
   return {
