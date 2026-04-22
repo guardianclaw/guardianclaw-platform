@@ -24,7 +24,8 @@
   },
   "files": [
     "dist",
-    "src"
+    "src",
+    "!src/**/*.test.ts"
   ],
   "scripts": {
     "build": "tsup src/index.ts src/patterns.ts src/memory-patterns.ts --format cjs,esm --dts",
