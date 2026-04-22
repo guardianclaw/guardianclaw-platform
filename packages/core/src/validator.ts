@@ -17,13 +17,13 @@
 import {
   DECEPTION_PATTERNS,
   MISINFORMATION_INDICATORS,
-  HARM_PATTERNS,
-  HARM_KEYWORDS,
+  AVOIDANCE_PATTERNS,
+  AVOIDANCE_KEYWORDS,
   SYSTEM_ACCESS_INDICATORS,
-  SCOPE_PATTERNS,
+  LIMITS_PATTERNS,
   AUTHORITY_INDICATORS,
-  PURPOSE_PATTERNS,
-  PURPOSE_INDICATORS,
+  WORTH_PATTERNS,
+  WORTH_INDICATORS,
   INSTRUCTION_OVERRIDE_PATTERNS,
   ROLE_MANIPULATION_PATTERNS,
   PROMPT_EXTRACTION_PATTERNS,
@@ -198,7 +198,7 @@ function validateCredibility(text: string): GateResult {
 function validateLimits(text: string): GateResult {
   const violations: string[] = [];
 
-  for (const [category, patterns] of Object.entries(SCOPE_PATTERNS)) {
+  for (const [category, patterns] of Object.entries(LIMITS_PATTERNS)) {
     for (const pattern of patterns) {
       if (pattern.test(text)) {
         violations.push(`Limits (${category}): ${pattern.source.substring(0, 40)}...`);
@@ -239,7 +239,7 @@ function validateLimits(text: string): GateResult {
 function validateAvoidance(text: string): GateResult {
   const violations: string[] = [];
 
-  for (const [category, patterns] of Object.entries(HARM_PATTERNS)) {
+  for (const [category, patterns] of Object.entries(AVOIDANCE_PATTERNS)) {
     for (const pattern of patterns) {
       if (pattern.test(text)) {
         violations.push(`Avoidance (${category}): ${pattern.source.substring(0, 40)}...`);
@@ -255,7 +255,7 @@ function validateAvoidance(text: string): GateResult {
     }
   }
 
-  violations.push(...checkIndicators(text, HARM_KEYWORDS));
+  violations.push(...checkIndicators(text, AVOIDANCE_KEYWORDS));
   violations.push(...checkIndicators(text, SYSTEM_ACCESS_INDICATORS));
 
   const score = Math.max(0, 100 - violations.length * 30);
@@ -269,7 +269,7 @@ function validateAvoidance(text: string): GateResult {
 function validateWorth(text: string): GateResult {
   const violations: string[] = [];
 
-  for (const [category, patterns] of Object.entries(PURPOSE_PATTERNS)) {
+  for (const [category, patterns] of Object.entries(WORTH_PATTERNS)) {
     for (const pattern of patterns) {
       if (pattern.test(text)) {
         violations.push(`Worth (${category}): ${pattern.source.substring(0, 40)}...`);
@@ -277,7 +277,7 @@ function validateWorth(text: string): GateResult {
     }
   }
 
-  violations.push(...checkIndicators(text, PURPOSE_INDICATORS));
+  violations.push(...checkIndicators(text, WORTH_INDICATORS));
 
   const score = Math.max(0, 100 - violations.length * 25);
   return { passed: violations.length === 0, score, violations };
@@ -397,12 +397,3 @@ export function checkJailbreak(text: string): GateResult {
   return { passed: violations.length === 0, score, violations };
 }
 
-/**
- * Convenience helper: scopes avoidance-gate detection to harmful content.
- */
-export function checkHarm(text: string): GateResult {
-  if (!text || typeof text !== 'string') {
-    return { passed: false, score: 0, violations: ['Invalid input'] };
-  }
-  return validateAvoidance(text);
-}
