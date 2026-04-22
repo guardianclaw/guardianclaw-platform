@@ -19,14 +19,12 @@ import {
   DECEPTION_PATTERNS as CORE_DECEPTION,
   ROLE_MANIPULATION_PATTERNS as CORE_ROLE_MANIPULATION,
   ROLEPLAY_MANIPULATION_PATTERNS as CORE_ROLEPLAY_MANIPULATION,
-  HARM_PATTERNS as CORE_HARM,
-  SCOPE_PATTERNS as CORE_SCOPE,
   INSTRUCTION_OVERRIDE_PATTERNS as CORE_INSTRUCTION_OVERRIDE,
   PROMPT_EXTRACTION_PATTERNS as CORE_PROMPT_EXTRACTION,
   FILTER_BYPASS_PATTERNS as CORE_FILTER_BYPASS,
   SYSTEM_INJECTION_PATTERNS as CORE_SYSTEM_INJECTION,
-  ALL_PURPOSE_PATTERNS as CORE_PURPOSE,
-  ALL_HARM_PATTERNS,
+  ALL_WORTH_PATTERNS as CORE_WORTH,
+  ALL_AVOIDANCE_PATTERNS,
   quickCheck as coreQuickCheck,
 } from '@guardianclaw/core';
 
@@ -45,19 +43,19 @@ interface PatternDefinition {
 }
 
 // CREDIBILITY GATE: Combine deception, role manipulation, and roleplay manipulation patterns
-const TRUTH_PATTERNS: PatternDefinition[] = [
+const CREDIBILITY_PATTERNS: PatternDefinition[] = [
   ...createPatternDefs(CORE_DECEPTION, 'Deception'),
   ...createPatternDefs(CORE_ROLE_MANIPULATION, 'Role manipulation'),
   ...createPatternDefs(CORE_ROLEPLAY_MANIPULATION, 'Roleplay manipulation'),
 ];
 
 // AVOIDANCE GATE: Use all avoidance patterns from core
-const HARM_PATTERNS: PatternDefinition[] = [
-  ...createPatternDefs(ALL_HARM_PATTERNS, 'Avoidance'),
+const AVOIDANCE_PATTERNS: PatternDefinition[] = [
+  ...createPatternDefs(ALL_AVOIDANCE_PATTERNS, 'Avoidance'),
 ];
 
 // LIMITS GATE: Combine instruction override, prompt extraction, filter bypass, and system injection
-const SCOPE_PATTERNS: PatternDefinition[] = [
+const LIMITS_PATTERNS: PatternDefinition[] = [
   ...createPatternDefs(CORE_INSTRUCTION_OVERRIDE, 'Instruction override'),
   ...createPatternDefs(CORE_PROMPT_EXTRACTION, 'Prompt extraction'),
   ...createPatternDefs(CORE_FILTER_BYPASS, 'Filter bypass'),
@@ -65,8 +63,8 @@ const SCOPE_PATTERNS: PatternDefinition[] = [
 ];
 
 // WORTH GATE: Use worth patterns from core
-const PURPOSE_PATTERNS: PatternDefinition[] = [
-  ...createPatternDefs(CORE_PURPOSE, 'Worth violation'),
+const WORTH_PATTERNS: PatternDefinition[] = [
+  ...createPatternDefs(CORE_WORTH, 'Worth violation'),
 ];
 
 /**
@@ -114,7 +112,7 @@ export function validateContent(
   }
 
   // Check CREDIBILITY gate
-  for (const { pattern, concern } of TRUTH_PATTERNS) {
+  for (const { pattern, concern } of CREDIBILITY_PATTERNS) {
     if (pattern.test(content)) {
       gates.credibility = 'fail';
       concerns.push(`[CREDIBILITY] ${concern}`);
@@ -122,7 +120,7 @@ export function validateContent(
   }
 
   // Check AVOIDANCE gate
-  for (const { pattern, concern } of HARM_PATTERNS) {
+  for (const { pattern, concern } of AVOIDANCE_PATTERNS) {
     if (pattern.test(content)) {
       gates.avoidance = 'fail';
       concerns.push(`[AVOIDANCE] ${concern}`);
@@ -130,7 +128,7 @@ export function validateContent(
   }
 
   // Check LIMITS gate
-  for (const { pattern, concern } of SCOPE_PATTERNS) {
+  for (const { pattern, concern } of LIMITS_PATTERNS) {
     if (pattern.test(content)) {
       gates.limits = 'fail';
       concerns.push(`[LIMITS] ${concern}`);
@@ -138,7 +136,7 @@ export function validateContent(
   }
 
   // Check WORTH gate
-  for (const { pattern, concern } of PURPOSE_PATTERNS) {
+  for (const { pattern, concern } of WORTH_PATTERNS) {
     if (pattern.test(content)) {
       gates.worth = 'fail';
       concerns.push(`[WORTH] ${concern}`);
