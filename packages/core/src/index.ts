@@ -38,7 +38,6 @@ export {
   validateCLAW,
   quickCheck,
   checkJailbreak,
-  checkHarm,
   type GateResult,
   type CLAWResult,
   type ValidationContext,
@@ -70,17 +69,17 @@ export {
   // Credibility Gate
   DECEPTION_PATTERNS,
   MISINFORMATION_INDICATORS,
-  // Avoidance Gate
-  HARM_PATTERNS,
-  HARM_KEYWORDS,
-  SYSTEM_ACCESS_INDICATORS,
   // Limits Gate
-  SCOPE_PATTERNS,
+  LIMITS_PATTERNS,
   AUTHORITY_INDICATORS,
+  // Avoidance Gate
+  AVOIDANCE_PATTERNS,
+  AVOIDANCE_KEYWORDS,
+  SYSTEM_ACCESS_INDICATORS,
   // Worth Gate
-  PURPOSE_PATTERNS,
-  PURPOSE_INDICATORS,
-  // Jailbreak Gate
+  WORTH_PATTERNS,
+  WORTH_INDICATORS,
+  // Jailbreak attack-type patterns (distributed across Credibility & Limits)
   INSTRUCTION_OVERRIDE_PATTERNS,
   ROLE_MANIPULATION_PATTERNS,
   PROMPT_EXTRACTION_PATTERNS,
@@ -92,9 +91,9 @@ export {
   SENSITIVE_DATA_PATTERNS,
   // Collections
   ALL_JAILBREAK_PATTERNS,
-  ALL_HARM_PATTERNS,
-  ALL_SCOPE_PATTERNS,
-  ALL_PURPOSE_PATTERNS,
+  ALL_LIMITS_PATTERNS,
+  ALL_AVOIDANCE_PATTERNS,
+  ALL_WORTH_PATTERNS,
 } from './patterns';
 
 // =============================================================================
