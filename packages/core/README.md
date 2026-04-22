@@ -70,7 +70,6 @@ console.log("Layer:", result.layer); // "heuristic" or "semantic"
 | `validateCLAW(text)` | Full CLAW validation through all gates | `CLAWResult` |
 | `quickCheck(text)` | Fast boolean safety check | `boolean` |
 | `checkJailbreak(text)` | Convenience wrapper aggregating jailbreak-type signals across Credibility + Limits | `GateResult` |
-| `checkHarm(text)` | Harm detection only | `GateResult` |
 | `validateWithFallback(text)` | Heuristic with API fallback | `Promise<ValidateResponse>` |
 
 ### Types
@@ -114,7 +113,7 @@ The package includes ~370 patterns organized by category:
 - Role manipulation (Credibility)
 - Roleplay manipulation (Credibility)
 
-**Harm Detection**
+**Avoidance Detection**
 - Violence and weapons
 - Malware and hacking
 - Illegal activities
@@ -196,5 +195,5 @@ MIT
 |----------|-----|
 | Website | https://guardianclaw.org |
 | Documentation | https://guardianclaw.org/docs |
-| GitHub | https://github.com/guardian-claw/guardianclaw |
-| Issues | https://github.com/guardian-claw/guardianclaw/issues |
+| GitHub | https://github.com/guardianclaw/guardianclaw-platform |
+| Issues | https://github.com/guardianclaw/guardianclaw-platform/issues |
