@@ -79,7 +79,7 @@
     "url": "https://github.com/guardian-claw/guardianclaw/issues"
   },
   "dependencies": {
-    "@guardianclaw/core": "^2.25.0"
+    "@guardianclaw/core": "*"
   },
   "peerDependencies": {
     "moltbot": ">=1.0.0"
