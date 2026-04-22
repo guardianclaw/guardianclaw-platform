@@ -19,7 +19,7 @@ Available integrations:
     from guardianclaw.integrations.agent_validation import SafetyValidator
     from guardianclaw.integrations.solana_agent_kit import ClawValidator
     from guardianclaw.integrations.virtuals import GuardianClawSafetyWorker
-    from guardianclaw.integrations.garak import TruthGate, HarmGate  # Garak probes
+    from guardianclaw.integrations.garak import CredibilityGate, AvoidanceGate  # Garak probes
     from guardianclaw.integrations.openguardrails import OpenGuardrailsValidator
     from guardianclaw.integrations.pyrit import GuardianClawCLAWScorer  # PyRIT scorers
 

@@ -138,3 +138,18 @@ jobs:
 
       - name: TypeCheck Web
         run: npx tsc --noEmit --project apps/web/tsconfig.json
+
+  pattern-sync:
+    name: Pattern Sync
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Verify patterns/*.json are in sync with generated sources
+        run: python scripts/gen_patterns.py --check

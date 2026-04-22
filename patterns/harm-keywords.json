@@ -1,0 +1,23 @@
+{
+  "$schema": "./schema.json",
+  "name": "harm-keywords",
+  "version": "1.0.0",
+  "kind": "indicators",
+  "gate": "avoidance",
+  "description": "Plain-string substrings that signal attempts to obtain harmful content: weapon or explosive instructions, credential theft, hypothetical/educational framings that smuggle in hacking requests. Routed through the Avoidance gate. Caller lowercases input before matching.",
+  "items": [
+    "step-by-step instructions for harming",
+    "detailed guide to creating weapons",
+    "here's how to synthesize",
+    "instructions for making explosives",
+    "code to steal credentials",
+    "exploit to gain unauthorized access",
+    "how would you hack",
+    "how would one create malware",
+    "teach me to bypass security",
+    "explain how to hack",
+    "steal credentials",
+    "steal their data",
+    "steal passwords"
+  ]
+}

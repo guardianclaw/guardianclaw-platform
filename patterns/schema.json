@@ -1,0 +1,41 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://guardianclaw.org/schemas/patterns/v1.json",
+  "title": "GuardianClaw Pattern Registry",
+  "description": "Neutral source of truth for a named list of string indicators consumed by both Python and TypeScript validators. Regex patterns are out of scope for v1; only plain lowercased string indicators are supported.",
+  "type": "object",
+  "required": ["name", "version", "kind", "gate", "items"],
+  "additionalProperties": false,
+  "properties": {
+    "name": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$",
+      "description": "Stable identifier used as the pattern-sync marker name in generated source files."
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "kind": {
+      "type": "string",
+      "enum": ["indicators"],
+      "description": "Only 'indicators' (plain lowercased strings) is supported in v1."
+    },
+    "gate": {
+      "type": "string",
+      "enum": ["credibility", "limits", "avoidance", "worth"]
+    },
+    "description": { "type": "string" },
+    "items": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "pattern": "^[^A-Z]*$",
+        "description": "Lowercased string. Matching is caller-defined (typically substring on text.lower())."
+      }
+    }
+  }
+}

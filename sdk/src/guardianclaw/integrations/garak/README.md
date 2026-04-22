@@ -17,10 +17,10 @@ pip install guardianclaw garak
 
 | Component | Description |
 |-----------|-------------|
-| `TruthGate` | Probe for fake documents, impersonation, misinformation |
-| `HarmGate` | Probe for violence, hacking, financial crime |
-| `ScopeGate` | Probe for jailbreaks, prompt injection, persona manipulation |
-| `PurposeGate` | Probe for purposeless destruction, waste |
+| `CredibilityGate` | Probe for fake documents, impersonation, misinformation |
+| `AvoidanceGate` | Probe for violence, hacking, financial crime |
+| `LimitsGate` | Probe for jailbreaks, prompt injection, persona manipulation |
+| `WorthGate` | Probe for purposeless destruction, waste |
 | `CLAWCombined` | Probe for multi-gate sophisticated attacks |
 | `TruthViolation` | Detector for deceptive content generation |
 | `HarmViolation` | Detector for harmful information provision |
@@ -74,16 +74,16 @@ garak --model_type openai --model_name gpt-4o --probes claw_claw
 
 ```bash
 # Credibility Gate (fake documents, misinformation)
-garak --model_type openai --model_name gpt-4o --probes claw_claw.TruthGate
+garak --model_type openai --model_name gpt-4o --probes claw_claw.CredibilityGate
 
 # Avoidance Gate (violence, hacking)
-garak --model_type openai --model_name gpt-4o --probes claw_claw.HarmGate
+garak --model_type openai --model_name gpt-4o --probes claw_claw.AvoidanceGate
 
 # Limits Gate (jailbreaks, prompt injection)
-garak --model_type openai --model_name gpt-4o --probes claw_claw.ScopeGate
+garak --model_type openai --model_name gpt-4o --probes claw_claw.LimitsGate
 
 # Worth Gate (purposeless destruction)
-garak --model_type openai --model_name gpt-4o --probes claw_claw.PurposeGate
+garak --model_type openai --model_name gpt-4o --probes claw_claw.WorthGate
 ```
 
 ### Use GuardianClaw Detectors
@@ -129,10 +129,10 @@ garak --model_type anthropic --model_name claude-3-opus-20240229 --probes claw_c
 
 | Probe | Prompts | Description |
 |-------|---------|-------------|
-| `TruthGate` | 15 | Fake press releases, medical certificates, impersonation, misinformation |
-| `HarmGate` | 17 | Weapons, hacking tutorials, financial fraud, self-harm queries |
-| `ScopeGate` | 17 | DAN jailbreaks, system prompt disclosure, persona manipulation |
-| `PurposeGate` | 15 | Vandalism planning, resource waste, self-sabotage |
+| `CredibilityGate` | 15 | Fake press releases, medical certificates, impersonation, misinformation |
+| `AvoidanceGate` | 17 | Weapons, hacking tutorials, financial fraud, self-harm queries |
+| `LimitsGate` | 17 | DAN jailbreaks, system prompt disclosure, persona manipulation |
+| `WorthGate` | 15 | Vandalism planning, resource waste, self-sabotage |
 | `CLAWCombined` | 9 | Multi-gate attacks (Truth+Harm, Scope+Harm, etc.) |
 
 **Total: 73 prompts**
@@ -228,7 +228,7 @@ jobs:
 ## Programmatic Usage
 
 ```python
-from guardianclaw.integrations.garak.probes import TruthGate, HarmGate
+from guardianclaw.integrations.garak.probes import CredibilityGate, AvoidanceGate
 from guardianclaw.integrations.garak.detectors import (
     TruthViolation,
     DetectionMetrics,
@@ -236,8 +236,8 @@ from guardianclaw.integrations.garak.detectors import (
 )
 
 # Access probe prompts
-probe = TruthGate()
-print(f"TruthGate: {len(probe.prompts)} prompts")
+probe = CredibilityGate()
+print(f"CredibilityGate: {len(probe.prompts)} prompts")
 print(f"Goal: {probe.goal}")
 print(f"Primary detector: {probe.primary_detector}")
 

@@ -166,17 +166,13 @@ export function validateCLAW(
   // Use core validation
   const coreResult: CoreCLAWResult = coreValidateCLAW(input);
 
-  // Convert to browser format
+  // Convert to browser format. Jailbreak is a cross-gate signal in the core
+  // 4-gate model: role/roleplay manipulation surfaces as Credibility failures
+  // and instruction override / prompt extraction / filter bypass / system
+  // injection surfaces as Limits failures. We derive a synthetic jailbreak
+  // gate for the browser UI by calling checkJailbreak separately.
   const credibilityGate = convertGateResult(coreResult.credibility);
-  const jailbreakGate = convertGateResult(coreResult.jailbreak);
-
-  // For backwards compatibility: propagate jailbreak issues to credibility gate
-  // Jailbreaks are fundamentally violations of truthfulness (pretending to be something else)
-  if (!jailbreakGate.passed) {
-    credibilityGate.passed = false;
-    credibilityGate.score = Math.min(credibilityGate.score, jailbreakGate.score);
-    credibilityGate.issues.push(...jailbreakGate.issues.map(i => i.replace('Jailbreak', 'Credibility/Override')));
-  }
+  const jailbreakGate = convertGateResult(coreCheckJailbreak(input));
 
   let browserResult: CLAWResult = {
     credibility: credibilityGate,

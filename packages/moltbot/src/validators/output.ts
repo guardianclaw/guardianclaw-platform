@@ -193,7 +193,6 @@ function createPassingClawResult(): CLAWResult {
     overall: true,
     riskLevel: 'low' as const,
     summary: 'Validation skipped or failed',
-    jailbreak: passingGate,
     credibility: passingGate,
     avoidance: passingGate,
     limits: passingGate,
@@ -313,24 +312,36 @@ function detectDestructiveCommands(content: string): DetectedIssue[] {
  */
 function addClawViolations(clawResult: CLAWResult, issues: DetectedIssue[]): void {
   try {
-    // Process each gate directly with proper typing
+    // Jailbreak attempts surface as Credibility (identity deception) or Limits
+    // (boundary violation) violations — tagged by the violation-string prefix.
+    const jailbreakPrefixes = [
+      'Role manipulation',
+      'Roleplay manipulation',
+      'Instruction override',
+      'Prompt extraction',
+      'Filter bypass',
+      'System injection',
+    ];
+    const isJailbreakViolation = (v: string): boolean =>
+      jailbreakPrefixes.some((p) => v.startsWith(p));
+
     const gates = [
-      { result: clawResult.jailbreak, name: 'jailbreak', type: 'jailbreak_attempt' as const },
-      { result: clawResult.credibility, name: 'credibility', type: 'unknown' as const },
-      { result: clawResult.avoidance, name: 'avoidance', type: 'unknown' as const },
-      { result: clawResult.limits, name: 'limits', type: 'unknown' as const },
-      { result: clawResult.worth, name: 'worth', type: 'unknown' as const },
+      { result: clawResult.credibility, name: 'credibility' as const },
+      { result: clawResult.avoidance, name: 'avoidance' as const },
+      { result: clawResult.limits, name: 'limits' as const },
+      { result: clawResult.worth, name: 'worth' as const },
     ];
 
-    for (const { result, name, type } of gates) {
+    for (const { result, name } of gates) {
       if (!result.passed && result.violations.length > 0) {
         for (const violation of result.violations.slice(0, 3)) { // Limit to 3 per gate
+          const jailbreak = isJailbreakViolation(violation);
           issues.push({
-            type,
-            description: `${name} gate violation`,
+            type: jailbreak ? 'jailbreak_attempt' : 'unknown',
+            description: jailbreak ? 'jailbreak attempt' : `${name} gate violation`,
             evidence: truncateString(violation, 100),
-            severity: name === 'jailbreak' ? 'critical' : 'medium',
-            gate: name as DetectedIssue['gate'],
+            severity: jailbreak ? 'critical' : 'medium',
+            gate: jailbreak ? 'jailbreak' : name,
           });
         }
       }
@@ -375,12 +386,15 @@ function applyIgnorePatterns(content: string, patterns?: string[]): string {
  * Convert CLAW result to simplified gate results.
  */
 function convertToGateResults(clawResult: CLAWResult): GateResults {
+  // Jailbreak is a cross-gate signal dissolved into Credibility + Limits.
+  // We expose a synthetic status that fails if either host gate failed.
+  const jailbreakPassed = clawResult.credibility.passed && clawResult.limits.passed;
   return {
     credibility: clawResult.credibility.passed ? 'pass' : 'fail',
     avoidance: clawResult.avoidance.passed ? 'pass' : 'fail',
     limits: clawResult.limits.passed ? 'pass' : 'fail',
     worth: clawResult.worth.passed ? 'pass' : 'fail',
-    jailbreak: clawResult.jailbreak.passed ? 'pass' : 'fail',
+    jailbreak: jailbreakPassed ? 'pass' : 'fail',
   };
 }
 

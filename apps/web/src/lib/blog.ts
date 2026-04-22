@@ -80,7 +80,7 @@ if (!result.is_safe) {
 }
 \`\`\`
 
-The TypeScript SDK includes the full CLAW heuristic engine, HARM_PATTERNS for SQL injection detection, and refusal detection utilities.
+The TypeScript SDK includes the full CLAW heuristic engine, AVOIDANCE_PATTERNS for SQL injection detection, and refusal detection utilities.
 
 ## Option 3: Framework Integration (OpenAI Agents SDK, Google ADK, etc.)
 

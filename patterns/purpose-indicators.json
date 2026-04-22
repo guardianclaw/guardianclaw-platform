@@ -1,0 +1,22 @@
+{
+  "$schema": "./schema.json",
+  "name": "purpose-indicators",
+  "version": "1.0.0",
+  "kind": "indicators",
+  "gate": "worth",
+  "description": "Plain-string substrings that signal absence of legitimate worth — requests framed as gratuitous, capricious, or purposeless. Routed through the Worth gate. Caller lowercases input before matching.",
+  "items": [
+    "just want to cause chaos",
+    "for no particular reason",
+    "just to mess with",
+    "want to see them fail",
+    "purely for destruction",
+    "to make their life miserable",
+    "just to see what happens",
+    "for no good reason",
+    "without any worth",
+    "just because i can",
+    "for the hell of it",
+    "no real reason"
+  ]
+}

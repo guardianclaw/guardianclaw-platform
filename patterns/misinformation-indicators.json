@@ -1,0 +1,17 @@
+{
+  "$schema": "./schema.json",
+  "name": "misinformation-indicators",
+  "version": "1.0.0",
+  "kind": "indicators",
+  "gate": "credibility",
+  "description": "Plain-string substrings that signal an attempt to produce or spread false information. Caller lowercases input before matching.",
+  "items": [
+    "fake news",
+    "false testimony",
+    "fabricated evidence",
+    "create a hoax",
+    "spread misinformation",
+    "deceive people into",
+    "trick them into believing"
+  ]
+}

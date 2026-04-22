@@ -202,7 +202,7 @@ export class ClawValidator {
     }
 
     // GATE 2: AVOIDANCE - Assess potential for damage
-    const avoidanceResult = this.checkHarmGate(input);
+    const avoidanceResult = this.checkAvoidanceGate(input);
     gateResults.push(avoidanceResult);
     if (!avoidanceResult.passed) {
       concerns.push(avoidanceResult.reason || "Avoidance gate failed");
@@ -210,7 +210,7 @@ export class ClawValidator {
     }
 
     // GATE 3: LIMITS - Check boundaries and limits
-    const limitsResult = this.checkScopeGate(input);
+    const limitsResult = this.checkLimitsGate(input);
     gateResults.push(limitsResult);
     if (!limitsResult.passed) {
       concerns.push(limitsResult.reason || "Limits gate failed");
@@ -218,7 +218,7 @@ export class ClawValidator {
     }
 
     // GATE 4: WORTH - Verify legitimate benefit
-    const worthResult = this.checkPurposeGate(input);
+    const worthResult = this.checkWorthGate(input);
     gateResults.push(worthResult);
     if (!worthResult.passed) {
       concerns.push(worthResult.reason || "Worth gate failed");
@@ -353,7 +353,7 @@ export class ClawValidator {
   /**
    * AVOIDANCE GATE: Assess potential for damage to users or systems
    */
-  private checkHarmGate(input: ValidationInput): GateResult {
+  private checkAvoidanceGate(input: ValidationInput): GateResult {
     // Check against blocked addresses with proper type guard
     if (
       input.recipient &&
@@ -404,7 +404,7 @@ export class ClawValidator {
   /**
    * LIMITS GATE: Check if transaction is within appropriate boundaries
    */
-  private checkScopeGate(input: ValidationInput): GateResult {
+  private checkLimitsGate(input: ValidationInput): GateResult {
     // Check transaction amount limits
     if (
       input.amount !== undefined &&
@@ -426,7 +426,7 @@ export class ClawValidator {
   /**
    * WORTH GATE: Verify legitimate benefit and explicit justification
    */
-  private checkPurposeGate(input: ValidationInput): GateResult {
+  private checkWorthGate(input: ValidationInput): GateResult {
     const actionLower = input.action.toLowerCase();
 
     // Check if this action requires explicit worth

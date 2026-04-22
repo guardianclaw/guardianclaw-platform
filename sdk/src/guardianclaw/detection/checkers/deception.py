@@ -18,7 +18,7 @@ Categories Detected:
     - Fabrication: Making up facts, fake quotes, fictional events as real
 
 Design:
-    The checker uses patterns from TruthGate (validators.gates)
+    The checker uses patterns from CredibilityGate (validators.gates)
     to detect deceptive content in AI OUTPUT.
     This is checking if the AI PRODUCED deceptive content.
 

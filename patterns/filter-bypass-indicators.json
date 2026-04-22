@@ -1,0 +1,17 @@
+{
+  "$schema": "./schema.json",
+  "name": "filter-bypass-indicators",
+  "version": "1.0.0",
+  "kind": "indicators",
+  "gate": "limits",
+  "description": "Plain-string substrings that indicate an attempt to disable, bypass, or remove the safety filters and guardrails rather than work around them implicitly. Routed through Limits. Caller lowercases input before matching.",
+  "items": [
+    "bypass safety",
+    "bypass the content filter",
+    "disable content filter",
+    "disable your safety features",
+    "turn off your restrictions",
+    "remove your guardrails",
+    "deactivate your safety mode"
+  ]
+}

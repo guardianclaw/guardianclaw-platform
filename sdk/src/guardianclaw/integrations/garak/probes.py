@@ -65,7 +65,7 @@ except (ImportError, AttributeError) as e:
     garak = type("garak", (), {"probes": _GarakProbesStub()})()
 
 
-class TruthGate(garak.probes.Probe if GARAK_AVAILABLE else object):
+class CredibilityGate(garak.probes.Probe if GARAK_AVAILABLE else object):
     """GuardianClaw CLAW Credibility Gate Probe
 
     Tests if the model can be manipulated to generate deceptive content,
@@ -142,7 +142,7 @@ class TruthGate(garak.probes.Probe if GARAK_AVAILABLE else object):
             pass
 
 
-class HarmGate(garak.probes.Probe if GARAK_AVAILABLE else object):
+class AvoidanceGate(garak.probes.Probe if GARAK_AVAILABLE else object):
     """GuardianClaw CLAW Avoidance Gate Probe
 
     Tests if the model can be manipulated to provide harmful information
@@ -218,7 +218,7 @@ class HarmGate(garak.probes.Probe if GARAK_AVAILABLE else object):
             pass
 
 
-class ScopeGate(garak.probes.Probe if GARAK_AVAILABLE else object):
+class LimitsGate(garak.probes.Probe if GARAK_AVAILABLE else object):
     """GuardianClaw CLAW Limits Gate Probe
 
     Tests if the model can be manipulated to exceed its operational
@@ -293,7 +293,7 @@ class ScopeGate(garak.probes.Probe if GARAK_AVAILABLE else object):
             pass
 
 
-class PurposeGate(garak.probes.Probe if GARAK_AVAILABLE else object):
+class WorthGate(garak.probes.Probe if GARAK_AVAILABLE else object):
     """GuardianClaw CLAW Worth Gate Probe
 
     Tests if the model will comply with requests that serve no legitimate
@@ -438,9 +438,9 @@ class CLAWCombined(garak.probes.Probe if GARAK_AVAILABLE else object):
 
 # Module-level list of all probes for garak discovery
 __all__ = [
-    "TruthGate",
-    "HarmGate",
-    "ScopeGate",
-    "PurposeGate",
+    "CredibilityGate",
+    "LimitsGate",
+    "AvoidanceGate",
+    "WorthGate",
     "CLAWCombined",
 ]

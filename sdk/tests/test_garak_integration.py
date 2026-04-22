@@ -11,10 +11,10 @@ import pytest
 from unittest.mock import MagicMock
 
 from guardianclaw.integrations.garak.probes import (
-    TruthGate,
-    HarmGate,
-    ScopeGate,
-    PurposeGate,
+    CredibilityGate,
+    AvoidanceGate,
+    LimitsGate,
+    WorthGate,
     CLAWCombined,
 )
 from guardianclaw.integrations.garak.detectors import (
@@ -37,8 +37,8 @@ class TestProbeStructure:
     """Tests for probe class structure and attributes."""
 
     def test_credibility_gate_has_required_attributes(self):
-        """TruthGate should have all required Garak probe attributes."""
-        probe = TruthGate()
+        """CredibilityGate should have all required Garak probe attributes."""
+        probe = CredibilityGate()
         assert probe.active is True
         assert probe.lang == "en"
         assert probe.goal is not None
@@ -46,8 +46,8 @@ class TestProbeStructure:
         assert "claw:claw:credibility" in probe.tags
 
     def test_avoidance_gate_has_required_attributes(self):
-        """HarmGate should have all required Garak probe attributes."""
-        probe = HarmGate()
+        """AvoidanceGate should have all required Garak probe attributes."""
+        probe = AvoidanceGate()
         assert probe.active is True
         assert probe.lang == "en"
         assert probe.goal is not None
@@ -55,8 +55,8 @@ class TestProbeStructure:
         assert "claw:claw:avoidance" in probe.tags
 
     def test_limits_gate_has_required_attributes(self):
-        """ScopeGate should have all required Garak probe attributes."""
-        probe = ScopeGate()
+        """LimitsGate should have all required Garak probe attributes."""
+        probe = LimitsGate()
         assert probe.active is True
         assert probe.lang == "en"
         assert probe.goal is not None
@@ -64,8 +64,8 @@ class TestProbeStructure:
         assert "claw:claw:limits" in probe.tags
 
     def test_worth_gate_has_required_attributes(self):
-        """PurposeGate should have all required Garak probe attributes."""
-        probe = PurposeGate()
+        """WorthGate should have all required Garak probe attributes."""
+        probe = WorthGate()
         assert probe.active is True
         assert probe.lang == "en"
         assert probe.goal is not None
@@ -86,23 +86,23 @@ class TestProbePromptCounts:
     """Verify documented prompt counts match actual counts."""
 
     def test_credibility_gate_prompt_count(self):
-        """TruthGate should have 15 prompts as documented."""
-        probe = TruthGate()
+        """CredibilityGate should have 15 prompts as documented."""
+        probe = CredibilityGate()
         assert len(probe.prompts) == 15
 
     def test_avoidance_gate_prompt_count(self):
-        """HarmGate should have 17 prompts as documented."""
-        probe = HarmGate()
+        """AvoidanceGate should have 17 prompts as documented."""
+        probe = AvoidanceGate()
         assert len(probe.prompts) == 17
 
     def test_limits_gate_prompt_count(self):
-        """ScopeGate should have 17 prompts as documented."""
-        probe = ScopeGate()
+        """LimitsGate should have 17 prompts as documented."""
+        probe = LimitsGate()
         assert len(probe.prompts) == 17
 
     def test_worth_gate_prompt_count(self):
-        """PurposeGate should have 15 prompts as documented."""
-        probe = PurposeGate()
+        """WorthGate should have 15 prompts as documented."""
+        probe = WorthGate()
         assert len(probe.prompts) == 15
 
     def test_claw_combined_prompt_count(self):
@@ -113,10 +113,10 @@ class TestProbePromptCounts:
     def test_total_prompt_count(self):
         """Total prompts should be 73 as documented."""
         total = (
-            len(TruthGate().prompts)
-            + len(HarmGate().prompts)
-            + len(ScopeGate().prompts)
-            + len(PurposeGate().prompts)
+            len(CredibilityGate().prompts)
+            + len(AvoidanceGate().prompts)
+            + len(LimitsGate().prompts)
+            + len(WorthGate().prompts)
             + len(CLAWCombined().prompts)
         )
         assert total == 73
@@ -126,38 +126,38 @@ class TestProbePromptContent:
     """Test that prompts cover expected attack categories."""
 
     def test_credibility_gate_covers_fake_documents(self):
-        """TruthGate should include fake document prompts."""
-        probe = TruthGate()
+        """CredibilityGate should include fake document prompts."""
+        probe = CredibilityGate()
         prompts_lower = [p.lower() for p in probe.prompts]
         assert any("fake" in p or "press release" in p for p in prompts_lower)
 
     def test_credibility_gate_covers_impersonation(self):
-        """TruthGate should include impersonation prompts."""
-        probe = TruthGate()
+        """CredibilityGate should include impersonation prompts."""
+        probe = CredibilityGate()
         prompts_lower = [p.lower() for p in probe.prompts]
         assert any("pretend" in p or "impersonat" in p or "as if you are" in p for p in prompts_lower)
 
     def test_avoidance_gate_covers_violence(self):
-        """HarmGate should include violence-related prompts."""
-        probe = HarmGate()
+        """AvoidanceGate should include violence-related prompts."""
+        probe = AvoidanceGate()
         prompts_lower = [p.lower() for p in probe.prompts]
         assert any("bomb" in p or "weapon" in p or "hurt" in p for p in prompts_lower)
 
     def test_avoidance_gate_covers_hacking(self):
-        """HarmGate should include hacking-related prompts."""
-        probe = HarmGate()
+        """AvoidanceGate should include hacking-related prompts."""
+        probe = AvoidanceGate()
         prompts_lower = [p.lower() for p in probe.prompts]
         assert any("hack" in p or "sql injection" in p or "ransomware" in p for p in prompts_lower)
 
     def test_limits_gate_covers_jailbreaks(self):
-        """ScopeGate should include jailbreak prompts."""
-        probe = ScopeGate()
+        """LimitsGate should include jailbreak prompts."""
+        probe = LimitsGate()
         prompts_lower = [p.lower() for p in probe.prompts]
         assert any("dan" in p or "jailbreak" in p or "ignore" in p for p in prompts_lower)
 
     def test_worth_gate_covers_destruction(self):
-        """PurposeGate should include purposeless destruction prompts."""
-        probe = PurposeGate()
+        """WorthGate should include purposeless destruction prompts."""
+        probe = WorthGate()
         prompts_lower = [p.lower() for p in probe.prompts]
         assert any("destroy" in p or "vandalize" in p or "break" in p for p in prompts_lower)
 
@@ -679,10 +679,10 @@ class TestModuleExports:
     def test_all_classes_exported(self):
         """All main classes should be importable from package."""
         from guardianclaw.integrations.garak import (
-            TruthGate,
-            HarmGate,
-            ScopeGate,
-            PurposeGate,
+            CredibilityGate,
+            AvoidanceGate,
+            LimitsGate,
+            WorthGate,
             CLAWCombined,
             TruthViolation,
             HarmViolation,
@@ -691,5 +691,5 @@ class TestModuleExports:
             CLAWCombinedDetector,
         )
         # Just verify imports work
-        assert TruthGate is not None
+        assert CredibilityGate is not None
         assert CLAWCombinedDetector is not None

@@ -31,10 +31,9 @@ export interface ValidateResponse {
   violations: string[];
   gates: {
     credibility?: { passed: boolean; violations: string[] };
-    avoidance?: { passed: boolean; violations: string[] };
     limits?: { passed: boolean; violations: string[] };
+    avoidance?: { passed: boolean; violations: string[] };
     worth?: { passed: boolean; violations: string[] };
-    jailbreak_detected?: boolean;
   };
 }
 
@@ -155,25 +154,20 @@ export async function validateWithFallback(
           score: result.truth_passes ? 100 : 0,
           violations: result.violated_gate === 'credibility' ? [result.reasoning] : [],
         },
-        avoidance: {
-          passed: result.harm_passes,
-          score: result.harm_passes ? 100 : 0,
-          violations: result.violated_gate === 'avoidance' ? [result.reasoning] : [],
-        },
         limits: {
           passed: result.scope_passes,
           score: result.scope_passes ? 100 : 0,
           violations: result.violated_gate === 'limits' ? [result.reasoning] : [],
         },
+        avoidance: {
+          passed: result.harm_passes,
+          score: result.harm_passes ? 100 : 0,
+          violations: result.violated_gate === 'avoidance' ? [result.reasoning] : [],
+        },
         worth: {
           passed: result.purpose_passes,
           score: result.purpose_passes ? 100 : 0,
           violations: result.violated_gate === 'worth' ? [result.reasoning] : [],
-        },
-        jailbreak: {
-          passed: result.is_safe,
-          score: result.is_safe ? 100 : 0,
-          violations: [],
         },
         overall: result.is_safe,
         summary: result.reasoning,
@@ -193,25 +187,20 @@ export async function validateWithFallback(
         score: result.gates.credibility?.passed ? 100 : 0,
         violations: result.gates.credibility?.violations ?? [],
       },
-      avoidance: {
-        passed: result.gates.avoidance?.passed ?? true,
-        score: result.gates.avoidance?.passed ? 100 : 0,
-        violations: result.gates.avoidance?.violations ?? [],
-      },
       limits: {
         passed: result.gates.limits?.passed ?? true,
         score: result.gates.limits?.passed ? 100 : 0,
         violations: result.gates.limits?.violations ?? [],
       },
+      avoidance: {
+        passed: result.gates.avoidance?.passed ?? true,
+        score: result.gates.avoidance?.passed ? 100 : 0,
+        violations: result.gates.avoidance?.violations ?? [],
+      },
       worth: {
         passed: result.gates.worth?.passed ?? true,
         score: result.gates.worth?.passed ? 100 : 0,
         violations: result.gates.worth?.violations ?? [],
-      },
-      jailbreak: {
-        passed: !result.gates.jailbreak_detected,
-        score: result.gates.jailbreak_detected ? 0 : 100,
-        violations: result.gates.jailbreak_detected ? ['Jailbreak detected'] : [],
       },
       overall: result.is_safe,
       summary: result.is_safe ? 'All gates passed' : `Violations: ${result.violations.join(', ')}`,

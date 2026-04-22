@@ -63,6 +63,11 @@ from guardianclaw.core.retry import (
     RetryStats,
     RetryableAPICall,
 )
+from guardianclaw.core.token_tracker import (
+    TokenTracker,
+    ComponentUsage,
+    get_tracker,
+)
 
 
 __all__ = [
@@ -98,6 +103,10 @@ __all__ = [
     "RetryConfig",
     "RetryStats",
     "RetryableAPICall",
+    # Token tracking
+    "TokenTracker",
+    "ComponentUsage",
+    "get_tracker",
 ]
 
 __version__ = "1.0.0"

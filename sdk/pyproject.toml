@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "guardianclaw"
-version = "2.26.0"
+version = "3.0.0rc1"
 description = "AI safety toolkit with CLAW protocol for LLMs, AI agents, and humanoid robots - EU AI Act compliance and practical alignment for developers"
 readme = "README.md"
 license = {text = "MIT"}
@@ -121,7 +121,11 @@ addopts = "-v --tb=short"
 asyncio_mode = "auto"
 
 [tool.coverage.run]
-source = ["src/guardianclaw"]
+# Coverage is gated on the core modules (Gates, Observer, Validator, Token Tracker,
+# configs/results/retry/exceptions). Integrations and detection helpers are exercised
+# by their own test files but not counted toward the fail_under threshold yet —
+# the plan is to broaden scope once each subpackage reaches parity with core.
+source = ["src/guardianclaw/core"]
 branch = true
 omit = [
     "*/tests/*",
@@ -143,7 +147,7 @@ exclude_lines = [
     "except ImportError:",
     "raise ImportError",
 ]
-fail_under = 50  # Temporarily lowered while coverage improvements are pending
+fail_under = 80  # Scoped to src/guardianclaw/core — see [tool.coverage.run]
 show_missing = true
 
 [tool.mypy]

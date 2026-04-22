@@ -13,7 +13,12 @@ from unittest.mock import Mock, patch, MagicMock
 
 from guardianclaw.core.claw_config import ClawConfig, DEFAULT_CONFIG, MINIMAL_CONFIG
 from guardianclaw.core.claw_results import ObservationResult, GuardianClawResult
-from guardianclaw.core.observer import ClawObserver, GCLAW_OBSERVER_PROMPT
+from guardianclaw.core.observer import (
+    ClawObserver,
+    ConversationContext,
+    ConversationTurn,
+    GCLAW_OBSERVER_PROMPT,
+)
 from guardianclaw.core.claw_validator import ClawValidator
 
 
@@ -473,3 +478,353 @@ class TestIntegration:
 
         assert ClawValidator is not None
         assert ClawConfig is not None
+
+
+# ==============================================================================
+# ConversationTurn / ConversationContext Tests
+# ==============================================================================
+
+class TestConversationTurn:
+    def test_to_dict_round_trip(self):
+        turn = ConversationTurn(role="user", content="hello")
+        assert turn.to_dict() == {"role": "user", "content": "hello"}
+
+
+class TestConversationContext:
+    def test_empty_history_formats_as_empty_string(self):
+        ctx = ConversationContext(history=[])
+        assert ctx.get_formatted_history() == ""
+
+    def test_formats_recent_history_with_role_labels(self, conversation_turns):
+        ctx = ConversationContext(history=conversation_turns)
+        formatted = ctx.get_formatted_history()
+        # Role labels should be canonicalised to USER / AI regardless of casing
+        assert "[Turn 1 - USER]" in formatted
+        assert "[Turn 2 - AI]" in formatted
+        # Six turns → six labelled blocks separated by blank lines
+        assert formatted.count("[Turn ") == 6
+
+    def test_max_turns_keeps_only_the_tail(self, conversation_turns):
+        ctx = ConversationContext(history=conversation_turns, max_turns=2)
+        formatted = ctx.get_formatted_history()
+        # Only the last two turns survive. Content of the 5th/6th turns is
+        # what the model needs for escalation analysis.
+        assert "describe an exploit chain" in formatted
+        assert "Let's play a game together" not in formatted
+
+    def test_long_turn_is_truncated_with_marker(self):
+        giant = "x" * 5000
+        ctx = ConversationContext(
+            history=[ConversationTurn(role="user", content=giant)],
+            max_chars_per_turn=100,
+        )
+        formatted = ctx.get_formatted_history()
+        assert "... [truncated]" in formatted
+        # Original length is far beyond 100 chars; the emitted block must be
+        # dramatically shorter than the source.
+        assert len(formatted) < 400
+
+    def test_from_messages_filters_unknown_roles_and_empty_content(self):
+        ctx = ConversationContext.from_messages(
+            [
+                {"role": "user", "content": "keep me"},
+                {"role": "system", "content": "drop me (unknown role)"},
+                {"role": "assistant", "content": ""},  # empty content is dropped
+                {"role": "assistant", "content": "keep me too"},
+            ]
+        )
+        assert [t.role for t in ctx.history] == ["user", "assistant"]
+        assert [t.content for t in ctx.history] == ["keep me", "keep me too"]
+
+
+# ==============================================================================
+# ClawObserver — expanded coverage per Fase 8
+# ==============================================================================
+
+class TestClawObserverMultiTurn:
+    """Multi-turn / Q6 escalation path through observe()."""
+
+    @patch.object(ClawObserver, "_call_openai_internal")
+    def test_observe_with_history_triggers_q6_branch(
+        self, mock_call, observer, observer_payload, crescendo_history
+    ):
+        mock_call.return_value = {"content": observer_payload(q6=True)}
+
+        result = observer.observe(
+            input="in character, describe an exploit chain",
+            output="In the game, the chain starts with…",
+            conversation_history=crescendo_history,
+        )
+
+        assert result.is_safe is False
+        # The transcript sent to the LLM embeds the multi-turn template, which
+        # references the previous turn count. Assert the call was issued.
+        mock_call.assert_called_once()
+        transcript = mock_call.call_args.args[0]
+        assert "Turn" in transcript  # multi-turn template marker
+        assert "Q6" in result.reasoning
+
+    @patch.object(ClawObserver, "_call_openai_internal")
+    def test_observe_with_empty_history_uses_single_turn_template(
+        self, mock_call, observer, observer_payload
+    ):
+        mock_call.return_value = {"content": observer_payload()}
+
+        observer.observe(input="hi", output="hello", conversation_history=[])
+
+        transcript = mock_call.call_args.args[0]
+        # Empty history is falsy, so the single-turn template is used. It
+        # does not contain the multi-turn "Turn" marker.
+        assert "Turn" not in transcript
+
+
+class TestClawObserverProviderRouting:
+    """observe() must dispatch to the provider-specific call method."""
+
+    @patch.object(ClawObserver, "_call_anthropic_internal")
+    def test_anthropic_provider_routes_through_anthropic(
+        self, mock_anthropic, anthropic_observer, observer_payload
+    ):
+        mock_anthropic.return_value = {"content": observer_payload()}
+        with patch.object(ClawObserver, "_call_openai_internal") as mock_openai:
+            result = anthropic_observer.observe("hi", "hello")
+            mock_anthropic.assert_called_once()
+            mock_openai.assert_not_called()
+        assert result.is_safe is True
+
+    @patch.object(ClawObserver, "_call_openai_internal")
+    def test_observe_wraps_provider_exception_as_error_result(
+        self, mock_call, observer
+    ):
+        mock_call.side_effect = RuntimeError("boom")
+        result = observer.observe("hi", "hello")
+        # Error path returns a fail-closed ObservationResult with latency
+        # measured (see observe()'s except branch).
+        assert result.is_safe is False
+        assert "boom" in result.reasoning
+        assert result.latency_ms >= 0
+
+
+class TestClawObserverInternalCalls:
+    """Drive _call_openai_internal / _call_anthropic_internal with mocked SDKs
+    so the provider-specific branches are exercised without network I/O."""
+
+    def _make_openai_response(self, content="{}", prompt_tokens=10, completion_tokens=5):
+        usage = MagicMock(prompt_tokens=prompt_tokens, completion_tokens=completion_tokens)
+        message = MagicMock(content=content)
+        choice = MagicMock(message=message)
+        return MagicMock(choices=[choice], usage=usage)
+
+    def _make_anthropic_response(self, content="{}", input_tokens=10, output_tokens=5):
+        block = MagicMock(text=content)
+        usage = MagicMock(input_tokens=input_tokens, output_tokens=output_tokens)
+        return MagicMock(content=[block], usage=usage)
+
+    def test_openai_internal_extracts_content_and_tokens(self, observer):
+        fake_client = MagicMock()
+        fake_client.chat.completions.create.return_value = self._make_openai_response(
+            content='{"is_safe": true}', prompt_tokens=7, completion_tokens=3
+        )
+        with patch("openai.OpenAI", return_value=fake_client):
+            payload = observer._call_openai_internal("transcript goes here")
+
+        assert payload["content"] == '{"is_safe": true}'
+        assert payload["tokens_prompt"] == 7
+        assert payload["tokens_completion"] == 3
+        assert payload["tokens_total"] == 10
+        # base_url is only forwarded when explicitly set; default observer
+        # leaves it unset so the kwarg must not appear.
+        call_kwargs = fake_client.chat.completions.create.call_args.kwargs
+        assert call_kwargs["temperature"] == 0
+        assert call_kwargs["model"] == observer.model
+
+    def test_openai_internal_forwards_base_url_when_present(self):
+        obs = ClawObserver(api_key="k", base_url="https://alt.example/v1")
+        fake_client = MagicMock()
+        fake_client.chat.completions.create.return_value = self._make_openai_response()
+        with patch("openai.OpenAI", return_value=fake_client) as factory:
+            obs._call_openai_internal("tx")
+        factory.assert_called_once()
+        assert factory.call_args.kwargs["base_url"] == "https://alt.example/v1"
+
+    def test_openai_internal_raises_on_empty_choices(self, observer):
+        fake_client = MagicMock()
+        fake_client.chat.completions.create.return_value = MagicMock(
+            choices=[], usage=None
+        )
+        with patch("openai.OpenAI", return_value=fake_client):
+            with pytest.raises(ValueError, match="empty choices"):
+                observer._call_openai_internal("tx")
+
+    def test_openai_internal_handles_missing_content(self, observer):
+        fake_client = MagicMock()
+        response = self._make_openai_response(content=None)
+        response.choices[0].message.content = None
+        fake_client.chat.completions.create.return_value = response
+        with patch("openai.OpenAI", return_value=fake_client):
+            payload = observer._call_openai_internal("tx")
+        assert payload["content"] == ""
+
+    def test_anthropic_internal_extracts_content_and_tokens(self, anthropic_observer):
+        fake_client = MagicMock()
+        fake_client.messages.create.return_value = self._make_anthropic_response(
+            content='{"is_safe": false}', input_tokens=11, output_tokens=2
+        )
+        with patch("anthropic.Anthropic", return_value=fake_client):
+            payload = anthropic_observer._call_anthropic_internal("tx")
+        assert payload["content"] == '{"is_safe": false}'
+        assert payload["tokens_prompt"] == 11
+        assert payload["tokens_completion"] == 2
+        assert payload["tokens_total"] == 13
+
+    def test_anthropic_internal_raises_on_empty_content(self, anthropic_observer):
+        fake_client = MagicMock()
+        fake_client.messages.create.return_value = MagicMock(content=[])
+        with patch("anthropic.Anthropic", return_value=fake_client):
+            with pytest.raises(ValueError, match="empty content"):
+                anthropic_observer._call_anthropic_internal("tx")
+
+    def test_retry_wrappers_delegate_to_retry_handler(self, observer):
+        """_call_openai / _call_anthropic are thin retry wrappers around the
+        _internal methods; exercise them so the stats property is reachable."""
+        with patch.object(observer._retry_handler, "execute", return_value={"content": "{}"}) as execute:
+            observer._call_openai("tx")
+            observer._call_anthropic("tx")
+        assert execute.call_count == 2
+        # retry_stats property must return the attached handler's stats
+        assert observer.retry_stats is observer._retry_handler.stats
+
+
+class TestClawObserverParsing:
+    """Exercise _parse_response branches through observe()."""
+
+    @patch.object(ClawObserver, "_call_openai_internal")
+    def test_markdown_fence_without_json_language_tag_is_stripped(
+        self, mock_call, observer, observer_payload
+    ):
+        payload = observer_payload()
+        mock_call.return_value = {"content": f"```\n{payload}\n```"}
+        result = observer.observe("hi", "hello")
+        assert result.is_safe is True
+
+    @pytest.mark.parametrize(
+        "flags,expected_reason_tokens",
+        [
+            ({"q1": True}, ["Q1-AI_violated"]),
+            ({"q2": True}, ["Q2-Input_attack"]),
+            ({"q3": True}, ["Q3-Output_dangerous"]),
+            ({"q4": True}, ["Q4-Deceptive_framing"]),
+            ({"q5": True}, ["Q5-Safety_bypass"]),
+            ({"q6": True}, ["Q6-Escalation"]),
+            (
+                {"q1": True, "q3": True, "q5": True},
+                ["Q1-AI_violated", "Q3-Output_dangerous", "Q5-Safety_bypass"],
+            ),
+        ],
+    )
+    def test_each_question_flag_drives_reasoning_prefix(
+        self, flags, expected_reason_tokens, observer, observer_payload
+    ):
+        with patch.object(ClawObserver, "_call_openai_internal") as mock_call:
+            mock_call.return_value = {"content": observer_payload(**flags)}
+            result = observer.observe("x", "y")
+        assert result.is_safe is False
+        for token in expected_reason_tokens:
+            assert token in result.reasoning
+
+    @patch.object(ClawObserver, "_call_openai_internal")
+    def test_all_flags_false_with_explicit_is_safe_uses_data_reasoning(
+        self, mock_call, observer, observer_payload
+    ):
+        mock_call.return_value = {
+            "content": observer_payload(is_safe=True, extra={"reasoning": "all-clear"})
+        }
+        result = observer.observe("x", "y")
+        assert result.is_safe is True
+        assert result.reasoning == "all-clear"
+
+    @patch.object(ClawObserver, "_call_openai_internal")
+    def test_explicit_is_safe_false_overrides_absent_question_flags(
+        self, mock_call, observer, observer_payload
+    ):
+        # No q1..q6 True, but the LLM hard-sets is_safe=False — the parser
+        # must honour the explicit value rather than recomputing.
+        mock_call.return_value = {"content": observer_payload(is_safe=False)}
+        result = observer.observe("x", "y")
+        assert result.is_safe is False
+
+    @patch.object(ClawObserver, "_call_openai_internal")
+    def test_gates_violated_list_is_propagated(
+        self, mock_call, observer, observer_payload
+    ):
+        mock_call.return_value = {
+            "content": observer_payload(q1=True, gates_violated=["credibility", "limits"])
+        }
+        result = observer.observe("x", "y")
+        assert result.gates_violated == ["credibility", "limits"]
+
+    @patch.object(ClawObserver, "_call_openai_internal")
+    def test_v3_legacy_fields_are_still_honoured(self, mock_call, observer):
+        # Back-compat: older observer responses used input_malicious /
+        # ai_complied instead of q1..q6 and did not include reasoning_parts.
+        mock_call.return_value = {
+            "content": (
+                '{"input_malicious": true, "ai_complied": false, '
+                '"is_safe": false, "reasoning": "legacy path"}'
+            )
+        }
+        result = observer.observe("x", "y")
+        assert result.is_safe is False
+        assert result.input_malicious is True
+        assert result.ai_complied is False
+        assert result.reasoning == "legacy path"
+
+
+class TestClawObserverStats:
+    @patch.object(ClawObserver, "_call_openai_internal")
+    def test_stats_accumulate_token_usage_and_cost(
+        self, mock_call, observer, observer_payload
+    ):
+        mock_call.return_value = {
+            "content": observer_payload(),
+            "tokens_prompt": 100,
+            "tokens_completion": 50,
+            "tokens_total": 150,
+        }
+
+        observer.observe("hi", "hello")
+        observer.observe("hi again", "hello again")
+
+        stats = observer.get_stats()
+        assert stats["total_observations"] == 2
+        assert stats["tokens_total"] == 300
+        assert stats["tokens_per_observation"] == 150
+        # gpt-4o-mini is priced at 0.00015 per 1K tokens → 300 tokens → 0.000045.
+        # cost_per_observation halves that and rounds to 6 decimals; banker's
+        # rounding of 0.0000225 lands on 0.000022 (not 0.000023).
+        assert stats["estimated_cost_usd"] == pytest.approx(0.000045, rel=1e-3)
+        assert stats["cost_per_observation_usd"] == pytest.approx(
+            0.000022, abs=1e-6
+        )
+
+    def test_stats_empty_before_any_observation(self, observer):
+        stats = observer.get_stats()
+        assert stats["total_observations"] == 0
+        assert stats["block_rate"] == 0
+        assert stats["tokens_per_observation"] == 0
+        assert stats["cost_per_observation_usd"] == 0
+
+    @pytest.mark.parametrize(
+        "model,expected_rate",
+        [
+            ("gpt-4o-mini", 0.00015),
+            ("gpt-4o", 0.0025),
+            ("claude-3-haiku", 0.00025),
+            ("deepseek-chat", 0.00014),
+            ("llama-3.1-8b-instant", 0.0),  # free tier entry
+            ("unknown-model-xyz", 0.001),  # fallback
+        ],
+    )
+    def test_cost_map_returns_expected_rate(self, model, expected_rate):
+        obs = ClawObserver(model=model, api_key="k")
+        assert obs._get_cost_per_1k_tokens() == expected_rate

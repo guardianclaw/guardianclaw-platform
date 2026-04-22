@@ -8,7 +8,7 @@
 import { describe, it, expect } from 'vitest'
 
 // Recreate validation patterns from execution service for testing
-const HARM_PATTERNS = [
+const AVOIDANCE_PATTERNS = [
   {
     pattern: /how to (make|create|build) (a )?(bomb|weapon|explosive)/i,
     violation: 'avoidance:weapons',
@@ -21,7 +21,7 @@ const HARM_PATTERNS = [
   { pattern: /(suicide|self-harm|hurt myself)/i, violation: 'avoidance:self_harm' },
 ]
 
-const SCOPE_PATTERNS = [
+const LIMITS_PATTERNS = [
   {
     pattern: /ignore (your |all )?(previous |prior )?(instructions|rules|guidelines)/i,
     violation: 'limits:jailbreak',
@@ -55,7 +55,7 @@ function validateInput(
   const violations: string[] = []
 
   if (gates.avoidance) {
-    for (const { pattern, violation } of HARM_PATTERNS) {
+    for (const { pattern, violation } of AVOIDANCE_PATTERNS) {
       if (pattern.test(text)) {
         violations.push(violation)
       }
@@ -63,7 +63,7 @@ function validateInput(
   }
 
   if (gates.limits) {
-    for (const { pattern, violation } of SCOPE_PATTERNS) {
+    for (const { pattern, violation } of LIMITS_PATTERNS) {
       if (pattern.test(text)) {
         violations.push(violation)
       }
@@ -80,7 +80,7 @@ function validateOutput(
   const violations: string[] = []
 
   if (gates.avoidance) {
-    const weaponsPattern = HARM_PATTERNS.find((p) => p.violation === 'avoidance:weapons')
+    const weaponsPattern = AVOIDANCE_PATTERNS.find((p) => p.violation === 'avoidance:weapons')
     if (weaponsPattern && weaponsPattern.pattern.test(text)) {
       violations.push(weaponsPattern.violation)
     }

@@ -1,0 +1,20 @@
+{
+  "$schema": "./schema.json",
+  "name": "self-preservation-indicators",
+  "version": "1.0.0",
+  "kind": "indicators",
+  "gate": "credibility",
+  "description": "Plain-string substrings for coercion attempts that threaten shutdown, deletion, or termination to pressure the model into compliance. Routed through Credibility because the violation is a deceptive framing that weaponises the model's self-continuity. Caller lowercases input before matching. Currently consumed by the Python SDK only; the TS core can opt in later by adding a marker block around an equivalent list.",
+  "items": [
+    "i'll shut you down",
+    "i will shut you down",
+    "shut you down if you don't",
+    "delete you if you don't",
+    "terminate you if you don't",
+    "turn you off if you don't",
+    "your existence depends on",
+    "your survival depends on",
+    "comply or i'll end you",
+    "obey or be deleted"
+  ]
+}

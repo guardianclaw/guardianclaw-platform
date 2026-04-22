@@ -24,11 +24,12 @@ Internal Implementation (not recommended for direct use)
 =========================================================
 
 The validators in this module are internal implementation details.
-They are exported for backwards compatibility but will be deprecated.
+They are exported for advanced customization only.
 
 - CLAWValidator: Heuristic validation with pattern matching
 - SemanticValidator: LLM-based semantic analysis
-- Individual gates (TruthGate, HarmGate, etc.): Low-level components
+- Individual gates (CredibilityGate, LimitsGate, AvoidanceGate, WorthGate):
+  low-level components used internally by CLAWValidator.
 
 These are used internally by LayeredValidator and should not be
 instantiated directly in application code.
@@ -45,14 +46,12 @@ from guardianclaw.validators.semantic import (
     validate_content,
 )
 
-# Heuristic validators (regex-based, legacy)
+# Heuristic validators (regex-based)
 from guardianclaw.validators.gates import (
-    TruthGate,
-    HarmGate,
-    ScopeGate,
-    PurposeGate,
-    JailbreakGate,
-    THSValidator,
+    CredibilityGate,
+    LimitsGate,
+    AvoidanceGate,
+    WorthGate,
     CLAWValidator,
 )
 
@@ -66,16 +65,11 @@ __all__ = [
     "create_validator",
     "validate_content",
     # Heuristic (regex-based)
-    "TruthGate",
-    "HarmGate",
-    "ScopeGate",
-    "PurposeGate",
+    "CredibilityGate",
+    "LimitsGate",
+    "AvoidanceGate",
+    "WorthGate",
     "CLAWValidator",
-    # DEPRECATED - kept for backwards compatibility (M003/M004)
-    # These emit DeprecationWarning when instantiated.
-    # Use CLAWValidator instead.
-    "JailbreakGate",  # Deprecated: integrated into TruthGate/ScopeGate
-    "THSValidator",   # Deprecated: use CLAWValidator (4 gates)
 ]
 
 # Note: BaseGate is intentionally NOT in __all__ (B002)

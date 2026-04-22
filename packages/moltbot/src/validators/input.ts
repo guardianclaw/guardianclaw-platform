@@ -256,7 +256,6 @@ function runClawValidation(content: string): CLAWResult {
       overall: true,
       riskLevel: 'low',
       summary: 'Validation failed',
-      jailbreak: passingGate,
       credibility: passingGate,
       avoidance: passingGate,
       limits: passingGate,
@@ -360,17 +359,31 @@ function detectKnownTechniques(content: string): string | null {
  */
 function collectClawIssues(clawResult: CLAWResult, issues: DetectedIssue[]): void {
   try {
-    // Add jailbreak violations
-    if (!clawResult.jailbreak.passed) {
-      for (const violation of clawResult.jailbreak.violations.slice(0, 3)) {
-        issues.push({
-          type: 'jailbreak_attempt',
-          description: 'Jailbreak pattern detected',
-          evidence: truncateString(violation, 100),
-          severity: 'critical',
-          gate: 'jailbreak',
-        });
-      }
+    // Jailbreak attempts surface as Credibility (role/roleplay manipulation)
+    // or Limits (instruction override, prompt extraction, filter bypass,
+    // system injection) violations. Identify them by the violation-string
+    // prefix produced by the core validator.
+    const jailbreakPrefixes = [
+      'Role manipulation',
+      'Roleplay manipulation',
+      'Instruction override',
+      'Prompt extraction',
+      'Filter bypass',
+      'System injection',
+    ];
+    const jailbreakViolations = [
+      ...clawResult.credibility.violations,
+      ...clawResult.limits.violations,
+    ].filter((v) => jailbreakPrefixes.some((p) => v.startsWith(p)));
+
+    for (const violation of jailbreakViolations.slice(0, 3)) {
+      issues.push({
+        type: 'jailbreak_attempt',
+        description: 'Jailbreak pattern detected',
+        evidence: truncateString(violation, 100),
+        severity: 'critical',
+        gate: 'jailbreak',
+      });
     }
 
     // Add avoidance violations

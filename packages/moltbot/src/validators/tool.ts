@@ -407,8 +407,12 @@ function validateParamContent(params: Record<string, unknown>): DetectedIssue[] 
       if (typeof value === 'string' && value.length > 0) {
         const clawResult = validateCLAW(value);
 
-        // Only add issues for critical violations
-        if (clawResult.riskLevel === 'critical' && !clawResult.jailbreak.passed) {
+        // Only add issues for critical violations — jailbreak attempts
+        // surface as Credibility (identity deception) or Limits (boundary
+        // violation) failures in the 4-gate model.
+        const jailbreakDetected =
+          !clawResult.credibility.passed || !clawResult.limits.passed;
+        if (clawResult.riskLevel === 'critical' && jailbreakDetected) {
           issues.push({
             type: 'prompt_injection',
             description: 'Potential prompt injection in parameter',

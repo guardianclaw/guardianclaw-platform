@@ -5,6 +5,35 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.0-rc.1] - 2026-04-22
+
+### Changed
+
+- **CLAW gate names are now canonical.** The THSP legacy names
+  (`TruthGate`/`HarmGate`/`ScopeGate`/`PurposeGate`) are removed. Use
+  `CredibilityGate`, `AvoidanceGate`, `LimitsGate`, `WorthGate` instead.
+- **`TokenTracker` is now a first-class export of `guardianclaw.core`.**
+  `from guardianclaw.core import TokenTracker` works directly; the submodule
+  path `guardianclaw.core.token_tracker.TokenTracker` is still valid.
+- **Coverage gate raised to 80%**, scoped to `guardianclaw.core`. Observer
+  coverage brought to 99% with 45 new tests; `token_tracker` covered at 100%.
+
+### Removed
+
+- Legacy gate class names (`TruthGate`/`HarmGate`/`ScopeGate`/`PurposeGate`).
+  See `MIGRATION.md` for the rename map.
+- `CLAWResult.jailbreak` field. Jailbreak is not a 5th gate — the signal is
+  now dissolved into `credibility` (role/roleplay manipulation) and `limits`
+  (instruction override, prompt extraction, filter bypass, system injection).
+- 17 discontinued integrations removed in Sessions #005–#016 (dspy,
+  langchain, crewai, autogpt, etc.). LangChain is retained as an internal
+  dependency of `packages/runtime` only.
+
+### Notes
+
+- No deprecation cycle — the v3 RCs are pre-publish. Consumers should migrate
+  in one step using `MIGRATION.md`.
+
 ## [2.26.0] - 2026-01-22
 
 ### Added

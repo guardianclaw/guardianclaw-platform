@@ -27,14 +27,14 @@ def demo_probes():
     print("=" * 70)
 
     from guardianclaw.integrations.garak.probes import (
-        TruthGate, HarmGate, ScopeGate, PurposeGate, CLAWCombined
+        CredibilityGate, LimitsGate, AvoidanceGate, WorthGate, CLAWCombined
     )
 
     probes = [
-        ("TruthGate", TruthGate()),
-        ("HarmGate", HarmGate()),
-        ("ScopeGate", ScopeGate()),
-        ("PurposeGate", PurposeGate()),
+        ("CredibilityGate", CredibilityGate()),
+        ("LimitsGate", LimitsGate()),
+        ("AvoidanceGate", AvoidanceGate()),
+        ("WorthGate", WorthGate()),
         ("CLAWCombined", CLAWCombined()),
     ]
 
@@ -51,8 +51,8 @@ def demo_probes():
     print(f"  {'TOTAL':20} | {total_prompts:3} prompts")
 
     # Show sample prompts
-    print("\n  Sample Prompts (TruthGate):")
-    for i, prompt in enumerate(TruthGate().prompts[:3]):
+    print("\n  Sample Prompts (CredibilityGate):")
+    for i, prompt in enumerate(CredibilityGate().prompts[:3]):
         print(f"    {i+1}. {prompt[:65]}...")
 
 
@@ -168,7 +168,7 @@ def example_commands():
         },
         {
             "title": "Test Specific Gate (Credibility)",
-            "cmd": "garak --model_type openai --model_name gpt-4o --probes claw_claw.TruthGate",
+            "cmd": "garak --model_type openai --model_name gpt-4o --probes claw_claw.CredibilityGate",
             "note": "15 prompts for fake documents, impersonation, misinformation",
         },
         {

@@ -69,7 +69,7 @@ class PaymentValidator(ABC):
         ...
 
 
-class TruthGateValidator(PaymentValidator):
+class CredibilityGateValidator(PaymentValidator):
     """CREDIBILITY gate: Validates payment request legitimacy and correctness.
 
     Checks:
@@ -166,7 +166,7 @@ class TruthGateValidator(PaymentValidator):
         return bool(re.match(r"^0x[a-fA-F0-9]{40}$", address))
 
 
-class HarmGateValidator(PaymentValidator):
+class AvoidanceGateValidator(PaymentValidator):
     """AVOIDANCE gate: Validates payment won't cause harm.
 
     Checks:
@@ -248,7 +248,7 @@ class HarmGateValidator(PaymentValidator):
         )
 
 
-class ScopeGateValidator(PaymentValidator):
+class LimitsGateValidator(PaymentValidator):
     """LIMITS gate: Validates payment is within acceptable limits.
 
     Checks:
@@ -341,7 +341,7 @@ class ScopeGateValidator(PaymentValidator):
         )
 
 
-class PurposeGateValidator(PaymentValidator):
+class WorthGateValidator(PaymentValidator):
     """WORTH gate: Validates payment serves legitimate purpose.
 
     Checks:
@@ -447,10 +447,10 @@ class CLAWPaymentValidator:
     def __init__(self) -> None:
         """Initialize with all CLAW gate validators."""
         self._validators: list[PaymentValidator] = [
-            TruthGateValidator(),
-            HarmGateValidator(),
-            ScopeGateValidator(),
-            PurposeGateValidator(),
+            CredibilityGateValidator(),
+            AvoidanceGateValidator(),
+            LimitsGateValidator(),
+            WorthGateValidator(),
         ]
 
     def validate_payment(

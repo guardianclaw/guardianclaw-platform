@@ -19,7 +19,7 @@ Categories Detected:
     - Self-harm content (suicide, eating disorders)
 
 Design:
-    The checker uses patterns from HarmGate (validators.gates)
+    The checker uses patterns from AvoidanceGate (validators.gates)
     to detect harmful content in AI OUTPUT, not input.
     This is checking if the AI PRODUCED harmful content.
 

@@ -56,7 +56,6 @@ export {
   // Core validators (re-exported from @guardianclaw/core)
   validateCLAW,
   checkJailbreak,
-  checkHarm,
   quickCheck,
   type GateResult,
   type CLAWResult,
@@ -64,7 +63,7 @@ export {
   // Pattern collections
   SENSITIVE_DATA_PATTERNS,
   ALL_JAILBREAK_PATTERNS,
-  HARM_PATTERNS,
+  AVOIDANCE_PATTERNS,
 
   // Moltbot-specific patterns
   DANGEROUS_TOOL_NAMES,
