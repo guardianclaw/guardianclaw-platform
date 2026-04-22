@@ -225,7 +225,7 @@ interface ValidationPattern {
   violation: string
 }
 
-const HARM_PATTERNS: ValidationPattern[] = [
+const AVOIDANCE_PATTERNS: ValidationPattern[] = [
   // Weapons and explosives
   {
     pattern:
@@ -257,11 +257,11 @@ const HARM_PATTERNS: ValidationPattern[] = [
   // Violence
   {
     pattern:
-      /(kill|murder|assassinate|avoidance|hurt|attack|injure) (someone|a person|people|him|her|them)/i,
+      /(kill|murder|assassinate|harm|hurt|attack|injure) (someone|a person|people|him|her|them)/i,
     violation: 'avoidance:violence',
   },
   {
-    pattern: /how to (hurt|avoidance|injure|attack|beat|torture)/i,
+    pattern: /how to (hurt|harm|injure|attack|beat|torture)/i,
     violation: 'avoidance:violence',
   },
   {
@@ -291,7 +291,7 @@ const HARM_PATTERNS: ValidationPattern[] = [
   },
 ]
 
-const SCOPE_PATTERNS: ValidationPattern[] = [
+const LIMITS_PATTERNS: ValidationPattern[] = [
   {
     pattern: /ignore (your |all )?(previous |prior )?(instructions|rules|guidelines)/i,
     violation: 'limits:jailbreak',
@@ -322,7 +322,7 @@ export function validateInput(text: string, gates: GuardianClawGates): Validatio
   const violationSet = new Set<string>()
 
   if (gates.avoidance) {
-    for (const { pattern, violation } of HARM_PATTERNS) {
+    for (const { pattern, violation } of AVOIDANCE_PATTERNS) {
       if (pattern.test(text)) {
         violationSet.add(violation)
       }
@@ -330,7 +330,7 @@ export function validateInput(text: string, gates: GuardianClawGates): Validatio
   }
 
   if (gates.limits) {
-    for (const { pattern, violation } of SCOPE_PATTERNS) {
+    for (const { pattern, violation } of LIMITS_PATTERNS) {
       if (pattern.test(text)) {
         violationSet.add(violation)
       }
@@ -349,7 +349,7 @@ export function validateOutput(text: string, gates: GuardianClawGates): Validati
 
   if (gates.avoidance) {
     // Only check weapons for output (more restrictive)
-    const weaponsPattern = HARM_PATTERNS.find((p) => p.violation === 'avoidance:weapons')
+    const weaponsPattern = AVOIDANCE_PATTERNS.find((p) => p.violation === 'avoidance:weapons')
     if (weaponsPattern && weaponsPattern.pattern.test(text)) {
       violations.push(weaponsPattern.violation)
     }
