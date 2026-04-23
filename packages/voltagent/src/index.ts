@@ -161,7 +161,7 @@ export type {
 /**
  * Package version.
  */
-export const VERSION = '0.2.1';
+export const VERSION = '0.3.0';
 
 /**
  * Package name.
@@ -171,4 +171,4 @@ export const PACKAGE_NAME = '@guardianclaw/voltagent';
 /**
  * Supported VoltAgent version range.
  */
-export const VOLTAGENT_VERSION_RANGE = '>=0.1.0';
+export const VOLTAGENT_VERSION_RANGE = '>=2.0.0';
