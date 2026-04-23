@@ -1,4 +1,4 @@
-# Migration Guide
+﻿# Migration Guide
 
 ## v2.x → v3.0.0-rc.1
 
@@ -137,7 +137,7 @@ if (!checkJailbreak(text).passed) { ... }
 ```
 
 If your downstream type models still carry a synthetic `jailbreak` gate (e.g.
-moltbot's `GateResults` or voltagent's `CLAWGates`), derive it from
+openclaw's `GateResults` or voltagent's `CLAWGates`), derive it from
 `credibility.passed && limits.passed`.
 
 ### Sub-entries unchanged

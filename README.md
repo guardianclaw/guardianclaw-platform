@@ -1,4 +1,4 @@
-# GuardianClaw Platform
+﻿# GuardianClaw Platform
 
 > The Decision Firewall for AI Agents — Build, Deploy, and Protect
 
@@ -170,7 +170,7 @@ guardianclaw-platform/
 ├── packages/
 │   ├── core/                     # @guardianclaw/core
 │   ├── shared/                   # @guardianclaw/shared
-│   ├── moltbot/                  # @guardianclaw/moltbot
+│   ├── openclaw/                  # @guardianclaw/openclaw
 │   ├── voltagent/                # @guardianclaw/voltagent
 │   ├── elizaos/                  # @guardianclaw/elizaos-plugin
 │   ├── goat-plugin/              # @goat-sdk/plugin-claw

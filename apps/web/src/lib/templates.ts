@@ -819,26 +819,26 @@ export const TEMPLATES: Template[] = [
     runtime: 'nodejs',
   },
 
-  // Moltbot Template
+  // OpenClaw Template
   {
-    id: 'moltbot',
-    name: 'Moltbot',
+    id: 'openclaw',
+    name: 'OpenClaw',
     description: 'Personal AI agent with 5-layer safety guardrails and configurable protection',
     longDescription:
-      'Moltbot is a personal AI agent framework with defense-in-depth safety. ' +
+      'OpenClaw is a personal AI agent framework with defense-in-depth safety. ' +
       "This template integrates GuardianClaw's full 5-layer validation pipeline: input analysis, " +
       'seed injection, output validation, tool-call guarding, and session monitoring. ' +
       'Four configurable protection levels (off, watch, guard, shield) with escape hatches for user control.',
     icon: '\uD83E\uDD8E',
-    logoUrl: '/images/ecosystem/moltbot.svg',
+    logoUrl: '/images/ecosystem/openclaw.svg',
     category: 'frameworks',
-    sdkIntegration: '@guardianclaw/moltbot',
+    sdkIntegration: '@guardianclaw/openclaw',
     tags: ['personal-agent', 'safety', 'real-time', 'tool-validation'],
     requiredConfig: {
       name: {
         type: 'text',
         label: 'Agent Name',
-        description: 'A name for your Moltbot agent',
+        description: 'A name for your OpenClaw agent',
         required: true,
       },
       protectionLevel: {
@@ -890,7 +890,7 @@ export const TEMPLATES: Template[] = [
         { id: 'input-1', type: 'input', label: 'User Input' },
         { id: 'claw-l1', type: 'claw', label: 'L1 Input Analyzer' },
         { id: 'claw-l2', type: 'claw', label: 'L2 Seed Injector' },
-        { id: 'llm-1', type: 'llm', label: 'Moltbot Agent' },
+        { id: 'llm-1', type: 'llm', label: 'OpenClaw Agent' },
         { id: 'claw-l3', type: 'claw', label: 'L3 Output Validator' },
         { id: 'tool-guard', type: 'module', label: 'Tool Guard' },
         { id: 'output-1', type: 'output', label: 'Response' },
@@ -904,7 +904,7 @@ export const TEMPLATES: Template[] = [
         { id: 'e6', source: 'tool-guard', target: 'output-1' },
       ],
     },
-    documentation: 'https://guardianclaw.org/docs/integrations/moltbot',
+    documentation: 'https://guardianclaw.org/docs/integrations/openclaw',
     integrationConfig: {
       level: 'watch',
       alerts: {

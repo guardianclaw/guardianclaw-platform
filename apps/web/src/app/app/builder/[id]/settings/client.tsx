@@ -52,7 +52,7 @@ const frameworks = [
   { value: 'virtuals_protocol', label: 'Virtuals Protocol', icon: '🎮' },
   { value: 'elizaos', label: 'ElizaOS', icon: '💡' },
   { value: 'voltagent', label: 'VoltAgent', icon: '⚡' },
-  { value: 'moltbot', label: 'Moltbot', icon: '🛡️' },
+  { value: 'openclaw', label: 'OpenClaw', icon: '🛡️' },
   { value: 'custom', label: 'Custom', icon: '⚙️' },
 ]
 

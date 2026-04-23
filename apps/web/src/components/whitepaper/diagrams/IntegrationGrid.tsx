@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { memo, useState, useEffect, useRef } from 'react'
 import Image from 'next/image'
@@ -150,13 +150,13 @@ const INTEGRATIONS: Integration[] = [
     icon: '/images/ecosystem/elizaos.svg',
   },
   {
-    id: 'moltbot',
-    name: 'Moltbot',
+    id: 'openclaw',
+    name: 'OpenClaw',
     description: 'Personal AI agent with 5-layer safety',
     categoryId: 'agents',
-    website: 'https://moltbot.com',
+    website: 'https://openclaw.com',
     isNew: true,
-    icon: '/images/ecosystem/moltbot.svg',
+    icon: '/images/ecosystem/openclaw.svg',
   },
 
   // LLM Providers (3)

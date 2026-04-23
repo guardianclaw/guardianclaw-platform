@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { Badge } from '@/components/ui/badge'
 import { Ban } from 'lucide-react'
@@ -28,7 +28,7 @@ const FRAMEWORK_CONFIG: Record<string, { color: string; label: string }> = {
   },
   elizaos: { color: 'bg-pink-500/10 text-pink-500 border-pink-500/20', label: 'ElizaOS' },
   voltagent: { color: 'bg-violet-500/10 text-violet-500 border-violet-500/20', label: 'VoltAgent' },
-  moltbot: { color: 'bg-teal-500/10 text-teal-500 border-teal-500/20', label: 'Moltbot' },
+  openclaw: { color: 'bg-teal-500/10 text-teal-500 border-teal-500/20', label: 'OpenClaw' },
   custom: { color: 'bg-gray-500/10 text-gray-500 border-gray-500/20', label: 'Custom' },
 }
 

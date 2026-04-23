@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
@@ -88,7 +88,7 @@ const frameworkNames: Record<string, string> = {
   virtuals_protocol: 'Virtuals',
   elizaos: 'ElizaOS',
   voltagent: 'VoltAgent',
-  moltbot: 'Moltbot',
+  openclaw: 'OpenClaw',
   custom: 'Custom',
 }
 

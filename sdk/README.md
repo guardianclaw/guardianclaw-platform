@@ -1,4 +1,4 @@
-# GuardianClaw AI
+﻿# GuardianClaw AI
 
 ### Safety for AI that Acts: From Chatbots to Robots
 
@@ -51,7 +51,7 @@ GuardianClaw is an **AI safety framework** that protects across three surfaces:
 - **Database Guard:** Query validation to prevent SQL injection and data exfiltration
 - **Humanoid Safety:** ISO/TS 15066 contact force limits for robotics
 - **Python SDK:** Easy integration with any LLM
-- **Framework Support:** Virtuals, ElizaOS, VoltAgent, Moltbot, OpenGuardrails, PyRIT, Google ADK, OpenAI Agents SDK, Anthropic SDK, Coinbase AgentKit, Solana Agent Kit
+- **Framework Support:** Virtuals, ElizaOS, VoltAgent, OpenClaw, OpenGuardrails, PyRIT, Google ADK, OpenAI Agents SDK, Anthropic SDK, Coinbase AgentKit, Solana Agent Kit
 - **REST API:** Deploy alignment as a service
 
 ---
@@ -461,7 +461,7 @@ GuardianClaw provides native integrations for major agent frameworks and platfor
 | Garak | [`integrations/garak/README.md`](src/guardianclaw/integrations/garak/README.md) | 185 |
 | PyRIT | [`integrations/pyrit/README.md`](src/guardianclaw/integrations/pyrit/README.md) | 228 |
 | OpenGuardrails | [`integrations/openguardrails/README.md`](src/guardianclaw/integrations/openguardrails/README.md) | 261 |
-| Moltbot | [guardianclaw.org/docs/integrations/moltbot](https://guardianclaw.org/docs/integrations/moltbot) | 656 |
+| OpenClaw | [guardianclaw.org/docs/integrations/openclaw](https://guardianclaw.org/docs/integrations/openclaw) | 656 |
 
 </details>
 
@@ -684,11 +684,11 @@ const agent = new Agent({
 
 Features: CLAW validation, OWASP protection (SQL injection, XSS, command injection), PII detection/redaction, streaming support.
 
-### Moltbot
+### OpenClaw
 
 ```typescript
-// npm install @guardianclaw/moltbot
-// Add to your moltbot.config.json:
+// npm install @guardianclaw/openclaw
+// Add to your openclaw.config.json:
 {
   "plugins": {
     "claw": {
@@ -701,14 +701,14 @@ Features: CLAW validation, OWASP protection (SQL injection, XSS, command injecti
 Or use programmatically:
 
 ```typescript
-import { createGuardianClawHooks } from '@guardianclaw/moltbot';
+import { createGuardianClawHooks } from '@guardianclaw/openclaw';
 
 const hooks = createGuardianClawHooks({
   level: 'guard',
   alerts: { enabled: true, webhook: 'https://...' }
 });
 
-export const moltbot_hooks = {
+export const openclaw_hooks = {
   message_received: hooks.messageReceived,
   before_agent_start: hooks.beforeAgentStart,
   message_sending: hooks.messageSending,
@@ -716,7 +716,7 @@ export const moltbot_hooks = {
 };
 ```
 
-Features: 4 protection levels (off/watch/guard/shield), escape hatches (pause, allow-once, trust), CLI commands (`/claw status`), webhook alerts, audit logging. [Full documentation](https://guardianclaw.org/docs/integrations/moltbot).
+Features: 4 protection levels (off/watch/guard/shield), escape hatches (pause, allow-once, trust), CLI commands (`/claw status`), webhook alerts, audit logging. [Full documentation](https://guardianclaw.org/docs/integrations/openclaw).
 
 ### OpenAI Agents SDK
 
@@ -983,7 +983,7 @@ guardianclaw/
 ├── packages/                  # External packages (npm/PyPI)
 │   ├── elizaos/              # @guardianclaw/elizaos-plugin
 │   ├── voltagent/            # @guardianclaw/voltagent
-│   ├── moltbot/              # @guardianclaw/moltbot
+│   ├── openclaw/              # @guardianclaw/openclaw
 │   ├── solana-agent-kit/     # @guardianclaw/solana-agent-kit
 │   ├── promptfoo/            # guardianclaw-promptfoo (PyPI)
 │   └── jetbrains/            # IntelliJ/PyCharm plugin
@@ -1090,7 +1090,7 @@ MIT License. See [LICENSE](LICENSE)
 |----------|---------|---------|
 | **PyPI** | [guardianclaw](https://pypi.org/project/guardianclaw) | `pip install guardianclaw` |
 | **npm** | [@guardianclaw/core](https://npmjs.com/package/@guardianclaw/core) | `npm install @guardianclaw/core` |
-| **npm** | [@guardianclaw/moltbot](https://npmjs.com/package/@guardianclaw/moltbot) | `npm install @guardianclaw/moltbot` |
+| **npm** | [@guardianclaw/openclaw](https://npmjs.com/package/@guardianclaw/openclaw) | `npm install @guardianclaw/openclaw` |
 | **MCP** | [mcp-server-guardianclaw](https://npmjs.com/package/mcp-server-guardianclaw) | `npx mcp-server-guardianclaw` |
 
 ### Optional Dependencies
