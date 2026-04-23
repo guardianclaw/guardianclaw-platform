@@ -148,6 +148,76 @@ per the table above.
 
 ---
 
+## `@guardianclaw/moltbot` → `@guardianclaw/openclaw`
+
+Upstream renamed moltbot to openclaw (same product, new identity — see
+https://docs.openclaw.ai). We follow the rename and align our plugin package
+with core at version `3.0.0-rc.1`.
+
+### Install
+
+```diff
+-npm install @guardianclaw/moltbot
++npm install @guardianclaw/openclaw
+```
+
+### Imports
+
+```diff
+-import { createGuardianClawHooks } from '@guardianclaw/moltbot';
+-import type { GuardianClawMoltbotConfig } from '@guardianclaw/moltbot';
++import { createGuardianClawHooks } from '@guardianclaw/openclaw';
++import type { GuardianClawOpenClawConfig } from '@guardianclaw/openclaw';
+```
+
+### peerDependency
+
+```diff
+-"moltbot": ">=1.0.0"
++"openclaw": ">=2026.0.0"
+```
+
+### Plugin entry
+
+The package now ships a `definePluginEntry(...)` default export compatible
+with OpenClaw's plugin loader:
+
+```ts
+// Before (still works via the legacy named `register` export)
+import { register } from '@guardianclaw/openclaw/plugin';
+
+// After (preferred)
+import plugin from '@guardianclaw/openclaw/plugin';
+```
+
+### Seed hook
+
+Seed injection migrated from `before_agent_start` to `before_prompt_build`,
+using `prependSystemContext` (prompt-cached by providers). No action required
+unless you wrote custom hook observers — handler names in your own code will
+differ.
+
+### Manifest file
+
+If you reference the plugin manifest directly, the filename changed:
+`clawdbot.plugin.json` → `openclaw.plugin.json`.
+
+### Renamed export
+
+```diff
+-import { MOLTBOT_VERSION_RANGE } from '@guardianclaw/openclaw';
++import { OPENCLAW_VERSION_RANGE } from '@guardianclaw/openclaw';
+```
+
+### Database
+
+Supabase deployments get a new migration
+(`20260422230000_rename_moltbot_to_openclaw.sql`) that rewrites any
+`agents.framework = 'moltbot'` rows and their `integration_config` key.
+No manual work required on the app side.
+
+---
+
 ## Migration checklist
 
 - [ ] **Python**: search-replace gate class names
@@ -162,6 +232,9 @@ per the table above.
 - [ ] Run typecheck and test suites — no surprises expected beyond the
   renames above
 - [ ] Update your own docstrings/comments to match the CLAW naming
+- [ ] **Plugin consumers**: swap `@guardianclaw/moltbot` for
+  `@guardianclaw/openclaw`; rename `GuardianClawMoltbotConfig` and
+  `MOLTBOT_VERSION_RANGE`; update the `openclaw` peerDependency
 
 ---
 
