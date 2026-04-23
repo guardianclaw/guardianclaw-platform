@@ -508,7 +508,7 @@ Before an agent executes a Solana swap, the Transaction Simulator checks for hon
 
 GuardianClaw works wherever your agents run:
 
-- **Agent Frameworks**: ElizaOS, VoltAgent, Moltbot
+- **Agent Frameworks**: ElizaOS, VoltAgent, OpenClaw
 - **LLM Providers**: OpenAI Agents SDK, Anthropic SDK, Google ADK
 - **Crypto & DeFi**: Solana Agent Kit, Coinbase AgentKit, Virtuals Protocol
 - **Security Testing**: garak, PyRIT, Promptfoo, OpenGuardrails

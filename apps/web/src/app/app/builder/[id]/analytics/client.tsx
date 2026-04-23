@@ -27,7 +27,7 @@ function getFrameworkDescription(framework: string): string {
     virtuals_protocol: 'Virtual agent metrics with memory protection',
     google_adk: 'Plugin execution and multi-agent metrics',
     voltagent: 'VoltAgent safety guardrail metrics',
-    moltbot: 'Moltbot protection layer metrics',
+    openclaw: 'OpenClaw protection layer metrics',
     custom: 'Custom agent performance metrics',
   }
   return descriptions[framework] || 'Agent performance and protection metrics'

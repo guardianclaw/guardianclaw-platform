@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @fileoverview GuardianClaw Guard - Type Definitions
  *
  * This module contains all TypeScript type definitions for the GuardianClaw Guard
@@ -244,7 +244,7 @@ export interface ExtensionInfo {
 // =============================================================================
 
 /** Supported agent frameworks */
-export type AgentType = 'elizaos' | 'openai_agents' | 'google_adk' | 'voltagent' | 'moltbot' | 'custom';
+export type AgentType = 'elizaos' | 'openai_agents' | 'google_adk' | 'voltagent' | 'openclaw' | 'custom';
 
 /** Agent connection status */
 export type AgentConnectionStatus =
@@ -533,7 +533,7 @@ export type RuleConditionField =
   | 'riskLevel'         // low, medium, high, critical
   | 'estimatedValueUsd' // Numeric value
   // Agent Shield fields
-  | 'agentType'         // elizaos, moltbot, etc.
+  | 'agentType'         // elizaos, openclaw, etc.
   | 'agentTrustLevel'   // 0-100
   | 'actionType'        // transfer, swap, etc.
   | 'memoryCompromised' // boolean

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Integration tests for template-utils
  *
  * These tests verify that the template conversion works correctly
@@ -49,7 +49,7 @@ describe('template-utils integration tests', () => {
       'google_adk',
       'elizaos',
       'voltagent',
-      'moltbot',
+      'openclaw',
     ]
 
     frameworkTemplateIds.forEach((templateId) => {
@@ -229,7 +229,7 @@ describe('template-utils integration tests', () => {
         'virtuals_protocol',
         'elizaos',
         'voltagent',
-        'moltbot',
+        'openclaw',
         'custom',
       ]
 

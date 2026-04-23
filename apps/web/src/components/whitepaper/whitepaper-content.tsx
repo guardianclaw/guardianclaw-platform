@@ -1135,7 +1135,7 @@ export function IntegrationsContent() {
       <DataTable
         headers={['Category', 'Integrations']}
         rows={[
-          ['Agent Frameworks', 'VoltAgent, ElizaOS, Moltbot'],
+          ['Agent Frameworks', 'VoltAgent, ElizaOS, OpenClaw'],
           ['LLM Providers', 'OpenAI Agents SDK, Anthropic SDK, Google ADK'],
           ['Blockchain', 'Solana Agent Kit, Coinbase AgentKit, Virtuals Protocol'],
           ['Robotics', 'Humanoid Safety'],
@@ -1153,7 +1153,7 @@ export function IntegrationsContent() {
           ['VoltAgent', 'Native integration with TypeScript agent framework'],
           ['Google ADK', 'Integration with Google Agent Development Kit'],
           [
-            'Moltbot',
+            'OpenClaw',
             'Personal AI agent with 5-layer safety pipeline and configurable protection levels',
           ],
           ['MCP Server', 'Model Context Protocol tools for Claude and other MCP clients'],

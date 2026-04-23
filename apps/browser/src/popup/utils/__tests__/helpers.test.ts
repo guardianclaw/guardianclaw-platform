@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @fileoverview Unit tests for UI helper functions
  *
  * @author GuardianClaw Team
@@ -115,7 +115,7 @@ describe('helpers utilities', () => {
         expect(getAgentIcon('openai_agents')).toBe('🤖');
         expect(getAgentIcon('google_adk')).toBe('🔷');
         expect(getAgentIcon('voltagent')).toBe('⚡');
-        expect(getAgentIcon('moltbot')).toBe('🛡️');
+        expect(getAgentIcon('openclaw')).toBe('🛡️');
         expect(getAgentIcon('custom')).toBe('⚙️');
       });
 

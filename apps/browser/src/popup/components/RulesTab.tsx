@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @fileoverview Rules Tab - Manage approval rules
  *
  * Provides UI for:
@@ -88,7 +88,7 @@ const FIELD_OPTIONS: Record<string, { value: string; label: string }[]> = {
     { value: 'openai_agents', label: 'OpenAI Agents' },
     { value: 'google_adk', label: 'Google ADK' },
     { value: 'voltagent', label: 'VoltAgent' },
-    { value: 'moltbot', label: 'Moltbot' },
+    { value: 'openclaw', label: 'OpenClaw' },
     { value: 'custom', label: 'Custom' },
   ],
 };

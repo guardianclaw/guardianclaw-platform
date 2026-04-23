@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+﻿import { describe, it, expect } from 'vitest'
 import {
   convertTemplateToFlow,
   getDefaultProtectionLevel,
@@ -360,7 +360,7 @@ describe('template-utils', () => {
       'virtuals_protocol',
       'elizaos',
       'voltagent',
-      'moltbot',
+      'openclaw',
       'custom',
     ]
 

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Documentation Navigation Structure
  *
  * Defines the sidebar navigation hierarchy for documentation.
@@ -88,9 +88,9 @@ export const docsNavigation: DocSection[] = [
         description: 'Autonomous agent safety plugin',
       },
       {
-        slug: 'integrations/moltbot',
-        title: 'Moltbot',
-        description: 'Security guardrails for Moltbot agents',
+        slug: 'integrations/openclaw',
+        title: 'OpenClaw',
+        description: 'Security guardrails for OpenClaw agents',
       },
     ],
   },
