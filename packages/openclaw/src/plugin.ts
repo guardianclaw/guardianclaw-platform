@@ -138,34 +138,6 @@ function registerAll(api: OpenClawPluginLike, hooks: GuardianClawHooks): void {
   );
 }
 
-// eslint-disable-next-line import/no-default-export
-export default definePluginEntry({
-  id: 'guardianclaw',
-  name: 'GuardianClaw Safety',
-  description:
-    'CLAW protocol validation, data leak prevention, and tool safety for OpenClaw agents.',
-  configSchema: emptyPluginConfigSchema,
-  register: (api) => {
-    const typedApi = api as unknown as OpenClawPluginLike;
-    const userConfig = (typedApi.pluginConfig ?? {}) as Partial<GuardianClawOpenClawConfig>;
-    const hooks = createGuardianClawHooks(userConfig);
-
-    typedApi.logger.info('GuardianClaw initialized', { level: userConfig.level ?? 'watch' });
-
-    if (userConfig.level === 'off') {
-      typedApi.logger.info('GuardianClaw is disabled (level: off)');
-      return;
-    }
-
-    registerAll(typedApi, hooks);
-  },
-});
-
-/**
- * Legacy named-export retained for callers still doing
- * `import { register } from '@guardianclaw/openclaw/plugin'`.
- * Prefer the default export for new code.
- */
 export function register(api: OpenClawPluginLike): void {
   const userConfig = (api.pluginConfig ?? {}) as Partial<GuardianClawOpenClawConfig>;
   const hooks = createGuardianClawHooks(userConfig);
@@ -179,3 +151,13 @@ export function register(api: OpenClawPluginLike): void {
 
   registerAll(api, hooks);
 }
+
+// eslint-disable-next-line import/no-default-export
+export default definePluginEntry({
+  id: 'guardianclaw',
+  name: 'GuardianClaw Safety',
+  description:
+    'CLAW protocol validation, data leak prevention, and tool safety for OpenClaw agents.',
+  configSchema: emptyPluginConfigSchema,
+  register: (api) => register(api as unknown as OpenClawPluginLike),
+});
