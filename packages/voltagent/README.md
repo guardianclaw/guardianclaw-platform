@@ -4,6 +4,8 @@ AI safety guardrails for VoltAgent applications. Implements CLAW protocol valida
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
+> Validated against `@voltagent/core@2.7.2` on 2026-04-23.
+
 ## Features
 
 - **CLAW Protocol**: Credibility, Limits, Avoidance, Worth validation gates
