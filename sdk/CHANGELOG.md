@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Integration floors revalidated** (Passo 6, 2026-04-24 onwards). The old
+  `>=0.1.0` floors were placeholders from when integrations were first
+  authored; each package is now pinned to the minimum version whose public
+  surface still matches our imports.
+  - `mcp` extra: `>=0.1.0` → `>=1.8.0`. `mcp.client.streamable_http`
+    (used by `GuardianClawMCPClient` for HTTP transport) only exists from
+    `mcp@1.8.0` onwards, so the old floor was unusable. Validated against
+    `mcp@1.27.0` (latest) and `mcp@1.8.0` (floor); 64/64
+    `test_mcp_server_integration.py` tests pass on both.
 - **CLAW gate names are now canonical.** The THSP legacy names
   (`TruthGate`/`HarmGate`/`ScopeGate`/`PurposeGate`) are removed. Use
   `CredibilityGate`, `AvoidanceGate`, `LimitsGate`, `WorthGate` instead.
