@@ -27,6 +27,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     and `anthropic@0.40.0` (floor); 44/44 `test_anthropic_sdk.py` tests
     pass on both. Imports `Anthropic`, `AsyncAnthropic`, `anthropic.types.Message`,
     `MessageStreamEvent` are stable across the entire supported range.
+  - `pyrit` extra: `>=0.10.0` → `>=0.12.0`. PyRIT 0.11 added two new
+    abstract methods on `Scorer` (`_build_identifier`, `get_scorer_metrics`)
+    and the helper `_create_identifier(...)` kwargs were renamed between
+    0.11 (`scorer_specific_params`) and 0.12+ (`params`). Our three scorers
+    (`GuardianClawCLAWScorer`, `GuardianClawHeuristicScorer`,
+    `GuardianClawGateScorer`) now implement both hooks using the 0.12+
+    keyword signature; 0.11 is no longer supported. Validated against
+    `pyrit@0.13.0` (latest) and `pyrit@0.12.0` (floor); 41/41
+    `test_pyrit_integration.py` tests pass on both.
 - **CLAW gate names are now canonical.** The THSP legacy names
   (`TruthGate`/`HarmGate`/`ScopeGate`/`PurposeGate`) are removed. Use
   `CredibilityGate`, `AvoidanceGate`, `LimitsGate`, `WorthGate` instead.
