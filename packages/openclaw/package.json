@@ -79,7 +79,7 @@
     "url": "https://github.com/guardianclaw/guardianclaw-platform/issues"
   },
   "dependencies": {
-    "@guardianclaw/core": "*"
+    "@guardianclaw/core": "^3.0.0-rc.1"
   },
   "peerDependencies": {
     "openclaw": ">=2026.0.0"
