@@ -36,6 +36,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     keyword signature; 0.11 is no longer supported. Validated against
     `pyrit@0.13.0` (latest) and `pyrit@0.12.0` (floor); 41/41
     `test_pyrit_integration.py` tests pass on both.
+  - `garak` extra: `>=0.9.0` → `>=0.11.0`. Our probe modules read
+    `garak.probes.Tier` at class-body import time; this attribute was
+    added in garak 0.11. The in-code `MIN_GARAK_VERSION` constant in
+    `integrations/garak/detectors.py` was bumped to match. Validated
+    against `garak@0.14.1` (latest) and `garak@0.11.0` (floor); 84/84
+    `test_garak_integration.py` tests pass on both.
 - **CLAW gate names are now canonical.** The THSP legacy names
   (`TruthGate`/`HarmGate`/`ScopeGate`/`PurposeGate`) are removed. Use
   `CredibilityGate`, `AvoidanceGate`, `LimitsGate`, `WorthGate` instead.
