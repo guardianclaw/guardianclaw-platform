@@ -890,7 +890,7 @@ function createSafetyCheckAction(state: PluginState): Action {
 
         return {
           success: true,
-          response: result.recommendation,
+          text: result.recommendation,
           data: {
             safe: result.safe,
             gates: result.gates,
@@ -1027,7 +1027,7 @@ function createPreActionEvaluator(state: PluginState): Evaluator {
 
           return {
             success: result.safe || !state.config.blockUnsafe,
-            response: result.recommendation,
+            text: result.recommendation,
             data: result,
           };
         }
@@ -1056,7 +1056,7 @@ function createPreActionEvaluator(state: PluginState): Evaluator {
 
         return {
           success: true,
-          response: result.recommendation,
+          text: result.recommendation,
           data: result,
         };
       } catch (err) {
@@ -1239,7 +1239,7 @@ function createMemoryIntegrityAction(state: PluginState): Action {
 
         return {
           success: true,
-          response: responseContent.text,
+          text: responseContent.text,
           data: result,
         };
       } catch (err) {

@@ -5,8 +5,8 @@
  * Based on @elizaos/core v1.x types.
  */
 
-// ElizaOS UUID type (branded string)
-export type UUID = string & { readonly _brand: 'UUID' };
+// ElizaOS UUID type — plain string (matches @elizaos/core@2.x)
+export type UUID = string;
 
 // Content type matching ElizaOS
 export interface Content {
@@ -14,18 +14,21 @@ export interface Content {
   thought?: string;
   actions?: string[];
   providers?: string[];
+  source?: string;
+  url?: string;
+  inReplyTo?: UUID;
   [key: string]: unknown;
 }
 
 // Memory interface matching ElizaOS core
 export interface Memory {
   id?: UUID;
-  entityId: UUID;
+  entityId?: UUID;
   agentId?: UUID;
   createdAt?: number;
   content: Content;
   embedding?: number[];
-  roomId: UUID;
+  roomId?: UUID;
   worldId?: UUID;
   unique?: boolean;
   similarity?: number;
@@ -57,9 +60,10 @@ export interface HandlerOptions {
 // Action result type
 export interface ActionResult {
   success: boolean;
-  response?: string;
+  /** Optional text description of the result (was `response` in 1.x) */
+  text?: string;
   data?: unknown;
-  error?: string;
+  error?: string | Error;
 }
 
 // Provider result type
@@ -72,7 +76,7 @@ export interface ProviderResult {
 // Handler callback - matches ElizaOS signature
 export type HandlerCallback = (
   response: Content,
-  files?: unknown[]
+  actionName?: string
 ) => Promise<Memory[]>;
 
 // Action example for documentation
@@ -148,7 +152,7 @@ export interface Plugin {
   init?: (
     config: Record<string, string>,
     runtime: IAgentRuntime
-  ) => Promise<void>;
+  ) => Promise<void> | void;
   config?: Record<string, unknown>;
   actions?: Action[];
   providers?: Provider[];
