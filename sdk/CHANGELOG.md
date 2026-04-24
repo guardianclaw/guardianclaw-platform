@@ -42,6 +42,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     `integrations/garak/detectors.py` was bumped to match. Validated
     against `garak@0.14.1` (latest) and `garak@0.11.0` (floor); 84/84
     `test_garak_integration.py` tests pass on both.
+  - `virtuals` extra (`game-sdk`): floor unchanged at `>=0.1.1`. Validated
+    against `game-sdk@0.1.5` (latest) and `game-sdk@0.1.1` (floor); 39/39
+    `test_virtuals.py` tests pass on both. Imports from `game_sdk.game.agent`
+    and `game_sdk.game.custom_types` are stable across the supported range.
 - **CLAW gate names are now canonical.** The THSP legacy names
   (`TruthGate`/`HarmGate`/`ScopeGate`/`PurposeGate`) are removed. Use
   `CredibilityGate`, `AvoidanceGate`, `LimitsGate`, `WorthGate` instead.
