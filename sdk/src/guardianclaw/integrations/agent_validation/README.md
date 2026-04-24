@@ -2,6 +2,8 @@
 
 Framework-agnostic safety validation for autonomous agents.
 
+> Validated on 2026-04-24. Standalone integration — no PyPI upstream dependency.
+
 ## Requirements
 
 ```bash

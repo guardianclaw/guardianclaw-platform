@@ -63,6 +63,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `openguardrails` integration: no PyPI floor (HTTP-only, no Python
     import). README now references `openguardrails@3.0.2` as the latest
     tested server. 56/56 `test_openguardrails.py` tests pass.
+  - `solana_agent_kit` integration: no PyPI upstream (the TypeScript/npm
+    `solana-agent-kit` package lives in `integrations/solana-agent-kit/`
+    and is validated separately). 13/13 `test_memory_integration.py`
+    tests pass.
+  - `agent_validation` integration: standalone, no upstream. 99/99
+    `test_agent_validation.py` tests pass.
+  - `x402` extra: still pins `httpx>=0.25.0` and `pydantic>=2.0.0`; the
+    `coinbase_agentkit` imports under `integrations/coinbase/x402/` are
+    covered by the `coinbase-agentkit` validation above.
 - **CLAW gate names are now canonical.** The THSP legacy names
   (`TruthGate`/`HarmGate`/`ScopeGate`/`PurposeGate`) are removed. Use
   `CredibilityGate`, `AvoidanceGate`, `LimitsGate`, `WorthGate` instead.
