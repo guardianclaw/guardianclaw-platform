@@ -2,6 +2,8 @@
 
 Comprehensive security integration for the Coinbase ecosystem, providing guardrails for AI agents using AgentKit and x402 payment validation.
 
+> Validated against `coinbase-agentkit@0.7.4` (and floor `coinbase-agentkit@0.1.0`) on 2026-04-24.
+
 ## Overview
 
 This integration provides:

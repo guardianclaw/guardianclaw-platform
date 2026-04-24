@@ -46,6 +46,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     against `game-sdk@0.1.5` (latest) and `game-sdk@0.1.1` (floor); 39/39
     `test_virtuals.py` tests pass on both. Imports from `game_sdk.game.agent`
     and `game_sdk.game.custom_types` are stable across the supported range.
+  - `coinbase-agentkit` extra: floor unchanged at `>=0.1.0`. Validated
+    against `coinbase-agentkit@0.7.4` (latest) and `coinbase-agentkit@0.1.0`
+    (floor). Imports `AgentKit`, `ActionProvider`, `create_action`,
+    `coinbase_agentkit.network.Network` are stable across 0.1.0 through
+    0.7.4. 66/67 `tests/integrations/test_coinbase.py` tests pass on both
+    runs — one pre-existing failure in `test_valid_checksum_address` is
+    unrelated to `coinbase-agentkit` (it asserts against our own
+    `AddressValidationResult` logic for an address that isn't actually
+    checksummed per EIP-55) and will be addressed separately.
 - **CLAW gate names are now canonical.** The THSP legacy names
   (`TruthGate`/`HarmGate`/`ScopeGate`/`PurposeGate`) are removed. Use
   `CredibilityGate`, `AvoidanceGate`, `LimitsGate`, `WorthGate` instead.
