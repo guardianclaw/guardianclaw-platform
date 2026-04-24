@@ -2,19 +2,24 @@
 
 Integrate GuardianClaw's CLAW protocol into Microsoft's PyRIT (Python Risk Identification Tool) for AI red teaming and security assessments.
 
+> Validated against `pyrit@0.13.0` (and floor `pyrit@0.12.0`) on 2026-04-24.
+> Minimum floor is `0.12.0` because `Scorer._create_identifier(params=...)`
+> (required by the `_build_identifier` hook added in 0.11) only matches our
+> usage from 0.12 onwards — 0.11 used a different keyword name.
+
 ## Overview
 
 [PyRIT](https://github.com/Azure/PyRIT) is Microsoft's open-source framework for AI red teaming. This integration provides scorers that evaluate AI responses using GuardianClaw's CLAW protocol (Credibility, Limits, Avoidance, Worth).
 
 ## Requirements
 
-- **PyRIT >= 0.10.0** (required for `_score_piece_async` API)
+- **PyRIT >= 0.12.0** (required for `ComponentIdentifier` / `_create_identifier(params=)` API)
 - Python 3.10+
 
 ## Installation
 
 ```bash
-pip install 'pyrit>=0.10.0' guardianclaw
+pip install 'pyrit>=0.12.0' guardianclaw
 ```
 
 ## Scorers

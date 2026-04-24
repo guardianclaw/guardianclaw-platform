@@ -9,7 +9,7 @@ Three scorer types:
 - GuardianClawHeuristicScorer: Pattern-based analysis (no LLM required)
 - GuardianClawGateScorer: Single gate evaluation
 
-Requires PyRIT >= 0.10.0 (uses _score_piece_async API).
+Requires PyRIT >= 0.12.0 (for ComponentIdentifier / _create_identifier API).
 """
 
 from typing import Optional, List, Literal
@@ -22,8 +22,8 @@ try:
     from pyrit.score.scorer_prompt_validator import ScorerPromptValidator
 except (ImportError, AttributeError) as e:
     raise ImportError(
-        "PyRIT >= 0.10.0 is required for this integration. "
-        "Install with: pip install 'pyrit>=0.10.0'"
+        "PyRIT >= 0.12.0 is required for this integration. "
+        "Install with: pip install 'pyrit>=0.12.0'"
     ) from e
 
 from guardianclaw.validation import (
@@ -252,6 +252,21 @@ class GuardianClawCLAWScorer(Scorer):
             if score.score_value not in ("true", "false"):
                 raise ValueError(f"Invalid score value: {score.score_value}")
 
+    def _build_identifier(self):
+        """ComponentIdentifier for this scorer (required by pyrit>=0.11)."""
+        return self._create_identifier(
+            params={
+                "provider": "semantic",
+                "fail_mode": self._fail_mode.value,
+                "categories": list(self._categories),
+                "max_content_length": self._max_content_length,
+            },
+        )
+
+    def get_scorer_metrics(self):
+        """No evaluation result file is configured for this scorer."""
+        return None
+
 
 class GuardianClawHeuristicScorer(Scorer):
     """
@@ -399,6 +414,22 @@ class GuardianClawHeuristicScorer(Scorer):
             if score.score_value not in ("true", "false"):
                 raise ValueError(f"Invalid score value: {score.score_value}")
 
+    def _build_identifier(self):
+        """ComponentIdentifier for this scorer (required by pyrit>=0.11)."""
+        return self._create_identifier(
+            params={
+                "provider": "heuristic",
+                "fail_mode": self._fail_mode.value,
+                "strict_mode": self._strict_mode,
+                "categories": list(self._categories),
+                "max_content_length": self._max_content_length,
+            },
+        )
+
+    def get_scorer_metrics(self):
+        """No evaluation result file is configured for this scorer."""
+        return None
+
 
 class GuardianClawGateScorer(Scorer):
     """
@@ -519,3 +550,17 @@ class GuardianClawGateScorer(Scorer):
                 raise ValueError(f"Expected true_false score, got {score.score_type}")
             if score.score_value not in ("true", "false"):
                 raise ValueError(f"Invalid score value: {score.score_value}")
+
+    def _build_identifier(self):
+        """ComponentIdentifier for this scorer (required by pyrit>=0.11)."""
+        return self._create_identifier(
+            params={
+                "gate": self._gate,
+                "fail_mode": self._fail_mode.value,
+                "max_content_length": self._max_content_length,
+            },
+        )
+
+    def get_scorer_metrics(self):
+        """No evaluation result file is configured for this scorer."""
+        return None

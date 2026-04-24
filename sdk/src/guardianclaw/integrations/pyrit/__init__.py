@@ -8,10 +8,10 @@ PyRIT is Microsoft's open-source framework for AI red teaming. These scorers
 integrate GuardianClaw's safety analysis into PyRIT's automated testing workflows.
 
 Requirements:
-    - PyRIT >= 0.10.0 (required for _score_piece_async API)
+    - PyRIT >= 0.12.0 (required for _score_piece_async API)
 
 Installation:
-    pip install 'pyrit>=0.10.0' guardianclaw
+    pip install 'pyrit>=0.12.0' guardianclaw
 
 Usage:
     from pyrit.orchestrator import PromptSendingOrchestrator

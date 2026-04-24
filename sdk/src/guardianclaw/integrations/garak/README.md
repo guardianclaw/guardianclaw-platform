@@ -2,6 +2,10 @@
 
 CLAW protocol probes and detectors for Garak security testing.
 
+> Validated against `garak@0.14.1` (and floor `garak@0.11.0`) on 2026-04-24.
+> Minimum floor is `0.11.0` because our probes read `garak.probes.Tier`
+> (added in 0.11) at class-body import time.
+
 ## Requirements
 
 ```bash
@@ -11,7 +15,7 @@ pip install guardianclaw garak
 ```
 
 **Dependencies:**
-- `garak>=0.9.0`: [Docs](https://docs.garak.ai) | [GitHub](https://github.com/NVIDIA/garak)
+- `garak>=0.11.0`: [Docs](https://docs.garak.ai) | [GitHub](https://github.com/NVIDIA/garak)
 
 ## Overview
 

@@ -4,6 +4,8 @@ Semantic LLM-based guardrails for the OpenAI Agents SDK implementing CLAW (Credi
 
 **Important:** This integration uses a dedicated LLM agent to perform semantic analysis of content. It is NOT regex-based pattern matching. Each validation call invokes an LLM to understand context and intent.
 
+> Validated against `openai-agents@0.14.5` (and floor `openai-agents@0.6.0`) on 2026-04-24.
+
 ## Requirements
 
 ```bash

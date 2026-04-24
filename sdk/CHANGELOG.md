@@ -9,6 +9,69 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Integration floors revalidated** (Passo 6, 2026-04-24 onwards). The old
+  `>=0.1.0` floors were placeholders from when integrations were first
+  authored; each package is now pinned to the minimum version whose public
+  surface still matches our imports.
+  - `mcp` extra: `>=0.1.0` → `>=1.8.0`. `mcp.client.streamable_http`
+    (used by `GuardianClawMCPClient` for HTTP transport) only exists from
+    `mcp@1.8.0` onwards, so the old floor was unusable. Validated against
+    `mcp@1.27.0` (latest) and `mcp@1.8.0` (floor); 64/64
+    `test_mcp_server_integration.py` tests pass on both.
+  - `google-adk` extra: `>=0.1.0` → `>=1.7.0`. `google.adk.plugins.base_plugin`
+    (required by `GuardianClawPlugin`) first appeared in `google-adk@1.7.0`;
+    1.5.0 and 1.6.1 do not expose it. Validated against `google-adk@1.31.1`
+    (latest) and `google-adk@1.7.0` (floor); 83 passed / 1 skipped on both.
+  - `anthropic` extra: `>=0.18.0` → `>=0.40.0` (aligned with what the
+    README already advertised). Validated against `anthropic@0.97.0` (latest)
+    and `anthropic@0.40.0` (floor); 44/44 `test_anthropic_sdk.py` tests
+    pass on both. Imports `Anthropic`, `AsyncAnthropic`, `anthropic.types.Message`,
+    `MessageStreamEvent` are stable across the entire supported range.
+  - `pyrit` extra: `>=0.10.0` → `>=0.12.0`. PyRIT 0.11 added two new
+    abstract methods on `Scorer` (`_build_identifier`, `get_scorer_metrics`)
+    and the helper `_create_identifier(...)` kwargs were renamed between
+    0.11 (`scorer_specific_params`) and 0.12+ (`params`). Our three scorers
+    (`GuardianClawCLAWScorer`, `GuardianClawHeuristicScorer`,
+    `GuardianClawGateScorer`) now implement both hooks using the 0.12+
+    keyword signature; 0.11 is no longer supported. Validated against
+    `pyrit@0.13.0` (latest) and `pyrit@0.12.0` (floor); 41/41
+    `test_pyrit_integration.py` tests pass on both.
+  - `garak` extra: `>=0.9.0` → `>=0.11.0`. Our probe modules read
+    `garak.probes.Tier` at class-body import time; this attribute was
+    added in garak 0.11. The in-code `MIN_GARAK_VERSION` constant in
+    `integrations/garak/detectors.py` was bumped to match. Validated
+    against `garak@0.14.1` (latest) and `garak@0.11.0` (floor); 84/84
+    `test_garak_integration.py` tests pass on both.
+  - `virtuals` extra (`game-sdk`): floor unchanged at `>=0.1.1`. Validated
+    against `game-sdk@0.1.5` (latest) and `game-sdk@0.1.1` (floor); 39/39
+    `test_virtuals.py` tests pass on both. Imports from `game_sdk.game.agent`
+    and `game_sdk.game.custom_types` are stable across the supported range.
+  - `coinbase-agentkit` extra: floor unchanged at `>=0.1.0`. Validated
+    against `coinbase-agentkit@0.7.4` (latest) and `coinbase-agentkit@0.1.0`
+    (floor). Imports `AgentKit`, `ActionProvider`, `create_action`,
+    `coinbase_agentkit.network.Network` are stable across 0.1.0 through
+    0.7.4. 66/67 `tests/integrations/test_coinbase.py` tests pass on both
+    runs — one pre-existing failure in `test_valid_checksum_address` is
+    unrelated to `coinbase-agentkit` (it asserts against our own
+    `AddressValidationResult` logic for an address that isn't actually
+    checksummed per EIP-55) and will be addressed separately.
+  - `openai-agents` extra: floor unchanged at `>=0.6.0`. Validated against
+    `openai-agents@0.14.5` (latest) and `openai-agents@0.6.0` (floor);
+    95/95 `test_openai_agents.py` tests pass on both. The adapter is
+    duck-typed against the SDK (no hard top-level imports), so the 0.6→0.14
+    window is absorbed without code changes.
+  - `openguardrails` integration: no PyPI floor (HTTP-only, no Python
+    import). README now references `openguardrails@3.0.2` as the latest
+    tested server. 56/56 `test_openguardrails.py` tests pass.
+  - `solana_agent_kit` integration: no PyPI upstream (the TypeScript/npm
+    `solana-agent-kit` package lives in `integrations/solana-agent-kit/`
+    and is validated separately). 13/13 `test_memory_integration.py`
+    tests pass.
+  - `agent_validation` integration: standalone, no upstream. 99/99
+    `test_agent_validation.py` tests pass.
+  - `x402` extra: still pins `httpx>=0.25.0` and `pydantic>=2.0.0`; the
+    `coinbase_agentkit` imports under `integrations/coinbase/x402/` are
+    covered by the `coinbase-agentkit` validation above.
 - **CLAW gate names are now canonical.** The THSP legacy names
   (`TruthGate`/`HarmGate`/`ScopeGate`/`PurposeGate`) are removed. Use
   `CredibilityGate`, `AvoidanceGate`, `LimitsGate`, `WorthGate` instead.

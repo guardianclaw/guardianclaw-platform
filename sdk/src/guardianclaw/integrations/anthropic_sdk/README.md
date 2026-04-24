@@ -2,6 +2,8 @@
 
 Wrappers for the official Anthropic Python SDK with CLAW safety validation.
 
+> Validated against `anthropic@0.97.0` (and floor `anthropic@0.40.0`) on 2026-04-24.
+
 ## Requirements
 
 ```bash

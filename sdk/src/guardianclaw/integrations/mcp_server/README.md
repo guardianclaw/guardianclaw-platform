@@ -2,6 +2,8 @@
 
 Model Context Protocol server exposing GuardianClaw safety tools.
 
+> Validated against `mcp@1.27.0` (and floor `mcp@1.8.0`) on 2026-04-24.
+
 ## Requirements
 
 ```bash
@@ -11,7 +13,8 @@ pip install guardianclaw mcp
 ```
 
 **Dependencies:**
-- `mcp>=0.1.0`: [GitHub](https://github.com/modelcontextprotocol/python-sdk)
+- `mcp>=1.8.0`: [GitHub](https://github.com/modelcontextprotocol/python-sdk)
+  Minimum floor is `1.8.0` because `mcp.client.streamable_http` landed in that release.
 
 **For Claude Desktop:**
 ```bash

@@ -2,6 +2,11 @@
 
 Safety validation for Solana blockchain agents.
 
+> Validated on 2026-04-24. There is no PyPI upstream for Solana Agent Kit
+> itself — the adapter exposes standalone validation helpers that users
+> call before executing transactions with the TypeScript/npm
+> `solana-agent-kit` package (or any other Solana client).
+
 ## Requirements
 
 ```bash

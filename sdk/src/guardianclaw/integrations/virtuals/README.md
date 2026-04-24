@@ -2,6 +2,8 @@
 
 Safety validation for AI agents built with the GAME SDK.
 
+> Validated against `game-sdk@0.1.5` (and floor `game-sdk@0.1.1`) on 2026-04-24.
+
 ## Requirements
 
 ```bash
