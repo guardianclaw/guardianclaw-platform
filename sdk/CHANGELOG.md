@@ -55,6 +55,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     unrelated to `coinbase-agentkit` (it asserts against our own
     `AddressValidationResult` logic for an address that isn't actually
     checksummed per EIP-55) and will be addressed separately.
+  - `openai-agents` extra: floor unchanged at `>=0.6.0`. Validated against
+    `openai-agents@0.14.5` (latest) and `openai-agents@0.6.0` (floor);
+    95/95 `test_openai_agents.py` tests pass on both. The adapter is
+    duck-typed against the SDK (no hard top-level imports), so the 0.6→0.14
+    window is absorbed without code changes.
 - **CLAW gate names are now canonical.** The THSP legacy names
   (`TruthGate`/`HarmGate`/`ScopeGate`/`PurposeGate`) are removed. Use
   `CredibilityGate`, `AvoidanceGate`, `LimitsGate`, `WorthGate` instead.
