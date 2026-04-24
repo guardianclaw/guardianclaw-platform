@@ -18,6 +18,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     `mcp@1.8.0` onwards, so the old floor was unusable. Validated against
     `mcp@1.27.0` (latest) and `mcp@1.8.0` (floor); 64/64
     `test_mcp_server_integration.py` tests pass on both.
+  - `google-adk` extra: `>=0.1.0` → `>=1.7.0`. `google.adk.plugins.base_plugin`
+    (required by `GuardianClawPlugin`) first appeared in `google-adk@1.7.0`;
+    1.5.0 and 1.6.1 do not expose it. Validated against `google-adk@1.31.1`
+    (latest) and `google-adk@1.7.0` (floor); 83 passed / 1 skipped on both.
 - **CLAW gate names are now canonical.** The THSP legacy names
   (`TruthGate`/`HarmGate`/`ScopeGate`/`PurposeGate`) are removed. Use
   `CredibilityGate`, `AvoidanceGate`, `LimitsGate`, `WorthGate` instead.
