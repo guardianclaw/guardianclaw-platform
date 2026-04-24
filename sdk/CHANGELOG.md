@@ -60,6 +60,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     95/95 `test_openai_agents.py` tests pass on both. The adapter is
     duck-typed against the SDK (no hard top-level imports), so the 0.6→0.14
     window is absorbed without code changes.
+  - `openguardrails` integration: no PyPI floor (HTTP-only, no Python
+    import). README now references `openguardrails@3.0.2` as the latest
+    tested server. 56/56 `test_openguardrails.py` tests pass.
 - **CLAW gate names are now canonical.** The THSP legacy names
   (`TruthGate`/`HarmGate`/`ScopeGate`/`PurposeGate`) are removed. Use
   `CredibilityGate`, `AvoidanceGate`, `LimitsGate`, `WorthGate` instead.
