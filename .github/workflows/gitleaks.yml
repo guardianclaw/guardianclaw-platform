@@ -1,0 +1,41 @@
+name: Secret Scan
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  schedule:
+    # Weekly full-history re-scan to catch anything that slipped through
+    # as the default rule set evolves upstream.
+    - cron: '17 6 * * 1'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  gitleaks:
+    name: gitleaks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout (full history for PR scans, shallow for push)
+        uses: actions/checkout@v4
+        with:
+          # PR: full history so gitleaks can scan the diff range.
+          # Push/schedule: full history so re-scans cover everything.
+          fetch-depth: 0
+
+      - name: Run gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_CONFIG: .gitleaks.toml
+          # Fail the job if any leak is detected that is not covered by
+          # the allowlist in .gitleaks.toml.
+          GITLEAKS_ENABLE_COMMENTS: false
+          GITLEAKS_ENABLE_UPLOAD_ARTIFACT: true
+          GITLEAKS_ENABLE_SUMMARY: true
