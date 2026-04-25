@@ -32,9 +32,16 @@ id = "31614b65988843fcb419e1a42c57255c"
 # Staging has no cron triggers - use HTTP endpoints for manual testing
 
 # Production
-# workers_dev disabled: production traffic must come through api.guardianclaw.org only
+# workers_dev intentionally enabled until guardianclaw.org NS migrates from
+# Hostinger parking to Cloudflare. Today (2026-04-25) the registrar still
+# serves ns1/ns2.dns-parking.com, so the api.guardianclaw.org route below
+# is configured in CF but never receives traffic. Setting workers_dev=false
+# without DNS in place takes production offline.
+# TODO(post-DNS): once `dig +short NS guardianclaw.org` returns the
+# Cloudflare nameservers (noel/pat.ns.cloudflare.com), flip this back to
+# `false` to close the unguarded *.workers.dev ingress (audit Doc09 4.3).
 [env.production]
-workers_dev = false
+workers_dev = true
 vars = { ENVIRONMENT = "production", MODAL_RUNTIME_URL = "https://guardian-claw--claw-runtime-execute-agent-web.modal.run", MODAL_HEALTH_URL = "https://guardian-claw--claw-runtime-health-web.modal.run", MODAL_VALIDATE_INPUT_URL = "https://guardian-claw--claw-runtime-validate-input-web.modal.run", MODAL_VALIDATE_OUTPUT_URL = "https://guardian-claw--claw-runtime-validate-output-web.modal.run", MODAL_COMPLIANCE_URL = "https://guardian-claw--claw-runtime-check-compliance-web.modal.run" }
 routes = [
   { pattern = "api.guardianclaw.org/*", zone_name = "guardianclaw.org" }
