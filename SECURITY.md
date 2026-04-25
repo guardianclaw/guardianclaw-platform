@@ -242,6 +242,10 @@ Secret scanning, SAST, and dependency review are not yet CI jobs. A gitleaks-bas
 
 Some user-scoped write paths (`memories`, `character`, `user` deletion, `social-deliveries` approval) rely on a handler-side ownership check followed by a write keyed on the record `id` without reaffirming the predicate at the write boundary. Safe in practice today, but tightening this pattern is part of the ownership-predicate hardening in flight.
 
+### G-06 — Branch Protection and CODEOWNERS Gating Not Active
+
+The repo currently lives under a User account on the Free plan, which gates branch protection rules, rulesets, and Environments behind GitHub Pro for private repos. The `.github/CODEOWNERS` file is in tree but the team handles (`@guardianclaw/security`, `/ops`, `/core`, `/maintainers`) do not resolve in a User-account context, so PR review gating is informational only. CI status checks still run on every PR (Lint, TypeCheck, Test API, Test Web, Build, Pattern Sync, gitleaks); merges of failing checks rely on maintainer discipline rather than enforcement. This gap closes when the repo (a) moves to an Organization, or (b) is made public after Onda 2/3 hardening lands.
+
 ---
 
 ## Development Security

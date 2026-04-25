@@ -8,6 +8,14 @@
 #
 # Last owner match per file wins. Lines lower in this file override
 # lines higher up.
+#
+# NOTE — current enforcement state (see SECURITY.md G-06):
+# This file is currently aspirational. The repo lives under a User account
+# (not an Org), so the team handles below resolve to nothing and PR
+# review gating is not active. Branch protection and rulesets are also
+# Pro-gated on private User repos. The handles will activate the moment
+# the repo moves to an Org (or the repo is made public after Onda 2/3
+# remediations land).
 
 # Default owner for everything
 *                                           @guardianclaw/maintainers
