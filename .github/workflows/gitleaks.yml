@@ -22,20 +22,29 @@ jobs:
     name: gitleaks
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout (full history for PR scans, shallow for push)
+      - name: Checkout
         uses: actions/checkout@v4
         with:
-          # PR: full history so gitleaks can scan the diff range.
-          # Push/schedule: full history so re-scans cover everything.
+          # Full history so PR scans cover the whole diff range and
+          # scheduled scans cover everything.
           fetch-depth: 0
 
-      - name: Run gitleaks
-        uses: gitleaks/gitleaks-action@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITLEAKS_CONFIG: .gitleaks.toml
-          # Fail the job if any leak is detected that is not covered by
-          # the allowlist in .gitleaks.toml.
-          GITLEAKS_ENABLE_COMMENTS: false
-          GITLEAKS_ENABLE_UPLOAD_ARTIFACT: true
-          GITLEAKS_ENABLE_SUMMARY: true
+      - name: Install gitleaks
+        run: |
+          set -euo pipefail
+          VERSION=8.30.1
+          curl -sSL "https://github.com/gitleaks/gitleaks/releases/download/v${VERSION}/gitleaks_${VERSION}_linux_x64.tar.gz" \
+            | tar -xz -C /usr/local/bin gitleaks
+          gitleaks version
+
+      - name: Scan full history
+        run: |
+          # Exit 1 if any leak is detected that the .gitleaks.toml
+          # allowlist does not cover. Output redacted so secrets do not
+          # appear in workflow logs.
+          gitleaks git \
+            --config .gitleaks.toml \
+            --log-opts="--all" \
+            --redact \
+            --no-banner \
+            --exit-code 1
