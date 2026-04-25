@@ -1,0 +1,49 @@
+# Gitleaks configuration for guardianclaw-platform
+#
+# Purpose: keep secret scanning in CI without noise from known
+# synthetic test fixtures.
+#
+# Policy:
+# - The repo has never contained a real credential (confirmed by a full
+#   history scan on 2026-04-23, report in _internal/).
+# - All current findings are test vectors for the platform's own
+#   detection patterns, pattern unit tests, or documentation placeholders.
+# - We allowlist those specific files by path and keep the default rule
+#   set active for everything else.
+#
+# If gitleaks flags a new file, investigate before adding it here.
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Files containing known synthetic fixtures, pattern test vectors, or documentation placeholders"
+paths = [
+    # TypeScript/TSX tests — test vectors, mock responses, regex fixtures
+    '''.*\.test\.ts$''',
+    '''.*\.test\.tsx$''',
+    '''.*/__tests__/.*\.ts$''',
+    '''.*/__tests__/.*\.tsx$''',
+
+    # Kotlin tests (jetbrains plugin pattern detection suite)
+    '''.*/src/test/kotlin/.*\.kt$''',
+
+    # Python SDK tests — detection/memory/virtuals fixtures
+    '''sdk/tests/.*\.py$''',
+
+    # Test fixtures directories
+    '''.*/test/fixtures/.*''',
+    '''.*/tests/fixtures/.*''',
+
+    # Documentation with literal placeholders (YOUR_API_KEY, etc.)
+    '''apps/web/src/app/app/builder/\[id\]/deploy/components/code-examples\.tsx''',
+
+    # Example files — intentionally documented placeholders
+    '''sdk/src/guardianclaw/integrations/.+/example\.py$''',
+
+    # ES256 key generator script — generates ephemeral test keys, not real secrets
+    '''apps/api/scripts/generate-es256-keys\.ts''',
+
+    # Pattern corpus — the strings here are what we detect, not secrets
+    '''patterns/.*\.json$''',
+]

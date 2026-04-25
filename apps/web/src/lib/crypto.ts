@@ -9,27 +9,45 @@
  */
 
 /**
- * Get the HMAC secret from environment variables
- * Throws descriptive error if not configured
+ * Get the HMAC key from environment variables.
+ *
+ * The value lives in a NEXT_PUBLIC_* variable and is therefore embedded
+ * in the browser bundle. It is NOT a secret; it exists so the Memory
+ * Shield demo can show a deterministic signature flow. Naming reflects
+ * that reality: "_KEY" not "_SECRET".
+ *
+ * Throws descriptive error if not configured.
  */
-function getHmacSecret(providedSecret?: string): string {
-  // Use provided secret if given
-  if (providedSecret) {
-    return providedSecret
+function getHmacKey(providedKey?: string): string {
+  // Use provided value if given
+  if (providedKey) {
+    return providedKey
   }
 
-  // Try to get from environment variable
-  const envSecret = process.env.NEXT_PUBLIC_DEMO_HMAC_SECRET
-
-  if (!envSecret) {
-    throw new Error(
-      'HMAC secret not configured. ' +
-        'Set NEXT_PUBLIC_DEMO_HMAC_SECRET environment variable or provide secret parameter. ' +
-        'See .env.example for configuration.'
-    )
+  // Canonical variable name
+  const envKey = process.env.NEXT_PUBLIC_DEMO_HMAC_KEY
+  if (envKey) {
+    return envKey
   }
 
-  return envSecret
+  // Deprecated alias — accept during Vercel env migration, warn once per session
+  const legacyEnvKey = process.env.NEXT_PUBLIC_DEMO_HMAC_SECRET
+  if (legacyEnvKey) {
+    if (typeof window !== 'undefined' && !(window as typeof window & { __hmacLegacyWarned?: boolean }).__hmacLegacyWarned) {
+      console.warn(
+        'NEXT_PUBLIC_DEMO_HMAC_SECRET is deprecated. Rename to NEXT_PUBLIC_DEMO_HMAC_KEY. ' +
+          'The value is public (NEXT_PUBLIC_*) and was never a real secret.'
+      )
+      ;(window as typeof window & { __hmacLegacyWarned?: boolean }).__hmacLegacyWarned = true
+    }
+    return legacyEnvKey
+  }
+
+  throw new Error(
+    'HMAC key not configured. ' +
+      'Set NEXT_PUBLIC_DEMO_HMAC_KEY environment variable or provide key parameter. ' +
+      'See .env.example for configuration.'
+  )
 }
 
 // Convert string to ArrayBuffer
@@ -66,9 +84,9 @@ async function importKey(secret: string): Promise<CryptoKey> {
  * @returns Hex-encoded HMAC signature with sha256: prefix
  */
 export async function computeHmac(data: unknown, secret?: string): Promise<string> {
-  const actualSecret = getHmacSecret(secret)
+  const resolvedKey = getHmacKey(secret)
   const message = typeof data === 'string' ? data : JSON.stringify(data)
-  const key = await importKey(actualSecret)
+  const key = await importKey(resolvedKey)
   const messageBuffer = stringToArrayBuffer(message)
   const signature = await crypto.subtle.sign('HMAC', key, messageBuffer)
   return `sha256:${arrayBufferToHex(signature)}`

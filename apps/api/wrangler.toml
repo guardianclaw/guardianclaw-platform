@@ -19,8 +19,9 @@ vars = { ENVIRONMENT = "development", MODAL_RUNTIME_URL = "https://guardian-claw
 
 # Staging
 # Note: No cron triggers in staging to stay within free tier limit
+# workers_dev disabled: staging traffic goes through the routed custom domain
 [env.staging]
-workers_dev = true
+workers_dev = false
 routes = [
   { pattern = "staging-api.guardianclaw.org/*", zone_name = "guardianclaw.org" }
 ]
@@ -31,8 +32,9 @@ id = "31614b65988843fcb419e1a42c57255c"
 # Staging has no cron triggers - use HTTP endpoints for manual testing
 
 # Production
+# workers_dev disabled: production traffic must come through api.guardianclaw.org only
 [env.production]
-workers_dev = true
+workers_dev = false
 vars = { ENVIRONMENT = "production", MODAL_RUNTIME_URL = "https://guardian-claw--claw-runtime-execute-agent-web.modal.run", MODAL_HEALTH_URL = "https://guardian-claw--claw-runtime-health-web.modal.run", MODAL_VALIDATE_INPUT_URL = "https://guardian-claw--claw-runtime-validate-input-web.modal.run", MODAL_VALIDATE_OUTPUT_URL = "https://guardian-claw--claw-runtime-validate-output-web.modal.run", MODAL_COMPLIANCE_URL = "https://guardian-claw--claw-runtime-check-compliance-web.modal.run" }
 routes = [
   { pattern = "api.guardianclaw.org/*", zone_name = "guardianclaw.org" }
