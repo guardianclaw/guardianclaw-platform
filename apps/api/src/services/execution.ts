@@ -27,6 +27,8 @@ import { topologicalSort, type FlowNode as GraphFlowNode, type FlowEdge } from '
 import { StepExecutor, nodeToStep, runL4Observer } from './step-executor'
 import { createWebhookSignature, WEBHOOK_HEADERS } from '../lib/webhook-signature'
 import { CircuitBreaker } from '../lib/circuit-breaker'
+import { checkUrlOrLog } from '../lib/ssrf-guard'
+import { createSecureLogger } from '../lib/secure-logger'
 
 // Re-export types for consumers
 export type { ToolExecutionResult, ToolCredentialsContext }
@@ -530,10 +532,35 @@ export async function executeWebhookOutputs(
   agentContext?: { agentId?: string }
 ): Promise<WebhookDeliveryStatus[]> {
   const results: WebhookDeliveryStatus[] = []
+  const logger = createSecureLogger()
 
   for (const webhook of webhookOutputs) {
     const startTime = Date.now()
     try {
+      // SSRF guard — flow canvas authors are user-controlled, so a webhook
+      // node URL must be re-checked at every execution. The `agentId` is
+      // included in the surface label so log readers can correlate to a
+      // specific agent without exposing the URL itself.
+      const urlCheck = await checkUrlOrLog(
+        webhook.url,
+        {
+          surface: agentContext?.agentId
+            ? `execution.flow-webhook[${agentContext.agentId}]`
+            : 'execution.flow-webhook',
+        },
+        logger
+      )
+      if (!urlCheck.valid) {
+        results.push({
+          nodeId: webhook.nodeId,
+          url: webhook.url,
+          success: false,
+          error: urlCheck.error || 'Webhook URL is not allowed',
+          latency_ms: Date.now() - startTime,
+        })
+        continue
+      }
+
       const timestamp = Math.floor(Date.now() / 1000)
       const isJson = webhook.format === 'json'
 

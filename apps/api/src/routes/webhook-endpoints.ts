@@ -23,6 +23,8 @@ import { walletRateLimitMiddleware } from '../middleware/rate-limit'
 import { generateWebhookSecret } from '../lib/webhook-signature'
 import { encryptNewWebhookSecret } from '../lib/webhook-crypto'
 import { deliverImmediately, DELIVERY_EVENT_TYPES } from '../services/webhook-delivery'
+import { checkUrlOrLog } from '../lib/ssrf-guard'
+import { createSecureLogger } from '../lib/secure-logger'
 
 // ============================================
 // TYPES
@@ -33,6 +35,7 @@ type Bindings = {
   SUPABASE_SERVICE_KEY: string
   JWT_SECRET: string
   API_BASE_URL?: string
+  IP_HASH_SECRET?: string
 }
 
 type Variables = {
@@ -148,6 +151,17 @@ webhookEndpointRoutes.post(
     }
 
     const { name, url, headers, retry_count, timeout_ms, event_types } = parsed.data
+
+    // SSRF guard: block private/loopback/metadata destinations and require HTTPS
+    const logger = createSecureLogger({ IP_HASH_SECRET: c.env.IP_HASH_SECRET })
+    const urlCheck = await checkUrlOrLog(
+      url,
+      { surface: 'webhook-endpoints.create' },
+      logger
+    )
+    if (!urlCheck.valid) {
+      return c.json({ error: urlCheck.error || 'URL is not allowed' }, 400)
+    }
 
     // Check endpoint limit (max 10 active endpoints per agent)
     const { count } = await supabase
@@ -355,6 +369,19 @@ webhookEndpointRoutes.patch(
 
     if (!parsed.success) {
       return c.json({ error: 'Invalid request', details: parsed.error.flatten() }, 400)
+    }
+
+    // SSRF guard on URL update (only when caller is changing it)
+    if (parsed.data.url !== undefined) {
+      const logger = createSecureLogger({ IP_HASH_SECRET: c.env.IP_HASH_SECRET })
+      const urlCheck = await checkUrlOrLog(
+        parsed.data.url,
+        { surface: 'webhook-endpoints.update' },
+        logger
+      )
+      if (!urlCheck.valid) {
+        return c.json({ error: urlCheck.error || 'URL is not allowed' }, 400)
+      }
     }
 
     // Update endpoint

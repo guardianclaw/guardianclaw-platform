@@ -26,6 +26,8 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { createWebhookSignature, WEBHOOK_HEADERS } from '../lib/webhook-signature'
 import { decryptWebhookSecret, encryptWebhookSecret } from '../lib/webhook-crypto'
+import { checkUrlOrLog } from '../lib/ssrf-guard'
+import { createSecureLogger } from '../lib/secure-logger'
 
 // ============================================
 // CONFIGURATION
@@ -387,6 +389,26 @@ export async function executeDelivery(
   serverSecret: string
 ): Promise<DeliveryResult> {
   const startTime = Date.now()
+
+  // SSRF guard before each delivery — webhook_endpoints rows can be mutated
+  // outside the schema-time validation in routes/webhook-endpoints.ts (direct
+  // SQL, future migration paths, etc.), so re-check at the fetch boundary.
+  {
+    const logger = createSecureLogger()
+    const urlCheck = await checkUrlOrLog(
+      endpoint.url,
+      { surface: 'webhook-delivery.executeDelivery' },
+      logger
+    )
+    if (!urlCheck.valid) {
+      return {
+        success: false,
+        responseTimeMs: Date.now() - startTime,
+        errorCode: 'SSRF_BLOCKED',
+        errorMessage: urlCheck.error || 'Endpoint URL is not allowed',
+      }
+    }
+  }
 
   try {
     // Decrypt the endpoint secret for HMAC signing
