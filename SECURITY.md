@@ -243,7 +243,7 @@ See **Planned Controls → Unified Web/Admin Session Model**.
 
 ### G-04 — CI Without Security Scanners
 
-Secret scanning, SAST, and dependency review are not yet CI jobs. A gitleaks-based secret scanner is the first one being added (see **Development Security**). This section will shrink as jobs land.
+**Partially resolved 2026-04-26.** Secret scanning (gitleaks) and dependency audit (`npm audit` with allowlist gate) are wired in CI. Static analysis (SAST) is still on the backlog and will land alongside the move to GitHub Advanced Security when the repo migrates Org/public.
 
 ### G-05 — Writes With Application-Level Ownership Predicate
 
