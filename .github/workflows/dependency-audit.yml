@@ -39,31 +39,26 @@ jobs:
           node-version: '20'
           cache: 'npm'
 
-      # Production sweep — high/critical visible in the run header. Initially
-      # soft-fail because the existing lockfile carries a backlog of inherited
-      # CVEs (mostly transitive deps under tooling like vercel CLI and
-      # @solana/web3.js). Triage of these findings is its own follow-up; this
-      # workflow landing first is the prerequisite to track them at all.
-      # TODO(post-triage): drop `|| true` so production high/critical hard-fails
-      # the run. Tracked under Frente B / D of PLANO_PRE_LANCAMENTO.md.
-      - name: Audit production dependencies (high+, informational for now)
-        run: npm audit --omit=dev --audit-level=high || true
+      # Snapshot the current production-tree audit. The hard gate below reads
+      # this file rather than re-running npm audit so the gate sees the exact
+      # same advisories the human operator does in the run logs.
+      - name: Capture npm audit (production tree)
+        id: audit
+        run: |
+          set +e
+          npm audit --omit=dev --json > audit-prod.json
+          npm audit --omit=dev || true
+          set -e
+
+      # Hard gate: any production high/critical GHSA not present in
+      # .github/audit-allowlist.json fails the workflow. Stale allowlist
+      # entries (advisory no longer in tree) emit a warning but do not fail
+      # — the audit output is the source of truth.
+      - name: Audit gate (allowlist enforcement)
+        run: node scripts/audit-gate.mjs audit-prod.json
 
       # Informational sweep across the whole tree (devDeps included). Never
       # fails the job; output is preserved in workflow logs for triage.
       - name: Audit all dependencies (informational, never fails)
         if: always()
         run: npm audit || true
-
-      # Hard gate that DOES fail: critical findings in production deps that
-      # are NOT in the carried-over backlog. The carry-over set is captured
-      # in `.github/audit-allowlist.json`; CVEs outside that list block the
-      # PR. This gives us a real merge gate today without rewriting the
-      # lockfile.
-      # NOTE: allowlist file does not exist yet — the step is staged off
-      # until triage produces it. When ready, flip `if: false` to `if: always()`.
-      - name: Audit production dependencies (delta vs allowlist)
-        if: false
-        run: |
-          echo "Allowlist-based gate not yet active. See PLANO_PRE_LANCAMENTO.md Frente B/D."
-          exit 1
