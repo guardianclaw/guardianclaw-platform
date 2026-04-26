@@ -39,7 +39,6 @@ import {
   StickyNote,
 } from 'lucide-react'
 import { useUserNotes, invalidateAdminCache } from '@/hooks/use-admin-api'
-import { useAuth } from '@/hooks/use-auth'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.guardianclaw.org'
 
@@ -116,7 +115,6 @@ interface UserNotesProps {
 }
 
 export function UserNotes({ walletAddress, className }: UserNotesProps) {
-  const { token } = useAuth()
   const { data, isLoading, error } = useUserNotes(walletAddress)
   const [isAdding, setIsAdding] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -157,7 +155,8 @@ export function UserNotes({ walletAddress, className }: UserNotesProps) {
     try {
       const response = await fetch(`${API_URL}/admin/credits/user/${walletAddress}/notes`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ note: noteText, category }),
       })
 
@@ -185,7 +184,7 @@ export function UserNotes({ walletAddress, className }: UserNotesProps) {
     try {
       const response = await fetch(`${API_URL}/admin/credits/notes/${deleteNoteId}`, {
         method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` },
+        credentials: 'include',
       })
 
       if (!response.ok) {
@@ -209,7 +208,8 @@ export function UserNotes({ walletAddress, className }: UserNotesProps) {
     try {
       const response = await fetch(`${API_URL}/admin/credits/notes/${noteId}/pin`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ is_pinned: !currentlyPinned }),
       })
 

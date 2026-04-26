@@ -37,7 +37,7 @@ import {
 
 export default function CreditsPage() {
   const { connected } = useWallet()
-  const { token, isAuthenticated } = useAuth()
+  const { isAuthenticated } = useAuth()
 
   const [pricing, setPricing] = useState<CreditPricing | null>(null)
   const [deposits, setDeposits] = useState<DepositRecord[]>([])
@@ -61,7 +61,7 @@ export default function CreditsPage() {
         }
 
         // Fetch history if authenticated
-        if (token) {
+        if (isAuthenticated) {
           const [depositHistory, usageHistory] = await Promise.all([
             creditsApi.getHistory({ limit: 10 }),
             creditsApi.getUsage({ limit: 20 }),
@@ -77,11 +77,11 @@ export default function CreditsPage() {
     }
 
     fetchData()
-  }, [token])
+  }, [isAuthenticated])
 
   // Refresh data after deposit
   const handleDepositSuccess = useCallback(async () => {
-    if (!token) return
+    if (!isAuthenticated) return
 
     try {
       const [depositHistory, usageHistory] = await Promise.all([
@@ -94,7 +94,7 @@ export default function CreditsPage() {
     } catch (err) {
       console.error('Failed to refresh credits data:', err)
     }
-  }, [token])
+  }, [isAuthenticated])
 
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString('en-US', {

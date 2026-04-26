@@ -52,7 +52,7 @@ interface UseLLMKeyResult {
 
 export function useLLMKey(): UseLLMKeyResult {
   const { publicKey, signMessage, connected } = useWallet()
-  const { token, isAuthenticated } = useAuth()
+  const { isAuthenticated } = useAuth()
 
   // Key list state
   const [keys, setKeys] = useState<LLMKeyInfo[]>([])
@@ -74,7 +74,7 @@ export function useLLMKey(): UseLLMKeyResult {
 
   // Fetch available keys
   useEffect(() => {
-    if (!isAuthenticated || !token) {
+    if (!isAuthenticated) {
       setKeys([])
       setLoadingKeys(false)
       return
@@ -84,9 +84,7 @@ export function useLLMKey(): UseLLMKeyResult {
       setLoadingKeys(true)
       try {
         const response = await fetch(`${API_URL}/llm-keys`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          credentials: 'include',
         })
 
         if (response.ok) {
@@ -106,7 +104,7 @@ export function useLLMKey(): UseLLMKeyResult {
     }
 
     fetchKeys()
-  }, [isAuthenticated, token, selectedKeyId])
+  }, [isAuthenticated, selectedKeyId])
 
   // Clear cache when wallet disconnects
   useEffect(() => {
@@ -120,7 +118,7 @@ export function useLLMKey(): UseLLMKeyResult {
   // Decrypt a specific key
   const decryptKey = useCallback(
     async (keyId: string): Promise<string | null> => {
-      if (!signMessage || !publicKey || !token) {
+      if (!signMessage || !publicKey || !isAuthenticated) {
         setDecryptionError('Wallet not connected')
         return null
       }
@@ -136,9 +134,7 @@ export function useLLMKey(): UseLLMKeyResult {
       try {
         // Fetch full key data (including encrypted blob)
         const response = await fetch(`${API_URL}/llm-keys/${keyId}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          credentials: 'include',
         })
 
         if (!response.ok) {
@@ -191,7 +187,7 @@ export function useLLMKey(): UseLLMKeyResult {
         setIsDecrypting(false)
       }
     },
-    [signMessage, publicKey, token, cachedDecryptedKey]
+    [signMessage, publicKey, isAuthenticated, cachedDecryptedKey]
   )
 
   // Clear decryption cache

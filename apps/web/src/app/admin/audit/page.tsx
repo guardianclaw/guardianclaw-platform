@@ -124,7 +124,7 @@ export default function AdminAuditPage() {
   const [selectedLog, setSelectedLog] = useState<AuditLogEntry | null>(null)
   const [exporting, setExporting] = useState<'csv' | 'json' | null>(null)
 
-  const { token } = useAuth()
+  const { isAuthenticated } = useAuth()
   const { data: statsData, isLoading: statsLoading } = useAuditStats()
   const { data: logsData, isLoading: logsLoading } = useAuditLogs({
     limit: ITEMS_PER_PAGE,
@@ -154,7 +154,7 @@ export default function AdminAuditPage() {
   }
 
   const handleExport = async (exportFormat: 'csv' | 'json') => {
-    if (!token) {
+    if (!isAuthenticated) {
       toast.error('Not authenticated')
       return
     }
@@ -172,9 +172,7 @@ export default function AdminAuditPage() {
 
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api.guardianclaw.org'
       const response = await fetch(`${apiUrl}/admin/audit/export?${params.toString()}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        credentials: 'include',
       })
 
       if (!response.ok) {

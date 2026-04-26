@@ -17,16 +17,12 @@ export class ApiError extends Error {
   }
 }
 
-// Fetcher with authentication
-async function fetcher<T>(url: string, token: string | null): Promise<T> {
-  if (!token) {
-    throw new ApiError('Not authenticated', 401)
-  }
-
+// Fetcher with authentication.
+// Auth lives in the httpOnly `claw_session` cookie set by /auth/verify; we send
+// `credentials: 'include'` so the browser attaches it to every admin request.
+async function fetcher<T>(url: string): Promise<T> {
   const response = await fetch(url, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
+    credentials: 'include',
   })
 
   if (!response.ok) {
@@ -52,14 +48,14 @@ const defaultConfig: SWRConfiguration = {
 
 // Generic hook for fetching admin API data
 export function useAdminApi<T>(endpoint: string | null, config?: SWRConfiguration<T>) {
-  const { token } = useAuth()
+  const { isAuthenticated } = useAuth()
 
   const url = endpoint ? `${API_URL}${endpoint}` : null
-  const swrKey = url && token ? [url, token] : null
+  const swrKey = url && isAuthenticated ? url : null
 
   const { data, error, isLoading, isValidating, mutate } = useSWR<T, ApiError>(
     swrKey,
-    ([url, token]) => fetcher<T>(url, token),
+    (key: string) => fetcher<T>(key),
     {
       ...defaultConfig,
       ...config,
@@ -78,7 +74,7 @@ export function useAdminApi<T>(endpoint: string | null, config?: SWRConfiguratio
 
 // Hook for admin API mutations (POST, PATCH, DELETE)
 export function useAdminMutation<TData = unknown, TResponse = unknown>() {
-  const { token } = useAuth()
+  const { isAuthenticated } = useAuth()
 
   const mutateAsync = useCallback(
     async (
@@ -88,7 +84,7 @@ export function useAdminMutation<TData = unknown, TResponse = unknown>() {
         data?: TData
       }
     ): Promise<TResponse> => {
-      if (!token) {
+      if (!isAuthenticated) {
         throw new ApiError('Not authenticated', 401)
       }
 
@@ -96,8 +92,8 @@ export function useAdminMutation<TData = unknown, TResponse = unknown>() {
 
       const response = await fetch(url, {
         method: options.method,
+        credentials: 'include',
         headers: {
-          Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
         body: options.data ? JSON.stringify(options.data) : undefined,
@@ -113,7 +109,7 @@ export function useAdminMutation<TData = unknown, TResponse = unknown>() {
 
       return response.json()
     },
-    [token]
+    [isAuthenticated]
   )
 
   return { mutateAsync }

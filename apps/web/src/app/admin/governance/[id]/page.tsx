@@ -23,7 +23,6 @@ import {
 } from '@/components/admin/governance'
 import { useProposalDetails, useProposalVotes } from '@/hooks/use-admin-api'
 import { governanceApi } from '@/lib/api'
-import { useAuth } from '@/hooks/use-auth'
 import {
   ArrowLeft,
   Eye,
@@ -54,7 +53,6 @@ function truncateWallet(wallet: string): string {
 export default function AdminProposalDetailsPage() {
   const params = useParams()
   const router = useRouter()
-  const { token } = useAuth()
   const proposalId = params.id as string
 
   const { data, isLoading, mutate } = useProposalDetails(proposalId)
@@ -76,9 +74,9 @@ export default function AdminProposalDetailsPage() {
       `${process.env.NEXT_PUBLIC_API_URL}/admin/governance/proposals/${proposalId}/visibility`,
       {
         method: 'PATCH',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           hidden: !proposal.is_hidden,

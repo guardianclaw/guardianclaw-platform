@@ -139,20 +139,18 @@ function formatCurrency(value: number | undefined | null): string {
 }
 
 export default function AdminFinancialPage() {
-  const { token } = useAuth()
+  const { isAuthenticated } = useAuth()
   const [metrics, setMetrics] = useState<FinancialMetrics | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     async function fetchMetrics() {
-      if (!token) return
+      if (!isAuthenticated) return
 
       try {
         const response = await fetch(`${API_URL}/admin/metrics/financial`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          credentials: 'include',
         })
 
         if (!response.ok) {
@@ -169,7 +167,7 @@ export default function AdminFinancialPage() {
     }
 
     fetchMetrics()
-  }, [token])
+  }, [isAuthenticated])
 
   if (error) {
     return (

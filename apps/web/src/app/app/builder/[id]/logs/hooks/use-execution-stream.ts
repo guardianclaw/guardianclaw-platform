@@ -54,14 +54,19 @@ export interface UseExecutionStreamResult {
 /**
  * Hook for streaming execution logs in real-time via SSE.
  *
+ * Auth rides on the httpOnly `claw_session` cookie — fetch sends
+ * `credentials: 'include'` so the browser attaches it to the streaming
+ * request. Callers gate the hook on a boolean session flag rather than
+ * threading the JWT through the call site.
+ *
  * @param agentId - The agent ID to stream logs for
- * @param token - JWT token for authentication
+ * @param hasSession - Whether the user has an active session
  * @param options - Configuration options
  * @returns Stream state and control functions
  */
 export function useExecutionStream(
   agentId: string | undefined,
-  token: string | null,
+  hasSession: boolean,
   options: UseExecutionStreamOptions = {}
 ): UseExecutionStreamResult {
   const {
@@ -111,7 +116,7 @@ export function useExecutionStream(
 
   // Connect to SSE stream
   const connect = useCallback(() => {
-    if (!agentId || !token || !enabled) {
+    if (!agentId || !hasSession || !enabled) {
       return
     }
 
@@ -119,27 +124,17 @@ export function useExecutionStream(
     updateStatus('connecting')
     setError(null)
 
-    // Build SSE URL with auth token as query param (SSE doesn't support headers)
-    // Note: In production, consider using a cookie-based auth for SSE
+    // EventSource doesn't expose custom headers, so we run our own fetch-based
+    // SSE reader against the same endpoint. The httpOnly session cookie is
+    // attached automatically via `credentials: 'include'`.
     const url = new URL(`${API_URL}/agents/${agentId}/executions/stream`)
 
-    // Create EventSource with custom fetch for auth
-    // Since EventSource doesn't support headers, we use a polyfill approach
-    // by creating a fetch-based SSE reader
-    const eventSource = new EventSource(url.toString())
-
-    // Unfortunately, EventSource doesn't support custom headers.
-    // We need to use a different approach - fetch with ReadableStream
-    eventSource.close()
-
-    // Use fetch-based SSE instead
     const abortController = new AbortController()
 
     const fetchSSE = async () => {
       try {
         const headers: Record<string, string> = {
           Accept: 'text/event-stream',
-          Authorization: `Bearer ${token}`,
           'Cache-Control': 'no-cache',
         }
 
@@ -149,6 +144,7 @@ export function useExecutionStream(
 
         const response = await fetch(url.toString(), {
           method: 'GET',
+          credentials: 'include',
           headers,
           signal: abortController.signal,
         })
@@ -250,7 +246,7 @@ export function useExecutionStream(
 
     fetchSSE()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [agentId, token, enabled, closeConnection, updateStatus, onNewExecution, onError])
+  }, [agentId, hasSession, enabled, closeConnection, updateStatus, onNewExecution, onError])
 
   // Schedule reconnection with backoff
   const scheduleReconnect = useCallback(() => {
@@ -284,7 +280,7 @@ export function useExecutionStream(
 
   // Setup and cleanup effect
   useEffect(() => {
-    if (enabled && agentId && token) {
+    if (enabled && agentId && hasSession) {
       connect()
     } else {
       closeConnection()
@@ -294,7 +290,7 @@ export function useExecutionStream(
     return () => {
       closeConnection()
     }
-  }, [enabled, agentId, token, connect, closeConnection, updateStatus])
+  }, [enabled, agentId, hasSession, connect, closeConnection, updateStatus])
 
   return {
     status,

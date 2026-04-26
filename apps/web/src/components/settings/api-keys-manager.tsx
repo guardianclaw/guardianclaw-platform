@@ -52,7 +52,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.guardianclaw.org
 
 export function ApiKeysManager() {
   const { publicKey, signMessage, connected } = useWallet()
-  const { token, isAuthenticated } = useAuth()
+  const { isAuthenticated } = useAuth()
 
   const [keys, setKeys] = useState<StoredKey[]>([])
   const [loading, setLoading] = useState(true)
@@ -74,16 +74,14 @@ export function ApiKeysManager() {
 
   // Fetch keys
   const fetchKeys = useCallback(async () => {
-    if (!token) return
+    if (!isAuthenticated) return
 
     setLoading(true)
     setError(null)
 
     try {
       const response = await fetch(`${API_URL}/llm-keys`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        credentials: 'include',
       })
 
       if (!response.ok) {
@@ -98,17 +96,17 @@ export function ApiKeysManager() {
     } finally {
       setLoading(false)
     }
-  }, [token])
+  }, [isAuthenticated])
 
   useEffect(() => {
-    if (isAuthenticated && token) {
+    if (isAuthenticated) {
       fetchKeys()
     }
-  }, [isAuthenticated, token, fetchKeys])
+  }, [isAuthenticated, fetchKeys])
 
   // Add new key
   const handleAddKey = async () => {
-    if (!signMessage || !publicKey || !token) {
+    if (!signMessage || !publicKey || !isAuthenticated) {
       setAddError('Wallet not connected')
       return
     }
@@ -153,9 +151,9 @@ export function ApiKeysManager() {
       // Send encrypted key to server
       const response = await fetch(`${API_URL}/llm-keys`, {
         method: 'POST',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           provider: newKeyProvider,
@@ -196,16 +194,14 @@ export function ApiKeysManager() {
 
   // Delete key
   const handleDeleteKey = async () => {
-    if (!keyToDelete || !token) return
+    if (!keyToDelete || !isAuthenticated) return
 
     setDeleting(true)
 
     try {
       const response = await fetch(`${API_URL}/llm-keys/${keyToDelete.id}`, {
         method: 'DELETE',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        credentials: 'include',
       })
 
       if (!response.ok) {

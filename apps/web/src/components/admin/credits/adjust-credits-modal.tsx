@@ -22,7 +22,6 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Label } from '@/components/ui/label'
 import { Loader2, AlertTriangle, Plus, Minus, DollarSign, CheckCircle2 } from 'lucide-react'
-import { useAuth } from '@/hooks/use-auth'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.guardianclaw.org'
 
@@ -112,7 +111,6 @@ export function AdjustCreditsModal({
   currentBalance,
   onSuccess,
 }: AdjustCreditsModalProps) {
-  const { token } = useAuth()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<AdjustmentResult | null>(null)
@@ -195,9 +193,9 @@ export function AdjustCreditsModal({
     try {
       const response = await fetch(`${API_URL}/admin/credits/adjust`, {
         method: 'POST',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           wallet_address: formData.wallet_address,

@@ -187,6 +187,12 @@ All API responses include:
 
 - `approve_social_delivery(p_delivery_id, p_wallet_address)` (`supabase/migrations/20260426000000_secure_approve_social_delivery.sql`) enforces the wallet-ownership check inside the same UPDATE statement that transitions the row from `draft` to `pending`. The route handler (`apps/api/src/routes/social-deliveries.ts`) does not perform a post-hoc revert — if the caller does not own the agent, zero rows update and the RPC returns `success=false`. Closes the TOCTOU window flagged as F-05 / P1.1 in the 2026-04-23 audit.
 
+### Unified Web/Admin Session Model
+
+- Browser sessions land at the API with the JWT in the httpOnly `claw_session` cookie set by `/auth/verify`. Both `authMiddleware` and `adminAuthMiddleware` accept either a `Bearer <jwt>` header (used by SDK / CLI clients) or the cookie; the previous sentinel-string Bearer header used by the frontend is gone (`apps/web/src/components/providers/auth-provider.tsx` now exposes a `hasSession: boolean` instead of a `token` field).
+- All `apps/web` admin and account pages fetch with `credentials: 'include'` and no `Authorization` header. The auth context never holds a fake token, so admin views fail closed when the cookie is missing or expired.
+- Closes F-03 / P0.3 from the 2026-04-23 audit.
+
 ### Admin Audit Trail
 
 - Every admin action logged with outcome (`success` / `failure`), wallet hash, IP hash, and request context (`apps/api/src/middleware/admin-audit.ts`).
@@ -207,12 +213,6 @@ All API responses include:
 ## Planned Controls
 
 These are designed and partially implemented but are **not yet enforced across all surfaces**. Do not rely on them as guarantees until they move to Implemented.
-
-### Unified Web/Admin Session Model
-
-- Browser sessions use httpOnly cookies.
-- The admin surface currently expects a Bearer token in the `Authorization` header, which produces a hybrid state. The frontend auth provider uses a semantic placeholder (`'authenticated'`) rather than a real token.
-- **Status:** unification (cookie-based admin + CSRF, or explicit Bearer storage) is the next hardening step. Until complete, admin UI depends on legacy paths.
 
 ### Dependency and SAST Scanning
 
@@ -239,7 +239,7 @@ The API runtime uses the Supabase `service_role` key across most user-scoped rou
 
 ### G-03 — Admin Session Model Hybrid
 
-See **Planned Controls → Unified Web/Admin Session Model**.
+**Resolved 2026-04-26 (Onda 2 Frente A.2).** The frontend no longer holds a sentinel `'authenticated'` token; the auth context exposes a `hasSession` boolean and every web/admin call sends `credentials: 'include'`. `adminAuthMiddleware` accepts either the httpOnly cookie or a real Bearer token, with the cookie as the browser path and Bearer reserved for SDK / CLI clients. Entry retained for traceability and will be removed at the next SECURITY.md revision.
 
 ### G-04 — CI Without Security Scanners
 

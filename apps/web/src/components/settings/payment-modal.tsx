@@ -80,7 +80,7 @@ export function PaymentModal({
 }: PaymentModalProps) {
   const { publicKey, sendTransaction, connected } = useWallet()
   const { connection } = useConnection()
-  const { token } = useAuth()
+  const { isAuthenticated } = useAuth()
 
   const [paymentToken, setPaymentToken] = useState<PaymentToken>('SOL')
   const [state, setState] = useState<PaymentState>({
@@ -117,7 +117,7 @@ export function PaymentModal({
 
   // Create and send transaction
   const handlePayment = useCallback(async () => {
-    if (!publicKey || !sendTransaction || !connection || !token) {
+    if (!publicKey || !sendTransaction || !connection || !isAuthenticated) {
       setState((s) => ({ ...s, error: 'Wallet not connected' }))
       return
     }
@@ -222,9 +222,9 @@ export function PaymentModal({
       // Verify with backend
       const verifyResponse = await fetch(`${API_URL}/payments/verify`, {
         method: 'POST',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           tx_signature: signature,
@@ -271,7 +271,7 @@ export function PaymentModal({
     publicKey,
     sendTransaction,
     connection,
-    token,
+    isAuthenticated,
     treasuryWallet,
     paymentToken,
     plan,

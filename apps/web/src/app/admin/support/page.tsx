@@ -71,7 +71,7 @@ function UserCard({ user, onClick }: { user: UserResult; onClick: () => void }) 
 
 export default function AdminSupportPage() {
   const router = useRouter()
-  const { token } = useAuth()
+  const { isAuthenticated } = useAuth()
   const [searchQuery, setSearchQuery] = useState('')
   const [users, setUsers] = useState<UserResult[]>([])
   const [loading, setLoading] = useState(false)
@@ -79,7 +79,7 @@ export default function AdminSupportPage() {
   const [error, setError] = useState<string | null>(null)
 
   const searchUsers = useCallback(async () => {
-    if (!token || !searchQuery.trim()) return
+    if (!isAuthenticated || !searchQuery.trim()) return
 
     setLoading(true)
     setError(null)
@@ -89,9 +89,7 @@ export default function AdminSupportPage() {
       const response = await fetch(
         `${API_URL}/admin/users/search?query=${encodeURIComponent(searchQuery.trim())}`,
         {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          credentials: 'include',
         }
       )
 
@@ -107,7 +105,7 @@ export default function AdminSupportPage() {
     } finally {
       setLoading(false)
     }
-  }, [token, searchQuery])
+  }, [isAuthenticated, searchQuery])
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {

@@ -45,7 +45,7 @@ function TestConsumer({ onAuth }: { onAuth: (auth: ReturnType<typeof useAuth>) =
   return (
     <div>
       <span data-testid="authenticated">{auth.isAuthenticated ? 'yes' : 'no'}</span>
-      <span data-testid="token">{auth.token || 'none'}</span>
+      <span data-testid="has-session">{auth.hasSession ? 'yes' : 'no'}</span>
       <span data-testid="wallet">{auth.profile?.wallet_address || 'none'}</span>
     </div>
   )
@@ -116,7 +116,7 @@ describe('AuthProvider', () => {
       })
 
       expect(authState?.isAuthenticated).toBe(false)
-      expect(authState?.token).toBeNull()
+      expect(authState?.hasSession).toBe(false)
       expect(authState?.profile).toBeNull()
     })
 
@@ -140,7 +140,7 @@ describe('AuthProvider', () => {
       })
 
       expect(authState?.isAuthenticated).toBe(true)
-      expect(authState?.token).toBe('authenticated')
+      expect(authState?.hasSession).toBe(true)
       expect(authState?.profile?.wallet_address).toBe(walletAddress)
     })
   })
@@ -183,8 +183,8 @@ describe('AuthProvider', () => {
         </AuthProvider>
       )
 
-      // Token should still exist (disconnect timer is 2s)
-      expect(authState?.token).toBe('authenticated')
+      // Session should still exist (disconnect timer is 2s)
+      expect(authState?.hasSession).toBe(true)
     })
 
     it('should maintain session during temporary wallet disconnect (navigation)', async () => {
@@ -240,7 +240,7 @@ describe('AuthProvider', () => {
       )
 
       // Session should still be valid
-      expect(authState?.token).toBe('authenticated')
+      expect(authState?.hasSession).toBe(true)
     })
   })
 
@@ -287,7 +287,7 @@ describe('AuthProvider', () => {
         expect(authState?.isAuthenticated).toBe(false)
       })
 
-      expect(authState?.token).toBeNull()
+      expect(authState?.hasSession).toBe(false)
       expect(authState?.profile).toBeNull()
     })
 
@@ -341,7 +341,7 @@ describe('AuthProvider', () => {
       )
 
       // Session should remain valid
-      expect(authState?.token).toBe('authenticated')
+      expect(authState?.hasSession).toBe(true)
     })
   })
 
@@ -380,7 +380,7 @@ describe('AuthProvider', () => {
       })
 
       // Everything should be cleared
-      expect(authState?.token).toBeNull()
+      expect(authState?.hasSession).toBe(false)
       expect(authState?.profile).toBeNull()
       expect(authState?.isAuthenticated).toBe(false)
       expect(mockWalletState.disconnect).toHaveBeenCalled()
@@ -416,7 +416,7 @@ describe('AuthProvider', () => {
 
       // isAuthenticated should be false (no valid session)
       expect(authState?.isAuthenticated).toBe(false)
-      expect(authState?.token).toBeNull()
+      expect(authState?.hasSession).toBe(false)
     })
   })
 
