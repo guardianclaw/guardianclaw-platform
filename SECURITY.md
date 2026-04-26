@@ -183,6 +183,10 @@ All API responses include:
 - Blocks emit a structured `ssrf_blocked` security event via `SecureLogger`. The log includes the surface label and the rejected hostname only — never the full URL (path/query may contain credentials).
 - HTTPS is required by default. The `allowHttp` opt-in exists for development integrations against non-TLS endpoints; production callers do not pass it.
 
+### Server-Side Ownership Predicate (Social Deliveries)
+
+- `approve_social_delivery(p_delivery_id, p_wallet_address)` (`supabase/migrations/20260426000000_secure_approve_social_delivery.sql`) enforces the wallet-ownership check inside the same UPDATE statement that transitions the row from `draft` to `pending`. The route handler (`apps/api/src/routes/social-deliveries.ts`) does not perform a post-hoc revert — if the caller does not own the agent, zero rows update and the RPC returns `success=false`. Closes the TOCTOU window flagged as F-05 / P1.1 in the 2026-04-23 audit.
+
 ### Admin Audit Trail
 
 - Every admin action logged with outcome (`success` / `failure`), wallet hash, IP hash, and request context (`apps/api/src/middleware/admin-audit.ts`).
@@ -243,7 +247,7 @@ Secret scanning, SAST, and dependency review are not yet CI jobs. A gitleaks-bas
 
 ### G-05 — Writes With Application-Level Ownership Predicate
 
-Some user-scoped write paths (`memories`, `character`, `user` deletion, `social-deliveries` approval) rely on a handler-side ownership check followed by a write keyed on the record `id` without reaffirming the predicate at the write boundary. Safe in practice today, but tightening this pattern is part of the ownership-predicate hardening in flight.
+The `social-deliveries` approval path moved to a server-side predicate on 2026-04-26 (see **Implemented Controls → Server-Side Ownership Predicate**). The remaining user-scoped write paths (`memories`, `character`, `user` deletion) still rely on a handler-side ownership check followed by a write keyed on the record `id` without reaffirming the predicate at the write boundary. Safe in practice today, but tightening this pattern is part of the ownership-predicate hardening in flight (Onda 3 Frente B.2).
 
 ### G-06 — Branch Protection and CODEOWNERS Gating Not Active
 

@@ -101,9 +101,12 @@ socialDeliveriesRoutes.post('/:id/approve', async (c) => {
 
   const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)
 
-  // Call the approve RPC
+  // RPC enforces ownership and state transition atomically (mig 20260426000000).
+  // No revert path needed: if the caller does not own the agent the RPC simply
+  // returns success=false without touching the row.
   const { data: approveResult, error: rpcError } = await supabase.rpc('approve_social_delivery', {
     p_delivery_id: deliveryId,
+    p_wallet_address: wallet,
   })
 
   if (rpcError) {
@@ -114,6 +117,7 @@ socialDeliveriesRoutes.post('/:id/approve', async (c) => {
     success: boolean
     error?: string
     agent_id?: string
+    agent_name?: string
     credential_id?: string
     platform?: string
     content?: string
@@ -121,22 +125,10 @@ socialDeliveriesRoutes.post('/:id/approve', async (c) => {
   }
 
   if (!result.success) {
-    return c.json({ error: result.error || 'Delivery not found or not a draft' }, 404)
-  }
-
-  // Verify agent ownership before sending
-  const { data: agent, error: agentErr } = await supabase
-    .from('agents')
-    .select('id, name')
-    .eq('id', result.agent_id)
-    .eq('wallet_address', wallet)
-    .single()
-
-  if (agentErr || !agent) {
-    // Revert to draft since user doesn't own this agent
-    await supabase.from('social_deliveries').update({ status: 'draft' }).eq('id', deliveryId)
-
-    return c.json({ error: 'Agent not found or not owned' }, 403)
+    return c.json(
+      { error: result.error || 'Delivery not found, not in draft, or not owned' },
+      404
+    )
   }
 
   // Build config from stored delivery_config
@@ -156,7 +148,7 @@ socialDeliveriesRoutes.post('/:id/approve', async (c) => {
     const deliveryResult = await executeSocialDelivery({
       supabase,
       agentId: result.agent_id!,
-      agentName: agent.name,
+      agentName: result.agent_name,
       content: result.content || '',
       config,
       serverSecret: c.env.JWT_SECRET,
