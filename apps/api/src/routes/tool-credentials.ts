@@ -24,6 +24,8 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import { authMiddleware } from '../middleware/auth'
 import { walletRateLimitMiddleware } from '../middleware/rate-limit'
 import { encryptWebhookSecret, decryptWebhookSecret } from '../lib/webhook-crypto'
+import { checkUrlOrLog } from '../lib/ssrf-guard'
+import { createSecureLogger } from '../lib/secure-logger'
 
 // ============================================
 // TYPES
@@ -159,6 +161,22 @@ async function testCredential(
           }
         }
 
+        // SSRF guard: base_url is user-supplied and we're about to forward a
+        // bearer credential to it.
+        const logger = createSecureLogger()
+        const urlCheck = await checkUrlOrLog(
+          baseUrl,
+          { surface: 'tool-credentials.test.custom_api' },
+          logger
+        )
+        if (!urlCheck.valid) {
+          return {
+            success: false,
+            error: urlCheck.error || 'base_url is not allowed',
+            latency_ms: Date.now() - startTime,
+          }
+        }
+
         // If base_url is configured, try a simple HEAD request
         try {
           const response = await fetch(baseUrl, {
@@ -214,8 +232,23 @@ async function testCredential(
       }
 
       case 'discord_bot': {
-        // Check if webhook URL or bot token
+        // Check if webhook URL or bot token. The substring check is not a
+        // sufficient SSRF defense (e.g. `http://internal/?x=discord.com/api/webhooks`
+        // would slip through), so re-validate via the SSRF guard before fetch.
         if (credential.includes('discord.com/api/webhooks')) {
+          const logger = createSecureLogger()
+          const urlCheck = await checkUrlOrLog(
+            credential,
+            { surface: 'tool-credentials.test.discord_webhook' },
+            logger
+          )
+          if (!urlCheck.valid) {
+            return {
+              success: false,
+              error: urlCheck.error || 'Discord webhook URL is not allowed',
+              latency_ms: Date.now() - startTime,
+            }
+          }
           const response = await fetch(credential, { method: 'GET' })
           return {
             success: response.ok,

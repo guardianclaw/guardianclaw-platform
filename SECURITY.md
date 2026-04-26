@@ -169,6 +169,20 @@ All API responses include:
 
 - Docs renderer uses `react-markdown` with sanitized link protocols (`javascript:`, `data:`, `vbscript:` blocked). No `dangerouslySetInnerHTML` on user-controlled content.
 
+### SSRF / External URL Validation
+
+- `validateExternalUrl()` (`apps/api/src/middleware/sanitize.ts`) blocks: non-HTTP(S) schemes; plain `http://` (require `https://` unless caller opts in via `allowHttp`); IPv4 private ranges (`10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`); IPv4 loopback (`127.0.0.0/8`); IPv4 link-local (`169.254.0.0/16`); IPv6 loopback (`::1`); IPv6 unique local (`fc00::/7`); IPv6 link-local (`fe80::/10`); cloud metadata IPs and hostnames (`169.254.169.254`, `metadata.google.internal`, `metadata.goog`); and our own infrastructure hostnames.
+- The check runs at every user-controlled URL boundary that turns into an outbound `fetch`:
+    - **Webhook endpoint create / update** (`apps/api/src/routes/webhook-endpoints.ts`)
+    - **Webhook delivery execution** (`apps/api/src/services/webhook-delivery.ts`) — defense-in-depth re-check at each delivery
+    - **Alert rule create / update / test** (`apps/api/src/routes/alerts.ts`)
+    - **Background alert notification** (`apps/api/src/services/agent-alerts.ts`)
+    - **Flow webhook output nodes** (`apps/api/src/services/execution.ts`)
+    - **Tool credential `custom_api` test** and **Discord webhook credential test** (`apps/api/src/routes/tool-credentials.ts`)
+    - **Discord social-connector delivery** (`apps/api/src/services/social-connectors/discord.ts`)
+- Blocks emit a structured `ssrf_blocked` security event via `SecureLogger`. The log includes the surface label and the rejected hostname only — never the full URL (path/query may contain credentials).
+- HTTPS is required by default. The `allowHttp` opt-in exists for development integrations against non-TLS endpoints; production callers do not pass it.
+
 ### Admin Audit Trail
 
 - Every admin action logged with outcome (`success` / `failure`), wallet hash, IP hash, and request context (`apps/api/src/middleware/admin-audit.ts`).
@@ -189,17 +203,6 @@ All API responses include:
 ## Planned Controls
 
 These are designed and partially implemented but are **not yet enforced across all surfaces**. Do not rely on them as guarantees until they move to Implemented.
-
-### SSRF / External URL Validation
-
-- A utility `validateExternalUrl()` exists in `apps/api/src/middleware/sanitize.ts` with private-range, metadata-endpoint, and internal-host blocks.
-- It is **not yet applied consistently** to user-controlled URL surfaces including webhook endpoints, alert webhook tests, and tool-credential custom APIs.
-- **Status:** under active remediation. Until complete, authenticated users can cause the Worker to `fetch` URLs they supply. Consider this when operating the platform.
-
-### HTTPS Enforcement for User-Provided URLs
-
-- Outbound `fetch` from webhook and alert flows currently accepts both `http://` and `https://`.
-- Production should reject `http://`. Remediation in progress alongside SSRF enforcement.
 
 ### Unified Web/Admin Session Model
 
@@ -228,7 +231,7 @@ The API runtime uses the Supabase `service_role` key across most user-scoped rou
 
 ### G-02 — SSRF Enforcement Incomplete
 
-See **Planned Controls → SSRF**. The utility exists; the integration into every URL-accepting surface does not.
+**Resolved 2026-04-25 (Onda 2 Frente A.1).** `validateExternalUrl()` now runs at every documented user-controlled URL boundary listed under **Implemented Controls → SSRF / External URL Validation**. HTTPS is required by default; `http://` is rejected unless the caller explicitly opts in (no production caller does). Blocks emit `ssrf_blocked` security events. This entry remains for historical traceability and will be removed at the next SECURITY.md revision.
 
 ### G-03 — Admin Session Model Hybrid
 

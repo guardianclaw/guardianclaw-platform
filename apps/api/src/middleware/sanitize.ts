@@ -162,18 +162,46 @@ const BLOCKED_HOSTNAMES = [
 ]
 
 /**
+ * Options for validateExternalUrl.
+ */
+export interface ValidateExternalUrlOptions {
+  /**
+   * Allow http:// in addition to https://. Default false — production callers
+   * should only emit https. Pass true for development integration tests where
+   * a non-TLS endpoint is unavoidable.
+   */
+  allowHttp?: boolean
+}
+
+/**
  * Validate a URL is safe to fetch (SSRF prevention).
  *
+ * Blocks: non-HTTP(S) schemes, http:// (unless `allowHttp`), private/loopback/
+ * link-local IPv4 + IPv6 ranges, cloud metadata IPs and hostnames, our own
+ * infrastructure hostnames.
+ *
+ * Used by every route handler that turns a user-controlled URL into an outbound
+ * fetch. Audit ref: 2026-04-23 finding F-02 / P0.2.
+ *
  * @param url - The URL to validate
+ * @param options - Optional behavior tweaks
  * @returns Validation result with error message if invalid
  */
-export function validateExternalUrl(url: string): { valid: boolean; error?: string } {
+export function validateExternalUrl(
+  url: string,
+  options: ValidateExternalUrlOptions = {}
+): { valid: boolean; error?: string } {
   try {
     const parsed = new URL(url)
 
-    // Must be HTTPS in production
+    // Reject non-HTTP(S) schemes (file://, ftp://, gopher://, javascript:, ...)
     if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') {
-      return { valid: false, error: 'Only HTTP(S) URLs are allowed' }
+      return { valid: false, error: 'Only HTTPS URLs are allowed' }
+    }
+
+    // Reject http:// unless explicitly allowed by caller
+    if (parsed.protocol === 'http:' && !options.allowHttp) {
+      return { valid: false, error: 'HTTPS is required' }
     }
 
     // Check hostname against blocklist

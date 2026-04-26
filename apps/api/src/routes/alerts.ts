@@ -13,6 +13,8 @@ import { z } from 'zod'
 import { createClient } from '@supabase/supabase-js'
 import { authMiddleware } from '../middleware/auth'
 import { walletRateLimitMiddleware } from '../middleware/rate-limit'
+import { checkUrlOrLog } from '../lib/ssrf-guard'
+import { createSecureLogger } from '../lib/secure-logger'
 
 type Bindings = {
   SUPABASE_URL: string
@@ -155,6 +157,20 @@ alertsRoutes.post('/:agentId/alerts', async (c) => {
     return c.json({ error: 'Invalid request body', details: bodyResult.error.flatten() }, 400)
   }
 
+  // SSRF guard: notification_target is the destination of an outbound POST
+  // for both webhook and slack channels. Block private/loopback/metadata.
+  {
+    const logger = createSecureLogger({ IP_HASH_SECRET: c.env.IP_HASH_SECRET })
+    const urlCheck = await checkUrlOrLog(
+      bodyResult.data.notification_target,
+      { surface: 'alerts.create' },
+      logger
+    )
+    if (!urlCheck.valid) {
+      return c.json({ error: urlCheck.error || 'Notification target is not allowed' }, 400)
+    }
+  }
+
   const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)
 
   // Verify agent ownership
@@ -265,6 +281,19 @@ alertsRoutes.patch('/:agentId/alerts/:alertId', async (c) => {
   // Check if there are any updates
   if (Object.keys(bodyResult.data).length === 0) {
     return c.json({ error: 'No updates provided' }, 400)
+  }
+
+  // SSRF guard on notification_target update (when caller is changing it)
+  if (bodyResult.data.notification_target !== undefined) {
+    const logger = createSecureLogger({ IP_HASH_SECRET: c.env.IP_HASH_SECRET })
+    const urlCheck = await checkUrlOrLog(
+      bodyResult.data.notification_target,
+      { surface: 'alerts.update' },
+      logger
+    )
+    if (!urlCheck.valid) {
+      return c.json({ error: urlCheck.error || 'Notification target is not allowed' }, 400)
+    }
   }
 
   const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)
@@ -417,6 +446,27 @@ alertsRoutes.post('/:agentId/alerts/:alertId/test', async (c) => {
 
   if (ruleError || !rule) {
     return c.json({ error: 'Alert rule not found' }, 404)
+  }
+
+  // SSRF guard: even though notification_target was set by the user via
+  // create/update earlier, re-validate at every fetch boundary so a row
+  // mutated outside the schema layer cannot drive an internal request.
+  const logger = createSecureLogger({ IP_HASH_SECRET: c.env.IP_HASH_SECRET })
+  const urlCheck = await checkUrlOrLog(
+    rule.notification_target,
+    { surface: 'alerts.test' },
+    logger
+  )
+  if (!urlCheck.valid) {
+    return c.json(
+      {
+        success: false,
+        error: urlCheck.error || 'Notification target is not allowed',
+        notification_channel: rule.notification_channel,
+        notification_target: '[hidden]',
+      },
+      400
+    )
   }
 
   // Send test notification based on channel

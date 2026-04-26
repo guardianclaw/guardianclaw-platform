@@ -10,6 +10,8 @@
  */
 
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { checkUrlOrLog } from '../lib/ssrf-guard'
+import { createSecureLogger, type SecureLogger } from '../lib/secure-logger'
 
 // Rule types matching the database schema
 type RuleType =
@@ -135,13 +137,32 @@ function formatAlertMessage(rule: AgentAlertRule, metricValue: number, agentName
 
 /**
  * Send a notification for a triggered alert.
+ *
+ * SSRF guard runs before every outbound fetch as defense-in-depth — schema-time
+ * validation in `routes/alerts.ts` is the primary boundary; this protects
+ * against rows that were mutated outside that path. The optional `logger`
+ * argument lets callers attach the env-bound IP_HASH_SECRET; the default-built
+ * logger is fine for the structured ssrf_blocked event since no IP is hashed
+ * in this path.
  */
 async function sendNotification(
   rule: AgentAlertRule,
   metricValue: number,
-  agentName?: string
+  agentName?: string,
+  logger: SecureLogger = createSecureLogger()
 ): Promise<{ sent: boolean; error?: string }> {
   const message = formatAlertMessage(rule, metricValue, agentName)
+
+  if (rule.notification_channel === 'webhook' || rule.notification_channel === 'slack') {
+    const urlCheck = await checkUrlOrLog(
+      rule.notification_target,
+      { surface: 'agent-alerts.deliver' },
+      logger
+    )
+    if (!urlCheck.valid) {
+      return { sent: false, error: urlCheck.error || 'Notification target is not allowed' }
+    }
+  }
 
   try {
     if (rule.notification_channel === 'webhook') {

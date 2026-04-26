@@ -141,26 +141,72 @@ describe('Sanitization Middleware', () => {
       expect(validateExternalUrl('https://api.github.com/repos')).toEqual({ valid: true })
     })
 
+    it('blocks plain http:// by default (HTTPS required)', () => {
+      const result = validateExternalUrl('http://example.com')
+      expect(result.valid).toBe(false)
+      expect(result.error).toMatch(/HTTPS/i)
+    })
+
+    it('allows http:// when allowHttp=true (dev integrations)', () => {
+      // Need a public hostname; private IPs still blocked even with allowHttp.
+      expect(validateExternalUrl('http://example.com', { allowHttp: true })).toEqual({
+        valid: true,
+      })
+    })
+
     it('blocks localhost', () => {
-      expect(validateExternalUrl('http://localhost:3000').valid).toBe(false)
+      expect(validateExternalUrl('http://localhost:3000', { allowHttp: true }).valid).toBe(false)
       expect(validateExternalUrl('https://localhost/api').valid).toBe(false)
     })
 
     it('blocks 127.0.0.1', () => {
-      expect(validateExternalUrl('http://127.0.0.1:8080').valid).toBe(false)
+      expect(validateExternalUrl('http://127.0.0.1:8080', { allowHttp: true }).valid).toBe(false)
+      expect(validateExternalUrl('https://127.0.0.1').valid).toBe(false)
     })
 
     it('blocks private IP ranges (10.x.x.x)', () => {
-      expect(validateExternalUrl('http://10.0.0.1').valid).toBe(false)
-      expect(validateExternalUrl('http://10.255.255.255').valid).toBe(false)
+      expect(validateExternalUrl('https://10.0.0.1').valid).toBe(false)
+      expect(validateExternalUrl('https://10.255.255.255').valid).toBe(false)
+    })
+
+    it('blocks private IP ranges (172.16.0.0/12)', () => {
+      expect(validateExternalUrl('https://172.16.0.1').valid).toBe(false)
+      expect(validateExternalUrl('https://172.20.5.5').valid).toBe(false)
+      expect(validateExternalUrl('https://172.31.255.255').valid).toBe(false)
+      // Sanity: 172.15.x.x and 172.32.x.x are NOT in the private range.
+      expect(validateExternalUrl('https://172.15.0.1').valid).toBe(true)
+      expect(validateExternalUrl('https://172.32.0.1').valid).toBe(true)
     })
 
     it('blocks private IP ranges (192.168.x.x)', () => {
-      expect(validateExternalUrl('http://192.168.1.1').valid).toBe(false)
+      expect(validateExternalUrl('https://192.168.1.1').valid).toBe(false)
     })
 
-    it('blocks cloud metadata endpoints', () => {
-      expect(validateExternalUrl('http://169.254.169.254/latest/meta-data').valid).toBe(false)
+    it('blocks IPv4 link-local (169.254.0.0/16)', () => {
+      expect(validateExternalUrl('https://169.254.10.20').valid).toBe(false)
+    })
+
+    it('blocks IPv6 loopback (::1)', () => {
+      expect(validateExternalUrl('https://[::1]/').valid).toBe(false)
+      expect(validateExternalUrl('https://[::1]:8080/admin').valid).toBe(false)
+    })
+
+    it('blocks IPv6 unique local (fc00::/7)', () => {
+      expect(validateExternalUrl('https://[fc00::1]/').valid).toBe(false)
+      expect(validateExternalUrl('https://[fd12:3456::1]/').valid).toBe(false)
+    })
+
+    it('blocks IPv6 link-local (fe80::/10)', () => {
+      expect(validateExternalUrl('https://[fe80::1]/').valid).toBe(false)
+      expect(validateExternalUrl('https://[fe80::abcd]/').valid).toBe(false)
+    })
+
+    it('blocks cloud metadata endpoints (AWS, GCP)', () => {
+      expect(
+        validateExternalUrl('http://169.254.169.254/latest/meta-data', { allowHttp: true }).valid
+      ).toBe(false)
+      expect(validateExternalUrl('https://metadata.google.internal/').valid).toBe(false)
+      expect(validateExternalUrl('https://metadata.goog/').valid).toBe(false)
     })
 
     it('blocks GuardianClaw infrastructure', () => {
@@ -171,6 +217,8 @@ describe('Sanitization Middleware', () => {
     it('blocks non-HTTP protocols', () => {
       expect(validateExternalUrl('file:///etc/passwd').valid).toBe(false)
       expect(validateExternalUrl('ftp://example.com').valid).toBe(false)
+      expect(validateExternalUrl('gopher://example.com').valid).toBe(false)
+      expect(validateExternalUrl('javascript:alert(1)').valid).toBe(false)
     })
 
     it('rejects invalid URLs', () => {

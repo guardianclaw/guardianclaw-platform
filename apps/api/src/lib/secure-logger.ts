@@ -254,6 +254,7 @@ export type SecurityEventType =
   | 'rate_limit_exceeded'
   | 'csrf_blocked'
   | 'ssrf_attempt'
+  | 'ssrf_blocked'
   // Sprint 4: Zero-Knowledge Keys
   | 'api_key_created'
   | 'api_key_revoked'

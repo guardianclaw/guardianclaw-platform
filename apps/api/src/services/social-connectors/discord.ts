@@ -4,6 +4,8 @@
  */
 
 import type { SocialAdapter, DeliveryRequest, SocialDeliveryResult, DiscordConfig } from './types'
+import { checkUrlOrLog } from '../../lib/ssrf-guard'
+import { createSecureLogger } from '../../lib/secure-logger'
 
 const DISCORD_API_BASE = 'https://discord.com/api/v10'
 
@@ -97,8 +99,22 @@ export const discordAdapter: SocialAdapter = {
     details?: Record<string, unknown>
   }> {
     try {
-      // Check if webhook URL
+      // Check if webhook URL. The substring test alone is bypassable (an
+      // attacker could embed `discord.com/api/webhooks` in a query string of
+      // an internal URL), so re-validate via the SSRF guard before fetch.
       if (credential.includes('discord.com/api/webhooks')) {
+        const logger = createSecureLogger()
+        const urlCheck = await checkUrlOrLog(
+          credential,
+          { surface: 'social-connectors.discord.testCredential' },
+          logger
+        )
+        if (!urlCheck.valid) {
+          return {
+            valid: false,
+            message: urlCheck.error || 'Webhook URL is not allowed',
+          }
+        }
         const response = await fetch(credential, {
           method: 'GET',
         })
@@ -170,6 +186,22 @@ async function deliverViaWebhook(
   agentName: string | undefined,
   startTime: number
 ): Promise<SocialDeliveryResult> {
+  // SSRF guard before each delivery — credential may have been mutated in DB.
+  const logger = createSecureLogger()
+  const urlCheck = await checkUrlOrLog(
+    webhookUrl,
+    { surface: 'social-connectors.discord.deliver' },
+    logger
+  )
+  if (!urlCheck.valid) {
+    return {
+      success: false,
+      latencyMs: Date.now() - startTime,
+      errorCode: 'SSRF_BLOCKED',
+      errorMessage: urlCheck.error || 'Webhook URL is not allowed',
+    }
+  }
+
   const body: Record<string, unknown> = {}
 
   if (config.embedFormat) {
