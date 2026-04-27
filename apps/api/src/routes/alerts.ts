@@ -10,15 +10,17 @@
 
 import { Hono } from 'hono'
 import { z } from 'zod'
-import { createClient } from '@supabase/supabase-js'
 import { authMiddleware } from '../middleware/auth'
 import { walletRateLimitMiddleware } from '../middleware/rate-limit'
 import { checkUrlOrLog } from '../lib/ssrf-guard'
 import { createSecureLogger } from '../lib/secure-logger'
+import { getUserClient } from '../lib/supabase-client'
 
 type Bindings = {
   SUPABASE_URL: string
   SUPABASE_SERVICE_KEY: string
+  SUPABASE_ANON_KEY: string
+  SUPABASE_JWT_SECRET: string
   JWT_SECRET: string
   RATE_LIMIT_KV?: KVNamespace
   IP_HASH_SECRET?: string
@@ -100,7 +102,7 @@ alertsRoutes.get('/:agentId/alerts', async (c) => {
     return c.json({ error: 'Invalid agent ID format' }, 400)
   }
 
-  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)
+  const supabase = await getUserClient(c.env, wallet)
 
   // Verify agent ownership
   const { data: agent, error: agentError } = await supabase
@@ -171,7 +173,7 @@ alertsRoutes.post('/:agentId/alerts', async (c) => {
     }
   }
 
-  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)
+  const supabase = await getUserClient(c.env, wallet)
 
   // Verify agent ownership
   const { data: agent, error: agentError } = await supabase
@@ -231,7 +233,7 @@ alertsRoutes.get('/:agentId/alerts/:alertId', async (c) => {
     return c.json({ error: 'Invalid ID format' }, 400)
   }
 
-  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)
+  const supabase = await getUserClient(c.env, wallet)
 
   // Get the alert rule (ownership verified via wallet_address)
   const { data: rule, error: ruleError } = await supabase
@@ -296,7 +298,7 @@ alertsRoutes.patch('/:agentId/alerts/:alertId', async (c) => {
     }
   }
 
-  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)
+  const supabase = await getUserClient(c.env, wallet)
 
   // Update the alert rule
   const { data: rule, error: updateError } = await supabase
@@ -335,7 +337,7 @@ alertsRoutes.delete('/:agentId/alerts/:alertId', async (c) => {
     return c.json({ error: 'Invalid ID format' }, 400)
   }
 
-  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)
+  const supabase = await getUserClient(c.env, wallet)
 
   // Delete the alert rule (cascade will delete history)
   const { error: deleteError } = await supabase
@@ -377,7 +379,7 @@ alertsRoutes.get('/:agentId/alerts/:alertId/history', async (c) => {
 
   const { limit, offset } = queryResult.data
 
-  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)
+  const supabase = await getUserClient(c.env, wallet)
 
   // First verify ownership via alert_rules
   const { data: rule, error: ruleError } = await supabase
@@ -433,7 +435,7 @@ alertsRoutes.post('/:agentId/alerts/:alertId/test', async (c) => {
     return c.json({ error: 'Invalid ID format' }, 400)
   }
 
-  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)
+  const supabase = await getUserClient(c.env, wallet)
 
   // Get the alert rule
   const { data: rule, error: ruleError } = await supabase
