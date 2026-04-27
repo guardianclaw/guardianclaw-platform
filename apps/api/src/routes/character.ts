@@ -7,13 +7,16 @@
 
 import { Hono } from 'hono'
 import { z } from 'zod'
-import { createClient, SupabaseClient } from '@supabase/supabase-js'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import { authMiddleware } from '../middleware/auth'
 import { walletRateLimitMiddleware } from '../middleware/rate-limit'
+import { getUserClient } from '../lib/supabase-client'
 
 type Bindings = {
   SUPABASE_URL: string
   SUPABASE_SERVICE_KEY: string
+  SUPABASE_ANON_KEY: string
+  SUPABASE_JWT_SECRET: string
   JWT_SECRET: string
   OPENAI_API_KEY?: string
 }
@@ -112,7 +115,7 @@ characterRoutes.get('/:agentId/character', async (c) => {
   const wallet = c.get('wallet')
   const agentId = c.req.param('agentId')
 
-  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)
+  const supabase = await getUserClient(c.env, wallet)
 
   const agentCheck = await verifyAgentOwnership(supabase, agentId, wallet)
   if (!agentCheck.success) {
@@ -173,7 +176,7 @@ characterRoutes.patch('/:agentId/character', async (c) => {
     memoryIntegrityData = memoryParsed.data
   }
 
-  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)
+  const supabase = await getUserClient(c.env, wallet)
 
   const agentCheck = await verifyAgentOwnership(supabase, agentId, wallet)
   if (!agentCheck.success) {
@@ -240,7 +243,7 @@ characterRoutes.post('/:agentId/character/preview', async (c) => {
     return c.json({ error: 'Message too long (max 1000 characters)' }, 400)
   }
 
-  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)
+  const supabase = await getUserClient(c.env, wallet)
 
   const agentCheck = await verifyAgentOwnership(supabase, agentId, wallet)
   if (!agentCheck.success) {
@@ -421,7 +424,7 @@ characterRoutes.put('/:agentId/character', async (c) => {
     )
   }
 
-  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)
+  const supabase = await getUserClient(c.env, wallet)
 
   const agentCheck = await verifyAgentOwnership(supabase, agentId, wallet)
   if (!agentCheck.success) {
@@ -462,7 +465,7 @@ characterRoutes.delete('/:agentId/character', async (c) => {
   const wallet = c.get('wallet')
   const agentId = c.req.param('agentId')
 
-  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)
+  const supabase = await getUserClient(c.env, wallet)
 
   const agentCheck = await verifyAgentOwnership(supabase, agentId, wallet)
   if (!agentCheck.success) {
