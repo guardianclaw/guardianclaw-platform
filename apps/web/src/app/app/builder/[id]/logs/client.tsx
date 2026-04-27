@@ -51,7 +51,7 @@ const PAGE_SIZE = 20
 
 export function LogsPageClient() {
   const { agent, isDemo } = useAgent()
-  const { token } = useAuth()
+  const { hasSession } = useAuth()
   const [logs, setLogs] = useState<ExecutionLogEntry[]>([])
   const [total, setTotal] = useState(0)
   const [selectedLog, setSelectedLog] = useState<ExecutionLogEntry | null>(null)
@@ -122,7 +122,7 @@ export function LogsPageClient() {
     error: streamError,
     logsReceived,
     reconnect: reconnectStream,
-  } = useExecutionStream(agent?.id, token, {
+  } = useExecutionStream(agent?.id, hasSession, {
     enabled: streamEnabled && !isDemo,
     onNewExecution: handleNewExecution,
   })

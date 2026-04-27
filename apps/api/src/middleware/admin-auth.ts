@@ -10,10 +10,13 @@
  */
 
 import { createMiddleware } from 'hono/factory'
+import { getCookie } from 'hono/cookie'
 import { createClient } from '@supabase/supabase-js'
 import { getJWTManager } from '../lib/jwt-manager'
 import { createTokenRevocationList } from '../lib/token-revocation'
 import { hashWallet } from '../lib/secure-logger'
+
+const SESSION_COOKIE_NAME = 'claw_session'
 
 // Admin role types
 export type AdminRole = 'super_admin' | 'admin' | 'support' | 'viewer'
@@ -148,13 +151,24 @@ type Env = {
  * Sets admin role and permissions in context.
  */
 export const adminAuthMiddleware = createMiddleware<Env>(async (c, next) => {
+  // Browser sessions land here with the JWT in the httpOnly claw_session cookie.
+  // SDK / CLI clients send `Authorization: Bearer <jwt>`. Either is acceptable.
+  // The browser flow used to send a sentinel string in the Bearer header, which
+  // is meaningless after JWT verification — we ignore it and fall back to the
+  // cookie below. Real Bearer tokens take priority over the cookie so SDKs can
+  // override session state when both are present.
   const authHeader = c.req.header('Authorization')
+  const rawBearer = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null
+  const bearerToken =
+    rawBearer && rawBearer !== 'authenticated' && rawBearer !== 'null' && rawBearer !== ''
+      ? rawBearer
+      : null
+  const cookieToken = getCookie(c, SESSION_COOKIE_NAME)
+  const token = bearerToken || cookieToken
 
-  if (!authHeader?.startsWith('Bearer ')) {
+  if (!token) {
     return c.json({ error: 'Missing or invalid authorization header' }, 401)
   }
-
-  const token = authHeader.slice(7)
 
   try {
     // Initialize JWT manager

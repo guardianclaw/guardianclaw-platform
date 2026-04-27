@@ -152,20 +152,18 @@ function formatNumber(value: number | undefined | null): string {
 }
 
 export default function AdminAnalyticsPage() {
-  const { token } = useAuth()
+  const { isAuthenticated } = useAuth()
   const [metrics, setMetrics] = useState<AnalyticsMetrics | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     async function fetchMetrics() {
-      if (!token) return
+      if (!isAuthenticated) return
 
       try {
         const response = await fetch(`${API_URL}/admin/metrics/analytics`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          credentials: 'include',
         })
 
         if (!response.ok) {
@@ -182,7 +180,7 @@ export default function AdminAnalyticsPage() {
     }
 
     fetchMetrics()
-  }, [token])
+  }, [isAuthenticated])
 
   if (error) {
     return (

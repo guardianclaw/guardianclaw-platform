@@ -517,13 +517,11 @@ export const agentsApi = {
   },
 
   exportCode: async (id: string): Promise<{ blob: Blob; filename: string }> => {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('claw_token') : null
-
     const response = await fetch(`${API_URL}/agents/${id}/export-code`, {
       method: 'POST',
+      credentials: 'include',
       headers: {
         'Content-Type': 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
     })
 

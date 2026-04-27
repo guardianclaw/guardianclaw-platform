@@ -19,14 +19,12 @@ import {
   STATUS_OPTIONS,
 } from '@/components/admin/compliance'
 import { useGdprRequestsList } from '@/hooks/use-admin-api'
-import { useAuth } from '@/hooks/use-auth'
 import { FileText, X, Search, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 
 const ITEMS_PER_PAGE = 20
 
 export default function AdminComplianceRequestsPage() {
-  const { token } = useAuth()
   const [page, setPage] = useState(0)
   const [search, setSearch] = useState('')
   const [requestType, setRequestType] = useState<string>('')
@@ -68,9 +66,9 @@ export default function AdminComplianceRequestsPage() {
       `${process.env.NEXT_PUBLIC_API_URL}/admin/compliance/requests/${selectedRequest.id}`,
       {
         method: 'PATCH',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           status: newStatus,

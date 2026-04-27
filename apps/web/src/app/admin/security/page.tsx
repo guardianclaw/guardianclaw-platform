@@ -178,20 +178,18 @@ function SeverityBadge({ severity }: { severity: string }) {
 }
 
 export default function AdminSecurityPage() {
-  const { token } = useAuth()
+  const { isAuthenticated } = useAuth()
   const [metrics, setMetrics] = useState<SecurityMetrics | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     async function fetchMetrics() {
-      if (!token) return
+      if (!isAuthenticated) return
 
       try {
         const response = await fetch(`${API_URL}/admin/metrics/security`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          credentials: 'include',
         })
 
         if (!response.ok) {
@@ -210,7 +208,7 @@ export default function AdminSecurityPage() {
     fetchMetrics()
     const interval = setInterval(fetchMetrics, 60000) // Refresh every minute
     return () => clearInterval(interval)
-  }, [token])
+  }, [isAuthenticated])
 
   if (error) {
     return (

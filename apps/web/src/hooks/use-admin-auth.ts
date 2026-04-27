@@ -21,7 +21,7 @@ interface AdminAuthState {
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.guardianclaw.org'
 
 export function useAdminAuth() {
-  const { isAuthenticated, token } = useAuth()
+  const { isAuthenticated } = useAuth()
   const [state, setState] = useState<AdminAuthState>({
     isLoading: true,
     isAdmin: false,
@@ -31,7 +31,7 @@ export function useAdminAuth() {
   })
 
   const verifyAdmin = useCallback(async () => {
-    if (!isAuthenticated || !token) {
+    if (!isAuthenticated) {
       setState({
         isLoading: false,
         isAdmin: false,
@@ -44,9 +44,7 @@ export function useAdminAuth() {
 
     try {
       const response = await fetch(`${API_URL}/admin/auth/verify`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        credentials: 'include',
       })
 
       if (response.ok) {
@@ -94,7 +92,7 @@ export function useAdminAuth() {
         error: 'Network error',
       })
     }
-  }, [isAuthenticated, token])
+  }, [isAuthenticated])
 
   useEffect(() => {
     verifyAdmin()

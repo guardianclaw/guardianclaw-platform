@@ -130,7 +130,7 @@ function StatusBadge({ status }: { status: string }) {
 export default function AdminUserDetailPage() {
   const params = useParams()
   const router = useRouter()
-  const { token } = useAuth()
+  const { isAuthenticated } = useAuth()
   const { hasPermission } = useAdminAuth()
   const wallet = params.wallet as string
 
@@ -143,16 +143,14 @@ export default function AdminUserDetailPage() {
   const canSuspendUser = hasPermission('suspend_user')
 
   const fetchUserDetails = useCallback(async () => {
-    if (!token || !wallet) return
+    if (!isAuthenticated || !wallet) return
 
     setLoading(true)
     setError(null)
 
     try {
       const response = await fetch(`${API_URL}/admin/users/${wallet}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        credentials: 'include',
       })
 
       if (!response.ok) {
@@ -169,21 +167,21 @@ export default function AdminUserDetailPage() {
     } finally {
       setLoading(false)
     }
-  }, [token, wallet])
+  }, [isAuthenticated, wallet])
 
   useEffect(() => {
     fetchUserDetails()
   }, [fetchUserDetails])
 
   const handleAction = async (action: string, endpoint: string, method = 'POST') => {
-    if (!token) return
+    if (!isAuthenticated) return
 
     setActionLoading(action)
     try {
       const response = await fetch(`${API_URL}/admin/users/${wallet}/${endpoint}`, {
         method,
+        credentials: 'include',
         headers: {
-          Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
       })

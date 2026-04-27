@@ -141,7 +141,7 @@ const VERIFY_RETRY_DELAYS = [2000, 4000, 6000]
 export function DepositModal({ open, onOpenChange, treasuryWallet, onSuccess }: DepositModalProps) {
   const { publicKey, sendTransaction, connected } = useWallet()
   const { connection } = useConnection()
-  const { token } = useAuth()
+  const { isAuthenticated } = useAuth()
 
   const successTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -316,7 +316,7 @@ export function DepositModal({ open, onOpenChange, treasuryWallet, onSuccess }: 
 
   // Create and send transaction
   const handleDeposit = useCallback(async () => {
-    if (!publicKey || !sendTransaction || !connection || !token) {
+    if (!publicKey || !sendTransaction || !connection || !isAuthenticated) {
       setState((s) => ({ ...s, error: 'Wallet not connected' }))
       return
     }
@@ -476,7 +476,7 @@ export function DepositModal({ open, onOpenChange, treasuryWallet, onSuccess }: 
     publicKey,
     sendTransaction,
     connection,
-    token,
+    isAuthenticated,
     treasuryWallet,
     paymentToken,
     amountUsd,

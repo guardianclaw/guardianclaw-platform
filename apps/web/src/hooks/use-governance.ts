@@ -170,7 +170,7 @@ export function useGovernanceMessage() {
 // =============================================================================
 
 export function useVoting(proposalId: string | null) {
-  const { token, isAuthenticated } = useAuth()
+  const { isAuthenticated } = useAuth()
   const { signGovernanceMessage } = useGovernanceMessage()
   const { publicKey } = useWallet()
 
@@ -208,7 +208,7 @@ export function useVoting(proposalId: string | null) {
 
   const vote = useCallback(
     async (choice: VoteChoice, comment?: string): Promise<VoteInput | null> => {
-      if (!isAuthenticated || !token || !proposalId || !publicKey) {
+      if (!isAuthenticated || !proposalId || !publicKey) {
         setError('Please connect your wallet first')
         return null
       }
@@ -238,7 +238,7 @@ export function useVoting(proposalId: string | null) {
         setLoading(false)
       }
     },
-    [proposalId, token, signGovernanceMessage, isAuthenticated, publicKey]
+    [proposalId, signGovernanceMessage, isAuthenticated, publicKey]
   )
 
   return {
@@ -257,7 +257,7 @@ export function useVoting(proposalId: string | null) {
 // =============================================================================
 
 export function useComments(proposalId: string | null) {
-  const { token, isAuthenticated } = useAuth()
+  const { isAuthenticated } = useAuth()
   const { signGovernanceMessage } = useGovernanceMessage()
 
   const [comments, setComments] = useState<Comment[]>([])
@@ -289,7 +289,7 @@ export function useComments(proposalId: string | null) {
 
   const addComment = useCallback(
     async (body: string, parentId?: string): Promise<Comment | null> => {
-      if (!isAuthenticated || !token || !proposalId) {
+      if (!isAuthenticated || !proposalId) {
         setError('Please connect your wallet first')
         return null
       }
@@ -322,7 +322,7 @@ export function useComments(proposalId: string | null) {
         setPosting(false)
       }
     },
-    [proposalId, token, signGovernanceMessage, isAuthenticated, fetchComments]
+    [proposalId, signGovernanceMessage, isAuthenticated, fetchComments]
   )
 
   return {
@@ -428,7 +428,7 @@ export function useGovernanceStats() {
 // =============================================================================
 
 export function useCreateProposal() {
-  const { token, isAuthenticated } = useAuth()
+  const { isAuthenticated } = useAuth()
   const { signGovernanceMessage } = useGovernanceMessage()
 
   const [loading, setLoading] = useState(false)
@@ -436,7 +436,7 @@ export function useCreateProposal() {
 
   const create = useCallback(
     async (data: { title: string; body: string; type: string }): Promise<Proposal | null> => {
-      if (!isAuthenticated || !token) {
+      if (!isAuthenticated) {
         setError('Please connect your wallet first')
         return null
       }
@@ -455,12 +455,12 @@ export function useCreateProposal() {
         setLoading(false)
       }
     },
-    [token, isAuthenticated]
+    [isAuthenticated]
   )
 
   const submit = useCallback(
     async (proposalId: string, votingPeriodDays?: number): Promise<Proposal | null> => {
-      if (!isAuthenticated || !token) {
+      if (!isAuthenticated) {
         setError('Please connect your wallet first')
         return null
       }
@@ -488,12 +488,12 @@ export function useCreateProposal() {
         setLoading(false)
       }
     },
-    [token, isAuthenticated, signGovernanceMessage]
+    [isAuthenticated, signGovernanceMessage]
   )
 
   const finalize = useCallback(
     async (proposalId: string): Promise<Proposal | null> => {
-      if (!isAuthenticated || !token) {
+      if (!isAuthenticated) {
         setError('Please connect your wallet first')
         return null
       }
@@ -512,12 +512,12 @@ export function useCreateProposal() {
         setLoading(false)
       }
     },
-    [token, isAuthenticated]
+    [isAuthenticated]
   )
 
   const cancel = useCallback(
     async (proposalId: string, reason?: string): Promise<Proposal | null> => {
-      if (!isAuthenticated || !token) {
+      if (!isAuthenticated) {
         setError('Please connect your wallet first')
         return null
       }
@@ -545,7 +545,7 @@ export function useCreateProposal() {
         setLoading(false)
       }
     },
-    [token, isAuthenticated, signGovernanceMessage]
+    [isAuthenticated, signGovernanceMessage]
   )
 
   return { create, submit, finalize, cancel, loading, error }

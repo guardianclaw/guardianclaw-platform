@@ -66,7 +66,7 @@ function SeverityBadge({ severity }: { severity: string }) {
 }
 
 export default function AdminAlertRulesPage() {
-  const { token } = useAuth()
+  const { isAuthenticated } = useAuth()
   const { hasPermission } = useAdminAuth()
   const [rules, setRules] = useState<AlertRule[]>([])
   const [loading, setLoading] = useState(true)
@@ -76,16 +76,14 @@ export default function AdminAlertRulesPage() {
   const canManageRules = hasPermission('manage_rules')
 
   const fetchRules = useCallback(async () => {
-    if (!token) return
+    if (!isAuthenticated) return
 
     setLoading(true)
     setError(null)
 
     try {
       const response = await fetch(`${API_URL}/admin/rules`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        credentials: 'include',
       })
 
       if (!response.ok) {
@@ -99,21 +97,21 @@ export default function AdminAlertRulesPage() {
     } finally {
       setLoading(false)
     }
-  }, [token])
+  }, [isAuthenticated])
 
   useEffect(() => {
     fetchRules()
   }, [fetchRules])
 
   const toggleRule = async (ruleId: string, enabled: boolean) => {
-    if (!token || !canManageRules) return
+    if (!isAuthenticated || !canManageRules) return
 
     setTogglingId(ruleId)
     try {
       const response = await fetch(`${API_URL}/admin/rules/${ruleId}`, {
         method: 'PATCH',
+        credentials: 'include',
         headers: {
-          Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ is_enabled: enabled }),

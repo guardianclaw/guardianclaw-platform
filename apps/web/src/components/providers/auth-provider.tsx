@@ -28,14 +28,20 @@ interface Profile {
 }
 
 interface AuthContextType {
-  token: string | null
+  /**
+   * Whether a session cookie was confirmed by the API. The actual JWT lives in
+   * an httpOnly cookie that JavaScript cannot read; UI code uses this boolean
+   * to render auth-gated state. To call the API, send `credentials: 'include'`
+   * — the cookie travels automatically.
+   */
+  hasSession: boolean
   profile: Profile | null
   isAuthenticated: boolean
   isLoading: boolean
   error: string | null
   wallet: string | null
   connected: boolean
-  login: () => Promise<string | null>
+  login: () => Promise<boolean>
   logout: () => Promise<void>
   clearError: () => void
 }
@@ -45,7 +51,7 @@ const AuthContext = createContext<AuthContextType | null>(null)
 export function AuthProvider({ children }: { children: ReactNode }) {
   const { publicKey, signMessage, connected, disconnect } = useWallet()
   const pathname = usePathname()
-  const [token, setToken] = useState<string | null>(null)
+  const [hasSession, setHasSession] = useState(false)
   const [profile, setProfile] = useState<Profile | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -53,7 +59,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const wasConnected = useRef(false)
   const loginAttemptRef = useRef(0)
 
-  const isAuthenticated = !!token && !!profile
+  const isAuthenticated = hasSession && !!profile
 
   // Check for existing session on mount via cookie (only once)
   useEffect(() => {
@@ -69,7 +75,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         if (res.ok) {
           const data = await res.json()
-          setToken('authenticated') // boolean flag, actual token is in httpOnly cookie
+          setHasSession(true)
           setProfile(data.profile)
         } else if (res.status === 401) {
           console.log('Session expired or invalid')
@@ -89,7 +95,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Listen for token expiration events from api.ts (401 responses)
   useEffect(() => {
     const handleTokenExpired = () => {
-      setToken(null)
+      setHasSession(false)
       setProfile(null)
       setIsLoading(false)
     }
@@ -110,14 +116,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         clearTimeout(disconnectTimer.current)
         disconnectTimer.current = null
       }
-    } else if (wasConnected.current && token) {
+    } else if (wasConnected.current && hasSession) {
       // Wallet went from connected → disconnected while authenticated.
       // Wait briefly to distinguish explicit disconnect from navigation transient.
       disconnectTimer.current = setTimeout(() => {
         // Still disconnected after delay — treat as explicit user disconnect
         if (!disconnectTimer.current) return
         console.log('Wallet disconnected, clearing session')
-        setToken(null)
+        setHasSession(false)
         setProfile(null)
         wasConnected.current = false
         loginAttemptRef.current = 0
@@ -131,7 +137,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         disconnectTimer.current = null
       }
     }
-  }, [connected, token])
+  }, [connected, hasSession])
 
   // Detect wallet change - if user connects a different wallet than the authenticated one,
   // clear the session to prevent confusion (profile shows wallet A, connected wallet is B).
@@ -149,7 +155,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // If the connected wallet doesn't match the authenticated profile, clear session
       if (connectedWallet !== profileWallet) {
         console.log('Wallet mismatch detected: connected wallet differs from authenticated profile')
-        setToken(null)
+        setHasSession(false)
         setProfile(null)
         wasConnected.current = false
         loginAttemptRef.current = 0
@@ -160,7 +166,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = useCallback(async () => {
     if (!publicKey || !signMessage) {
       setError('Wallet not connected or does not support signing')
-      return null
+      return false
     }
 
     setIsLoading(true)
@@ -211,12 +217,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       const { profile: newProfile } = await profileRes.json()
 
-      // 5. Update state (token lives in httpOnly cookie)
-      setToken('authenticated')
+      // 5. Update state (JWT lives in the httpOnly cookie that /auth/verify set)
+      setHasSession(true)
       setProfile(newProfile)
       setError(null)
 
-      return 'authenticated'
+      return true
     } catch (err) {
       let errorMessage = 'Authentication failed'
 
@@ -234,7 +240,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       setError(errorMessage)
-      return null
+      return false
     } finally {
       setIsLoading(false)
     }
@@ -305,7 +311,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch {
       // Best-effort — cookie will expire on its own
     }
-    setToken(null)
+    setHasSession(false)
     setProfile(null)
     setError(null)
     await disconnect()
@@ -318,7 +324,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   return (
     <AuthContext.Provider
       value={{
-        token,
+        hasSession,
         profile,
         isAuthenticated,
         isLoading,

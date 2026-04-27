@@ -38,7 +38,7 @@ global.fetch = mockFetch
 // ============================================
 
 const mockAgentId = '123e4567-e89b-12d3-a456-426614174000'
-const mockToken = 'mock-jwt-token'
+const mockHasSession = true
 
 function createMockStreamedLog(overrides: Partial<StreamedLogEntry> = {}): StreamedLogEntry {
   return {
@@ -76,7 +76,7 @@ describe('useExecutionStream', () => {
   describe('Initialization', () => {
     it('starts disconnected when disabled', () => {
       const { result } = renderHook(() =>
-        useExecutionStream(mockAgentId, mockToken, { enabled: false })
+        useExecutionStream(mockAgentId, mockHasSession, { enabled: false })
       )
 
       expect(result.current.status).toBe('disconnected')
@@ -86,15 +86,15 @@ describe('useExecutionStream', () => {
 
     it('starts disconnected when no agentId', () => {
       const { result } = renderHook(() =>
-        useExecutionStream(undefined, mockToken, { enabled: true })
+        useExecutionStream(undefined, mockHasSession, { enabled: true })
       )
 
       expect(result.current.status).toBe('disconnected')
       expect(mockFetch).not.toHaveBeenCalled()
     })
 
-    it('starts disconnected when no token', () => {
-      const { result } = renderHook(() => useExecutionStream(mockAgentId, null, { enabled: true }))
+    it('starts disconnected when no session', () => {
+      const { result } = renderHook(() => useExecutionStream(mockAgentId, false, { enabled: true }))
 
       expect(result.current.status).toBe('disconnected')
       expect(mockFetch).not.toHaveBeenCalled()
@@ -102,7 +102,7 @@ describe('useExecutionStream', () => {
 
     it('attempts to connect when enabled with valid params', async () => {
       const { result } = renderHook(() =>
-        useExecutionStream(mockAgentId, mockToken, { enabled: true })
+        useExecutionStream(mockAgentId, mockHasSession, { enabled: true })
       )
 
       await waitFor(() => {
@@ -113,9 +113,7 @@ describe('useExecutionStream', () => {
       expect(mockFetch).toHaveBeenCalledWith(
         expect.stringContaining(`/agents/${mockAgentId}/executions/stream`),
         expect.objectContaining({
-          headers: expect.objectContaining({
-            Authorization: `Bearer ${mockToken}`,
-          }),
+          credentials: 'include',
         })
       )
     })
@@ -128,7 +126,7 @@ describe('useExecutionStream', () => {
   describe('Control Functions', () => {
     it('provides reconnect function', () => {
       const { result } = renderHook(() =>
-        useExecutionStream(mockAgentId, mockToken, { enabled: false })
+        useExecutionStream(mockAgentId, mockHasSession, { enabled: false })
       )
 
       expect(typeof result.current.reconnect).toBe('function')
@@ -136,7 +134,7 @@ describe('useExecutionStream', () => {
 
     it('provides disconnect function', () => {
       const { result } = renderHook(() =>
-        useExecutionStream(mockAgentId, mockToken, { enabled: false })
+        useExecutionStream(mockAgentId, mockHasSession, { enabled: false })
       )
 
       expect(typeof result.current.disconnect).toBe('function')
@@ -144,7 +142,7 @@ describe('useExecutionStream', () => {
 
     it('disconnect transitions to disconnected', async () => {
       const { result } = renderHook(() =>
-        useExecutionStream(mockAgentId, mockToken, { enabled: true })
+        useExecutionStream(mockAgentId, mockHasSession, { enabled: true })
       )
 
       await waitFor(() => {
@@ -160,7 +158,7 @@ describe('useExecutionStream', () => {
 
     it('reconnect resets logsReceived counter', async () => {
       const { result } = renderHook(() =>
-        useExecutionStream(mockAgentId, mockToken, { enabled: false })
+        useExecutionStream(mockAgentId, mockHasSession, { enabled: false })
       )
 
       // Manually set logsReceived by calling reconnect (which resets it)
@@ -179,7 +177,7 @@ describe('useExecutionStream', () => {
   describe('State Properties', () => {
     it('returns correct initial state', () => {
       const { result } = renderHook(() =>
-        useExecutionStream(mockAgentId, mockToken, { enabled: false })
+        useExecutionStream(mockAgentId, mockHasSession, { enabled: false })
       )
 
       expect(result.current).toEqual({
@@ -193,7 +191,7 @@ describe('useExecutionStream', () => {
 
     it('status is connecting when fetch is in progress', async () => {
       const { result } = renderHook(() =>
-        useExecutionStream(mockAgentId, mockToken, { enabled: true })
+        useExecutionStream(mockAgentId, mockHasSession, { enabled: true })
       )
 
       await waitFor(() => {
@@ -208,14 +206,14 @@ describe('useExecutionStream', () => {
 
   describe('Enable/Disable Behavior', () => {
     it('does not connect when enabled is false', () => {
-      renderHook(() => useExecutionStream(mockAgentId, mockToken, { enabled: false }))
+      renderHook(() => useExecutionStream(mockAgentId, mockHasSession, { enabled: false }))
 
       expect(mockFetch).not.toHaveBeenCalled()
     })
 
     it('disconnects when enabled changes to false', async () => {
       const { result, rerender } = renderHook(
-        ({ enabled }) => useExecutionStream(mockAgentId, mockToken, { enabled }),
+        ({ enabled }) => useExecutionStream(mockAgentId, mockHasSession, { enabled }),
         { initialProps: { enabled: true } }
       )
 
@@ -230,7 +228,7 @@ describe('useExecutionStream', () => {
 
     it('connects when agentId becomes available', async () => {
       const { result, rerender } = renderHook(
-        ({ agentId }) => useExecutionStream(agentId, mockToken, { enabled: true }),
+        ({ agentId }) => useExecutionStream(agentId, mockHasSession, { enabled: true }),
         { initialProps: { agentId: undefined as string | undefined } }
       )
 
@@ -246,16 +244,16 @@ describe('useExecutionStream', () => {
       expect(mockFetch).toHaveBeenCalled()
     })
 
-    it('connects when token becomes available', async () => {
+    it('connects when session becomes available', async () => {
       const { result, rerender } = renderHook(
-        ({ token }) => useExecutionStream(mockAgentId, token, { enabled: true }),
-        { initialProps: { token: null as string | null } }
+        ({ hasSession }) => useExecutionStream(mockAgentId, hasSession, { enabled: true }),
+        { initialProps: { hasSession: false } }
       )
 
       expect(result.current.status).toBe('disconnected')
       expect(mockFetch).not.toHaveBeenCalled()
 
-      rerender({ token: mockToken })
+      rerender({ hasSession: true })
 
       await waitFor(() => {
         expect(result.current.status).toBe('connecting')
@@ -272,7 +270,7 @@ describe('useExecutionStream', () => {
   describe('Options', () => {
     it('accepts custom maxReconnectAttempts', () => {
       const { result } = renderHook(() =>
-        useExecutionStream(mockAgentId, mockToken, {
+        useExecutionStream(mockAgentId, mockHasSession, {
           enabled: false,
           maxReconnectAttempts: 10,
         })
@@ -285,7 +283,7 @@ describe('useExecutionStream', () => {
       const onNewExecution = vi.fn()
 
       const { result } = renderHook(() =>
-        useExecutionStream(mockAgentId, mockToken, {
+        useExecutionStream(mockAgentId, mockHasSession, {
           enabled: false,
           onNewExecution,
         })
@@ -298,7 +296,7 @@ describe('useExecutionStream', () => {
       const onStatusChange = vi.fn()
 
       renderHook(() =>
-        useExecutionStream(mockAgentId, mockToken, {
+        useExecutionStream(mockAgentId, mockHasSession, {
           enabled: false,
           onStatusChange,
         })
@@ -312,7 +310,7 @@ describe('useExecutionStream', () => {
       const onError = vi.fn()
 
       const { result } = renderHook(() =>
-        useExecutionStream(mockAgentId, mockToken, {
+        useExecutionStream(mockAgentId, mockHasSession, {
           enabled: false,
           onError,
         })
@@ -330,7 +328,7 @@ describe('useExecutionStream', () => {
   describe('Cleanup', () => {
     it('disconnects on unmount', async () => {
       const { unmount, result } = renderHook(() =>
-        useExecutionStream(mockAgentId, mockToken, { enabled: true })
+        useExecutionStream(mockAgentId, mockHasSession, { enabled: true })
       )
 
       await waitFor(() => {
@@ -350,7 +348,7 @@ describe('useExecutionStream', () => {
 
   describe('URL Construction', () => {
     it('constructs correct SSE URL with agentId', () => {
-      renderHook(() => useExecutionStream(mockAgentId, mockToken, { enabled: true }))
+      renderHook(() => useExecutionStream(mockAgentId, mockHasSession, { enabled: true }))
 
       // Check immediately - mock is synchronous
       expect(mockFetch).toHaveBeenCalled()
@@ -358,14 +356,14 @@ describe('useExecutionStream', () => {
       expect(url).toContain(`/agents/${mockAgentId}/executions/stream`)
     })
 
-    it('includes proper headers in request', () => {
-      renderHook(() => useExecutionStream(mockAgentId, mockToken, { enabled: true }))
+    it('includes proper headers and credentials in request', () => {
+      renderHook(() => useExecutionStream(mockAgentId, mockHasSession, { enabled: true }))
 
       // Check immediately - mock is synchronous
       expect(mockFetch).toHaveBeenCalled()
       const [, options] = mockFetch.mock.calls[0]
+      expect(options.credentials).toBe('include')
       expect(options.headers).toMatchObject({
-        Authorization: `Bearer ${mockToken}`,
         Accept: 'text/event-stream',
         'Cache-Control': 'no-cache',
       })
