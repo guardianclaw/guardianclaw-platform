@@ -7,7 +7,7 @@
 
 import { Hono } from 'hono'
 import { z } from 'zod'
-import { createClient, SupabaseClient } from '@supabase/supabase-js'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import { authMiddleware } from '../middleware/auth'
 import { walletRateLimitMiddleware } from '../middleware/rate-limit'
 import {
@@ -26,6 +26,7 @@ import {
   type MemoryIntegrityConfig,
 } from '../services/memory-integrity'
 import { indexMessage as indexMessageEmbedding } from '../services/vector-memory'
+import { getUserClient } from '../lib/supabase-client'
 
 // ===========================================
 // SUMMARY CONFIGURATION
@@ -45,6 +46,8 @@ const SUMMARY_CONFIG = {
 type Bindings = {
   SUPABASE_URL: string
   SUPABASE_SERVICE_KEY: string
+  SUPABASE_ANON_KEY: string
+  SUPABASE_JWT_SECRET: string
   JWT_SECRET: string
   MODAL_RUNTIME_URL?: string
   OPENAI_API_KEY?: string
@@ -525,7 +528,7 @@ conversationsRoutes.post('/:agentId/conversations', async (c) => {
     return c.json({ error: 'Invalid request', details: parsed.error.flatten() }, 400)
   }
 
-  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)
+  const supabase = await getUserClient(c.env, wallet)
 
   // Verify agent ownership
   const agentCheck = await verifyAgentOwnership(supabase, agentId, wallet)
@@ -570,7 +573,7 @@ conversationsRoutes.get('/:agentId/conversations', async (c) => {
   const limitNum = Math.min(parseInt(limit, 10), 100)
   const offsetNum = parseInt(offset, 10)
 
-  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)
+  const supabase = await getUserClient(c.env, wallet)
 
   // Verify agent ownership
   const agentCheck = await verifyAgentOwnership(supabase, agentId, wallet)
@@ -619,7 +622,7 @@ conversationsRoutes.get('/:agentId/conversations/:conversationId', async (c) => 
   const agentId = c.req.param('agentId')
   const conversationId = c.req.param('conversationId')
 
-  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)
+  const supabase = await getUserClient(c.env, wallet)
 
   // Verify agent ownership
   const agentCheck = await verifyAgentOwnership(supabase, agentId, wallet)
@@ -676,7 +679,7 @@ conversationsRoutes.patch('/:agentId/conversations/:conversationId', async (c) =
     return c.json({ error: 'Invalid request', details: parsed.error.flatten() }, 400)
   }
 
-  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)
+  const supabase = await getUserClient(c.env, wallet)
 
   // Verify ownership
   const convCheck = await verifyConversationOwnership(supabase, conversationId, agentId, wallet)
@@ -714,7 +717,7 @@ conversationsRoutes.delete('/:agentId/conversations/:conversationId', async (c) 
   const agentId = c.req.param('agentId')
   const conversationId = c.req.param('conversationId')
 
-  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)
+  const supabase = await getUserClient(c.env, wallet)
 
   // Verify ownership
   const convCheck = await verifyConversationOwnership(supabase, conversationId, agentId, wallet)
@@ -757,7 +760,7 @@ conversationsRoutes.post('/:agentId/conversations/:conversationId/messages', asy
     return c.json({ error: 'Invalid request', details: parsed.error.flatten() }, 400)
   }
 
-  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)
+  const supabase = await getUserClient(c.env, wallet)
 
   try {
     // Verify agent ownership and get agent data

@@ -7,14 +7,17 @@
 
 import { Hono } from 'hono'
 import { z } from 'zod'
-import { createClient, SupabaseClient } from '@supabase/supabase-js'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import { authMiddleware } from '../middleware/auth'
 import { walletRateLimitMiddleware } from '../middleware/rate-limit'
 import { searchSimilar, type VectorSearchResult } from '../services/vector-memory'
+import { getUserClient } from '../lib/supabase-client'
 
 type Bindings = {
   SUPABASE_URL: string
   SUPABASE_SERVICE_KEY: string
+  SUPABASE_ANON_KEY: string
+  SUPABASE_JWT_SECRET: string
   JWT_SECRET: string
   OPENAI_API_KEY?: string
 }
@@ -92,7 +95,7 @@ memoriesRoutes.get('/:agentId/memories', async (c) => {
 
   const { limit, offset, status, search } = parsed.data
 
-  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)
+  const supabase = await getUserClient(c.env, wallet)
 
   const agentCheck = await verifyAgentOwnership(supabase, agentId, wallet)
   if (!agentCheck.success) {
@@ -180,7 +183,7 @@ memoriesRoutes.get('/:agentId/memories/stats', async (c) => {
   const wallet = c.get('wallet')
   const agentId = c.req.param('agentId')
 
-  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)
+  const supabase = await getUserClient(c.env, wallet)
 
   const agentCheck = await verifyAgentOwnership(supabase, agentId, wallet)
   if (!agentCheck.success) {
@@ -237,7 +240,7 @@ memoriesRoutes.get('/:agentId/memories/:conversationId', async (c) => {
   const agentId = c.req.param('agentId')
   const conversationId = c.req.param('conversationId')
 
-  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)
+  const supabase = await getUserClient(c.env, wallet)
 
   const agentCheck = await verifyAgentOwnership(supabase, agentId, wallet)
   if (!agentCheck.success) {
@@ -308,7 +311,7 @@ memoriesRoutes.delete('/:agentId/memories/:conversationId', async (c) => {
   const conversationId = c.req.param('conversationId')
   const permanent = c.req.query('permanent') === 'true'
 
-  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)
+  const supabase = await getUserClient(c.env, wallet)
 
   const agentCheck = await verifyAgentOwnership(supabase, agentId, wallet)
   if (!agentCheck.success) {
@@ -364,7 +367,7 @@ memoriesRoutes.delete('/:agentId/memories', async (c) => {
   const permanent = c.req.query('permanent') === 'true'
   const _status = c.req.query('status') // Optional: only clear specific status
 
-  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)
+  const supabase = await getUserClient(c.env, wallet)
 
   const agentCheck = await verifyAgentOwnership(supabase, agentId, wallet)
   if (!agentCheck.success) {
@@ -444,7 +447,7 @@ memoriesRoutes.post('/:agentId/memories/search', async (c) => {
 
   const { query, limit, search_type, similarity_threshold } = parsed.data
 
-  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)
+  const supabase = await getUserClient(c.env, wallet)
 
   const agentCheck = await verifyAgentOwnership(supabase, agentId, wallet)
   if (!agentCheck.success) {
@@ -573,7 +576,7 @@ memoriesRoutes.post('/:agentId/memories/:conversationId/restore', async (c) => {
   const agentId = c.req.param('agentId')
   const conversationId = c.req.param('conversationId')
 
-  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)
+  const supabase = await getUserClient(c.env, wallet)
 
   const agentCheck = await verifyAgentOwnership(supabase, agentId, wallet)
   if (!agentCheck.success) {
