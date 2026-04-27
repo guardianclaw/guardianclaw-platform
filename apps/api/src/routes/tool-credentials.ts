@@ -20,12 +20,13 @@
 
 import { Hono } from 'hono'
 import { z } from 'zod'
-import { createClient, type SupabaseClient } from '@supabase/supabase-js'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import { authMiddleware } from '../middleware/auth'
 import { walletRateLimitMiddleware } from '../middleware/rate-limit'
 import { encryptWebhookSecret, decryptWebhookSecret } from '../lib/webhook-crypto'
 import { checkUrlOrLog } from '../lib/ssrf-guard'
 import { createSecureLogger } from '../lib/secure-logger'
+import { getUserClient } from '../lib/supabase-client'
 
 // ============================================
 // TYPES
@@ -34,6 +35,8 @@ import { createSecureLogger } from '../lib/secure-logger'
 type Bindings = {
   SUPABASE_URL: string
   SUPABASE_SERVICE_KEY: string
+  SUPABASE_ANON_KEY: string
+  SUPABASE_JWT_SECRET: string
   JWT_SECRET: string
 }
 
@@ -343,7 +346,7 @@ toolCredentialRoutes.post(
     }
 
     const { tool_type, name, credential, config } = parsed.data
-    const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)
+    const supabase = await getUserClient(c.env, wallet)
 
     // Check if credential with same name already exists
     const { data: existing } = await supabase
@@ -418,7 +421,7 @@ toolCredentialRoutes.get(
     const url = new URL(c.req.url)
     const toolType = url.searchParams.get('tool_type')
 
-    const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)
+    const supabase = await getUserClient(c.env, wallet)
 
     // Build query
     let query = supabase
@@ -471,7 +474,7 @@ toolCredentialRoutes.get(
     const wallet = c.get('wallet')
     const credentialId = c.req.param('id')
 
-    const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)
+    const supabase = await getUserClient(c.env, wallet)
 
     const { data: credential, error } = await supabase
       .from('tool_credentials')
@@ -520,7 +523,7 @@ toolCredentialRoutes.patch(
       return c.json({ error: 'Invalid request', details: parsed.error.flatten() }, 400)
     }
 
-    const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)
+    const supabase = await getUserClient(c.env, wallet)
 
     // Verify ownership
     const { data: existing } = await supabase
@@ -596,7 +599,7 @@ toolCredentialRoutes.delete(
     const wallet = c.get('wallet')
     const credentialId = c.req.param('id')
 
-    const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)
+    const supabase = await getUserClient(c.env, wallet)
 
     const { error } = await supabase
       .from('tool_credentials')
@@ -627,7 +630,7 @@ toolCredentialRoutes.post(
     const wallet = c.get('wallet')
     const credentialId = c.req.param('id')
 
-    const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)
+    const supabase = await getUserClient(c.env, wallet)
 
     // Get credential
     const { data: credentialData, error: fetchError } = await supabase
