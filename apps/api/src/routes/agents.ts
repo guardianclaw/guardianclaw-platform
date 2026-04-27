@@ -1,8 +1,8 @@
 ﻿import { Hono } from 'hono'
 import { z } from 'zod'
-import { createClient } from '@supabase/supabase-js'
 import { authMiddleware } from '../middleware/auth'
 import { walletRateLimitMiddleware } from '../middleware/rate-limit'
+import { getUserClient } from '../lib/supabase-client'
 import {
   execute,
   extractAnalyticsFields,
@@ -23,6 +23,8 @@ import { Errors } from '../lib/errors'
 type Bindings = {
   SUPABASE_URL: string
   SUPABASE_SERVICE_KEY: string
+  SUPABASE_ANON_KEY: string
+  SUPABASE_JWT_SECRET: string
   JWT_SECRET: string
   MODAL_RUNTIME_URL?: string // Optional - if not set, uses OpenAI or simulation
   OPENAI_API_KEY?: string // Optional - for direct OpenAI calls
@@ -199,7 +201,7 @@ export function validateFlowProtection(flow: {
 agentsRoutes.get('/', async (c) => {
   const wallet = c.get('wallet')
 
-  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)
+  const supabase = await getUserClient(c.env, wallet)
 
   const { data, error } = await supabase
     .from('agents')
@@ -272,7 +274,7 @@ agentsRoutes.get('/:id/analytics', async (c) => {
     return c.json({ error: 'Invalid query parameters' }, 400)
   }
 
-  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)
+  const supabase = await getUserClient(c.env, wallet)
 
   // Verify ownership
   const { data: agent, error: agentError } = await supabase
@@ -556,7 +558,7 @@ agentsRoutes.get('/:id/analytics/v2', async (c) => {
     return c.json({ error: 'Invalid query parameters' }, 400)
   }
 
-  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)
+  const supabase = await getUserClient(c.env, wallet)
 
   // Get agent with full metadata
   const { data: agent, error: agentError } = await supabase
@@ -885,7 +887,7 @@ agentsRoutes.get('/:id', async (c) => {
   const wallet = c.get('wallet')
   const agentId = c.req.param('id')
 
-  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)
+  const supabase = await getUserClient(c.env, wallet)
 
   const { data, error } = await supabase
     .from('agents')
@@ -913,7 +915,7 @@ agentsRoutes.post('/', async (c) => {
     return c.json({ error: 'Invalid request', details: parsed.error.flatten() }, 400)
   }
 
-  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)
+  const supabase = await getUserClient(c.env, wallet)
 
   // Check for duplicate name
   const { data: existingAgent } = await supabase
@@ -1013,7 +1015,7 @@ agentsRoutes.patch('/:id', async (c) => {
     return c.json({ error: 'Invalid request', details: parsed.error.flatten() }, 400)
   }
 
-  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)
+  const supabase = await getUserClient(c.env, wallet)
 
   // Check for duplicate name if name is being updated
   if (parsed.data.name !== undefined) {
@@ -1100,7 +1102,7 @@ agentsRoutes.delete('/:id', async (c) => {
   const wallet = c.get('wallet')
   const agentId = c.req.param('id')
 
-  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)
+  const supabase = await getUserClient(c.env, wallet)
 
   // Soft delete by setting status to archived
   const { error } = await supabase
@@ -1122,7 +1124,7 @@ agentsRoutes.post('/:id/export-code', async (c) => {
   const wallet = c.get('wallet')
   const agentId = c.req.param('id')
 
-  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)
+  const supabase = await getUserClient(c.env, wallet)
 
   // Fetch the agent
   const { data: agent, error } = await supabase
@@ -1197,7 +1199,7 @@ agentsRoutes.post('/:id/test', async (c) => {
     return c.json({ error: 'Invalid request', details: parsed.error.flatten() }, 400)
   }
 
-  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)
+  const supabase = await getUserClient(c.env, wallet)
 
   // Get agent
   const { data: agent, error: agentError } = await supabase
