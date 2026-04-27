@@ -17,7 +17,7 @@
 
 import { Hono } from 'hono'
 import { z } from 'zod'
-import { createClient, type SupabaseClient } from '@supabase/supabase-js'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import { authMiddleware } from '../middleware/auth'
 import { walletRateLimitMiddleware } from '../middleware/rate-limit'
 import { generateWebhookSecret } from '../lib/webhook-signature'
@@ -25,6 +25,7 @@ import { encryptNewWebhookSecret } from '../lib/webhook-crypto'
 import { deliverImmediately, DELIVERY_EVENT_TYPES } from '../services/webhook-delivery'
 import { checkUrlOrLog } from '../lib/ssrf-guard'
 import { createSecureLogger } from '../lib/secure-logger'
+import { getUserClient } from '../lib/supabase-client'
 
 // ============================================
 // TYPES
@@ -33,6 +34,8 @@ import { createSecureLogger } from '../lib/secure-logger'
 type Bindings = {
   SUPABASE_URL: string
   SUPABASE_SERVICE_KEY: string
+  SUPABASE_ANON_KEY: string
+  SUPABASE_JWT_SECRET: string
   JWT_SECRET: string
   API_BASE_URL?: string
   IP_HASH_SECRET?: string
@@ -134,7 +137,7 @@ webhookEndpointRoutes.post(
     const agentId = c.req.param('agentId')
     const wallet = c.get('wallet')
 
-    const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)
+    const supabase = await getUserClient(c.env, wallet)
 
     // Verify agent ownership
     const { agent, error: agentError } = await verifyAgentOwnership(supabase, agentId, wallet)
@@ -240,7 +243,7 @@ webhookEndpointRoutes.get(
     const agentId = c.req.param('agentId')
     const wallet = c.get('wallet')
 
-    const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)
+    const supabase = await getUserClient(c.env, wallet)
 
     // Verify agent ownership
     const { error: agentError } = await verifyAgentOwnership(supabase, agentId, wallet)
@@ -299,7 +302,7 @@ webhookEndpointRoutes.get(
     const endpointId = c.req.param('id')
     const wallet = c.get('wallet')
 
-    const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)
+    const supabase = await getUserClient(c.env, wallet)
 
     // Verify agent ownership
     const { error: agentError } = await verifyAgentOwnership(supabase, agentId, wallet)
@@ -355,7 +358,7 @@ webhookEndpointRoutes.patch(
     const endpointId = c.req.param('id')
     const wallet = c.get('wallet')
 
-    const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)
+    const supabase = await getUserClient(c.env, wallet)
 
     // Verify agent ownership
     const { error: agentError } = await verifyAgentOwnership(supabase, agentId, wallet)
@@ -429,7 +432,7 @@ webhookEndpointRoutes.delete(
     const endpointId = c.req.param('id')
     const wallet = c.get('wallet')
 
-    const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)
+    const supabase = await getUserClient(c.env, wallet)
 
     // Verify agent ownership
     const { error: agentError } = await verifyAgentOwnership(supabase, agentId, wallet)
@@ -468,7 +471,7 @@ webhookEndpointRoutes.post(
     const endpointId = c.req.param('id')
     const wallet = c.get('wallet')
 
-    const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)
+    const supabase = await getUserClient(c.env, wallet)
 
     // Verify agent ownership
     const { error: agentError } = await verifyAgentOwnership(supabase, agentId, wallet)
@@ -528,7 +531,7 @@ webhookEndpointRoutes.post(
     const endpointId = c.req.param('id')
     const wallet = c.get('wallet')
 
-    const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)
+    const supabase = await getUserClient(c.env, wallet)
 
     // Verify agent ownership
     const { error: agentError } = await verifyAgentOwnership(supabase, agentId, wallet)
@@ -588,7 +591,7 @@ webhookEndpointRoutes.get(
     const status = url.searchParams.get('status')
     const endpointId = url.searchParams.get('endpoint_id')
 
-    const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)
+    const supabase = await getUserClient(c.env, wallet)
 
     // Verify agent ownership
     const { error: agentError } = await verifyAgentOwnership(supabase, agentId, wallet)

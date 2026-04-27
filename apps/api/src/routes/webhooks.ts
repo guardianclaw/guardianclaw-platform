@@ -19,9 +19,10 @@
 
 import { Hono } from 'hono'
 import { z } from 'zod'
-import { createClient, type SupabaseClient } from '@supabase/supabase-js'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import { authMiddleware } from '../middleware/auth'
 import { walletRateLimitMiddleware } from '../middleware/rate-limit'
+import { getServiceClient, getUserClient } from '../lib/supabase-client'
 import {
   generateWebhookSecret,
   verifyWebhookSignature,
@@ -43,6 +44,8 @@ import { queueDeliveriesForAgent, type DeliveryEventType } from '../services/web
 type Bindings = {
   SUPABASE_URL: string
   SUPABASE_SERVICE_KEY: string
+  SUPABASE_ANON_KEY: string
+  SUPABASE_JWT_SECRET: string
   JWT_SECRET: string
   MODAL_RUNTIME_URL?: string
   OPENAI_API_KEY?: string
@@ -135,7 +138,7 @@ webhookRoutes.post(
     const agentId = c.req.param('agentId')
     const wallet = c.get('wallet')
 
-    const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)
+    const supabase = await getUserClient(c.env, wallet)
 
     // Verify agent ownership
     const { agent: _agent, error: agentError } = await verifyAgentOwnership(
@@ -233,7 +236,7 @@ webhookRoutes.get(
     const agentId = c.req.param('agentId')
     const wallet = c.get('wallet')
 
-    const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)
+    const supabase = await getUserClient(c.env, wallet)
 
     // Verify agent ownership
     const { error: agentError } = await verifyAgentOwnership(supabase, agentId, wallet)
@@ -294,7 +297,7 @@ webhookRoutes.get(
     const webhookId = c.req.param('id')
     const wallet = c.get('wallet')
 
-    const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)
+    const supabase = await getUserClient(c.env, wallet)
 
     // Verify agent ownership
     const { error: agentError } = await verifyAgentOwnership(supabase, agentId, wallet)
@@ -353,7 +356,7 @@ webhookRoutes.patch(
     const webhookId = c.req.param('id')
     const wallet = c.get('wallet')
 
-    const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)
+    const supabase = await getUserClient(c.env, wallet)
 
     // Verify agent ownership
     const { error: agentError } = await verifyAgentOwnership(supabase, agentId, wallet)
@@ -412,7 +415,7 @@ webhookRoutes.delete(
     const webhookId = c.req.param('id')
     const wallet = c.get('wallet')
 
-    const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)
+    const supabase = await getUserClient(c.env, wallet)
 
     // Verify agent ownership
     const { error: agentError } = await verifyAgentOwnership(supabase, agentId, wallet)
@@ -451,7 +454,7 @@ webhookRoutes.post(
     const webhookId = c.req.param('id')
     const wallet = c.get('wallet')
 
-    const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)
+    const supabase = await getUserClient(c.env, wallet)
 
     // Verify agent ownership
     const { error: agentError } = await verifyAgentOwnership(supabase, agentId, wallet)
@@ -513,7 +516,10 @@ webhookTriggerRoutes.post('/:webhookId/trigger', async (c) => {
   const clientIP = getClientIP(c.req.raw.headers)
   const startTime = Date.now()
 
-  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)
+  // Public endpoint authenticated by HMAC signature, not by a user JWT.
+  // No wallet context exists here, so the user-scoped RLS path doesn't apply
+  // — service-role is the right boundary for this surface.
+  const supabase = getServiceClient(c.env)
   const logger = createSecureLogger({ IP_HASH_SECRET: c.env.IP_HASH_SECRET })
 
   // 1. Get raw body for signature verification
@@ -811,7 +817,8 @@ webhookTriggerRoutes.post('/:webhookId/trigger', async (c) => {
 webhookTriggerRoutes.get('/:webhookId/health', async (c) => {
   const webhookId = c.req.param('webhookId')
 
-  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)
+  // Public health check; same justification as the trigger handler above.
+  const supabase = getServiceClient(c.env)
 
   const { data: webhook, error } = await supabase
     .from('webhooks')

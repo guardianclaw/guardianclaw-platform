@@ -109,6 +109,8 @@ const createTestApp = () => {
     Bindings: {
       SUPABASE_URL: string
       SUPABASE_SERVICE_KEY: string
+      SUPABASE_ANON_KEY: string
+      SUPABASE_JWT_SECRET: string
       JWT_SECRET: string
       API_BASE_URL: string
       OPENAI_API_KEY?: string
@@ -119,6 +121,8 @@ const createTestApp = () => {
     c.env = {
       SUPABASE_URL: 'https://test.supabase.co',
       SUPABASE_SERVICE_KEY: 'test-service-key',
+      SUPABASE_ANON_KEY: 'test-anon-key',
+      SUPABASE_JWT_SECRET: 'test-jwt-secret-with-minimum-32-chars-padding!',
       JWT_SECRET: 'test-jwt-secret-with-minimum-32-chars!',
       API_BASE_URL: 'https://api.test.com',
     }
