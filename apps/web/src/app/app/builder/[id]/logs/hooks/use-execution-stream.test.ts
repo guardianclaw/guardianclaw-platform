@@ -356,14 +356,14 @@ describe('useExecutionStream', () => {
       expect(url).toContain(`/agents/${mockAgentId}/executions/stream`)
     })
 
-    it('includes proper headers in request', () => {
+    it('includes proper headers and credentials in request', () => {
       renderHook(() => useExecutionStream(mockAgentId, mockHasSession, { enabled: true }))
 
       // Check immediately - mock is synchronous
       expect(mockFetch).toHaveBeenCalled()
       const [, options] = mockFetch.mock.calls[0]
+      expect(options.credentials).toBe('include')
       expect(options.headers).toMatchObject({
-        Authorization: `Bearer ${mockHasSession}`,
         Accept: 'text/event-stream',
         'Cache-Control': 'no-cache',
       })

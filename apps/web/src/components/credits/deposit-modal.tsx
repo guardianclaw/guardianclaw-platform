@@ -476,7 +476,7 @@ export function DepositModal({ open, onOpenChange, treasuryWallet, onSuccess }: 
     publicKey,
     sendTransaction,
     connection,
-    token,
+    isAuthenticated,
     treasuryWallet,
     paymentToken,
     amountUsd,
