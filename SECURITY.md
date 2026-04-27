@@ -230,8 +230,11 @@ These are tracked issues identified by the 2026-04-23 external audit and open in
 The API runtime uses the Supabase `service_role` key across most user-scoped routes. Declared RLS policies therefore act as **defense in depth**, not the primary boundary. The effective boundary today is the application handler's predicate filters.
 
 - **Impact:** a missed `.eq('wallet_address', ...)` or analogous filter in a handler could cross tenant boundaries because the database call does not run under a restricted user context.
-- **Mitigation in flight:** migration of user-scoped routes to an anon key + `set_request_context(wallet)` so RLS becomes a runtime barrier, not a documentation claim.
-- **Until then:** do not describe RLS as the effective tenancy boundary.
+- **Mitigation in flight (Frente B.1, started 2026-04-26):**
+  - `apps/api/src/lib/supabase-client.ts` exposes `getServiceClient` (admin/cron/system) and `getUserClient(env, wallet)` (user-scoped). The latter mints a short-lived HS256 JWT signed with `SUPABASE_JWT_SECRET`, carrying `role: 'authenticated'` and the wallet as a custom claim.
+  - Migration `20260427000000` adds parallel RLS policies on `llm_keys` keyed on the JWT's `wallet_address` claim. Permissive policies are OR'd, so the existing GUC-based policies stay in place during the rollout window.
+  - `routes/llm-keys.ts` is the pilot — flipped to `getUserClient`. Subsequent routes migrate one or two at a time per the inventory tracked locally in `_internal/auditoria/service-role-inventory.md`.
+- **Until full rollout completes:** do not describe RLS as the effective tenancy boundary across all routes. The pilot route does have RLS as its primary barrier.
 
 ### G-02 — SSRF Enforcement Incomplete
 
