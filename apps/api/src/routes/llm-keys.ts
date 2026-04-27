@@ -1,12 +1,13 @@
 import { Hono } from 'hono'
 import { z } from 'zod'
-import { createClient } from '@supabase/supabase-js'
 import { authMiddleware } from '../middleware/auth'
 import { walletRateLimitMiddleware } from '../middleware/rate-limit'
+import { getUserClient } from '../lib/supabase-client'
 
 type Bindings = {
   SUPABASE_URL: string
-  SUPABASE_SERVICE_KEY: string
+  SUPABASE_ANON_KEY: string
+  SUPABASE_JWT_SECRET: string
   JWT_SECRET: string
   RATE_LIMIT_KV?: KVNamespace
   IP_HASH_SECRET?: string
@@ -37,7 +38,7 @@ const createKeySchema = z.object({
 llmKeysRoutes.get('/', async (c) => {
   const wallet = c.get('wallet')
 
-  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)
+  const supabase = await getUserClient(c.env, wallet)
 
   const { data: keys, error } = await supabase
     .from('llm_keys')
@@ -58,7 +59,7 @@ llmKeysRoutes.get('/:id', async (c) => {
   const wallet = c.get('wallet')
   const keyId = c.req.param('id')
 
-  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)
+  const supabase = await getUserClient(c.env, wallet)
 
   const { data: key, error } = await supabase
     .from('llm_keys')
@@ -88,7 +89,7 @@ llmKeysRoutes.post('/', async (c) => {
 
   const { provider, name, ciphertext, iv, salt, key_preview } = parsed.data
 
-  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)
+  const supabase = await getUserClient(c.env, wallet)
 
   // Check key limits per plan
   const keyLimits: Record<string, number> = {
@@ -158,7 +159,7 @@ llmKeysRoutes.delete('/:id', async (c) => {
   const wallet = c.get('wallet')
   const keyId = c.req.param('id')
 
-  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)
+  const supabase = await getUserClient(c.env, wallet)
 
   // Verify ownership and delete
   const { data: deleted, error } = await supabase
@@ -186,7 +187,7 @@ llmKeysRoutes.get('/provider/:provider', async (c) => {
     return c.json({ error: 'Invalid provider' }, 400)
   }
 
-  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)
+  const supabase = await getUserClient(c.env, wallet)
 
   const { data: keys, error } = await supabase
     .from('llm_keys')
@@ -224,7 +225,7 @@ llmKeysRoutes.patch('/:id', async (c) => {
     return c.json({ error: 'No fields to update' }, 400)
   }
 
-  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)
+  const supabase = await getUserClient(c.env, wallet)
 
   // Verify ownership
   const { data: existing, error: fetchError } = await supabase

@@ -61,10 +61,14 @@ jobs:
           secrets: |
             SUPABASE_URL
             SUPABASE_SERVICE_KEY
+            SUPABASE_ANON_KEY
+            SUPABASE_JWT_SECRET
             JWT_SECRET
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          SUPABASE_JWT_SECRET: ${{ secrets.SUPABASE_JWT_SECRET }}
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
 
   deploy-web:

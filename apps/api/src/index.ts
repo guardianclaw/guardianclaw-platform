@@ -40,6 +40,10 @@ type Bindings = {
   ENVIRONMENT: string
   SUPABASE_URL: string
   SUPABASE_SERVICE_KEY: string
+  // RLS-aware client (Frente B.1). Optional until migration completes;
+  // user-scoped routes that have flipped off service_role require both.
+  SUPABASE_ANON_KEY?: string
+  SUPABASE_JWT_SECRET?: string
   JWT_SECRET: string
   // Security - IP hashing for GDPR compliance
   IP_HASH_SECRET?: string
