@@ -1,6 +1,6 @@
 import { Hono } from 'hono'
 import { z } from 'zod'
-import { createClient, type SupabaseClient } from '@supabase/supabase-js'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import { authMiddleware } from '../middleware/auth'
 import { walletRateLimitMiddleware } from '../middleware/rate-limit'
 import nacl from 'tweetnacl'
@@ -11,10 +11,13 @@ import {
   getTokenSupply,
   TOKEN_DECIMALS,
 } from '../services/solana-token'
+import { getServiceClient, getUserClient } from '../lib/supabase-client'
 
 type Bindings = {
   SUPABASE_URL: string
   SUPABASE_SERVICE_KEY: string
+  SUPABASE_ANON_KEY: string
+  SUPABASE_JWT_SECRET: string
   JWT_SECRET: string
   SOLANA_RPC_URL?: string
   SOLANA_ARCHIVE_RPC_URL?: string
@@ -66,7 +69,7 @@ function isGovernancePaused(c: { env?: { GOVERNANCE_PAUSED?: string } }): boolea
 // Admin pause toggle — placed before auth middleware so it uses its own auth check
 governanceRoutes.patch('/admin/pause', authMiddleware, async (c) => {
   const wallet = c.get('wallet')
-  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)
+  const supabase = await getUserClient(c.env, wallet)
 
   const { data: adminRole, error: roleError } = await supabase
     .from('admin_roles')
@@ -264,7 +267,10 @@ export async function finalizeProposal(
 
 // GET /governance/stats - Public statistics
 governanceRoutes.get('/stats', async (c) => {
-  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)
+  // Public endpoint: no caller wallet, aggregates across all proposals/votes.
+  // Stays on service-role; the underlying get_governance_stats RPC is the
+  // boundary (no per-row data leaks beyond aggregate counts).
+  const supabase = getServiceClient(c.env)
 
   const { data, error } = await supabase.rpc('get_governance_stats')
 
@@ -295,7 +301,9 @@ governanceRoutes.get('/health', async (c) => {
   let dbReachable = false
 
   try {
-    const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)
+    // Public health probe: just checks DB reachability with one row.
+    // Service-role because there is no caller wallet on this endpoint.
+    const supabase = getServiceClient(c.env)
     const { error } = await supabase.from('proposals').select('id').limit(1)
     dbReachable = !error
   } catch {
@@ -351,7 +359,8 @@ governanceRoutes.get('/profile', async (c) => {
 
 // GET /governance/proposals - List proposals
 governanceRoutes.get('/proposals', async (c) => {
-  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)
+  const wallet = c.get('wallet')
+  const supabase = await getUserClient(c.env, wallet)
   const query = c.req.query()
   const parsed = proposalQuerySchema.safeParse(query)
 
@@ -424,11 +433,12 @@ governanceRoutes.get('/proposals', async (c) => {
 
 // GET /governance/proposals/:id - Get a single proposal
 governanceRoutes.get('/proposals/:id', async (c) => {
+  const wallet = c.get('wallet')
   const id = c.req.param('id')
   if (!UUID_REGEX.test(id)) {
     return c.json({ error: 'Invalid proposal ID format' }, 400)
   }
-  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)
+  const supabase = await getUserClient(c.env, wallet)
 
   const { data, error } = await supabase
     .from('proposals')
@@ -480,7 +490,7 @@ governanceRoutes.post('/proposals', async (c) => {
     )
   }
 
-  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)
+  const supabase = await getUserClient(c.env, wallet)
 
   // Discussion period: 5 days from creation
   const now = new Date()
@@ -543,7 +553,7 @@ governanceRoutes.post('/proposals/:id/votes', async (c) => {
     return c.json({ error: 'Invalid message format' }, 400)
   }
 
-  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)
+  const supabase = await getUserClient(c.env, wallet)
 
   // Verify proposal exists and is in voting status
   const { data: proposal, error: fetchError } = await supabase
@@ -644,7 +654,7 @@ governanceRoutes.get('/proposals/:id/votes/check', async (c) => {
   if (!UUID_REGEX.test(proposalId)) {
     return c.json({ error: 'Invalid proposal ID format' }, 400)
   }
-  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)
+  const supabase = await getUserClient(c.env, wallet)
 
   const { data: vote, error } = await supabase
     .from('votes')
@@ -671,11 +681,12 @@ governanceRoutes.get('/proposals/:id/votes/check', async (c) => {
 
 // GET /governance/proposals/:id/comments - Get comments for a proposal
 governanceRoutes.get('/proposals/:id/comments', async (c) => {
+  const wallet = c.get('wallet')
   const proposalId = c.req.param('id')
   if (!UUID_REGEX.test(proposalId)) {
     return c.json({ error: 'Invalid proposal ID format' }, 400)
   }
-  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)
+  const supabase = await getUserClient(c.env, wallet)
 
   const { data, error } = await supabase
     .from('comments')
@@ -726,7 +737,7 @@ governanceRoutes.post('/proposals/:id/comments', async (c) => {
     return c.json({ error: 'Invalid message format' }, 400)
   }
 
-  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)
+  const supabase = await getUserClient(c.env, wallet)
 
   const { data, error } = await supabase
     .from('comments')
@@ -783,7 +794,7 @@ governanceRoutes.patch('/proposals/:id/submit', async (c) => {
     return c.json({ error: 'Invalid message format' }, 400)
   }
 
-  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)
+  const supabase = await getUserClient(c.env, wallet)
 
   // Fetch proposal and verify ownership and status
   const { data: proposal, error: fetchError } = await supabase
@@ -863,7 +874,10 @@ governanceRoutes.patch('/proposals/:id/finalize', async (c) => {
   if (!UUID_REGEX.test(proposalId)) {
     return c.json({ error: 'Invalid proposal ID format' }, 400)
   }
-  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)
+  // Finalization tallies votes from every wallet on the proposal — a
+  // cross-tenant aggregation that user-client RLS would clamp to the
+  // caller's own vote. Service-role is correct here by design.
+  const supabase = getServiceClient(c.env)
 
   // Fetch proposal
   const { data: proposal, error: fetchError } = await supabase
@@ -922,7 +936,10 @@ governanceRoutes.patch('/proposals/:id/execute', async (c) => {
     return c.json({ error: 'Invalid proposal ID format' }, 400)
   }
 
-  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)
+  // Admin-gated endpoint: caller may not be the proposal author, and the
+  // update has to land regardless of authorship. Service-role is correct;
+  // the admin role check below is the authorization boundary.
+  const supabase = getServiceClient(c.env)
 
   // Check admin role
   const { data: adminRole, error: roleError } = await supabase
@@ -1011,7 +1028,7 @@ governanceRoutes.patch('/proposals/:id/cancel', async (c) => {
     return c.json({ error: 'Invalid message format' }, 400)
   }
 
-  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)
+  const supabase = await getUserClient(c.env, wallet)
 
   // Fetch proposal and verify ownership
   const { data: proposal, error: fetchError } = await supabase
