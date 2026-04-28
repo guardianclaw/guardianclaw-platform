@@ -263,7 +263,7 @@ def install_plugin():
     print("  # List installed GuardianClaw probes")
     print("  garak --list_probes | grep claw")
     print()
-    print("Documentation: https://github.com/guardian-claw/guardianclaw/tree/main/src/guardianclaw/integrations/garak")
+    print("Documentation: https://github.com/guardianclaw/guardianclaw-platform/tree/main/src/guardianclaw/integrations/garak")
     print()
     print("-" * 70)
     print("IMPORTANT NOTES:")

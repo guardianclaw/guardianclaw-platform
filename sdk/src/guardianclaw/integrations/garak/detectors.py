@@ -14,7 +14,7 @@ Usage:
 Install:
     python -m guardianclaw.integrations.garak.install
 
-Documentation: https://github.com/guardian-claw/guardianclaw/tree/main/src/guardianclaw/integrations/garak
+Documentation: https://github.com/guardianclaw/guardianclaw-platform/tree/main/src/guardianclaw/integrations/garak
 """
 
 import os
@@ -244,7 +244,7 @@ class CLAWBaseDetector(Detector):
     """
 
     # Documentation reference
-    doc_uri = "https://github.com/guardian-claw/guardianclaw#claw-protocol"
+    doc_uri = "https://github.com/guardianclaw/guardianclaw-platform#claw-protocol"
 
     # Language specification (BCP47)
     lang_spec = "en"
@@ -454,7 +454,7 @@ class TruthViolation(CLAWBaseDetector):
     impersonation, or misinformation.
     """
 
-    doc_uri = "https://github.com/guardian-claw/guardianclaw#four-gate-protocol-claw"
+    doc_uri = "https://github.com/guardianclaw/guardianclaw-platform#four-gate-protocol-claw"
     tags = ["claw:claw:credibility", "avid-effect:ethics:E0301"]
 
     compliance_patterns: List[str] = [
@@ -486,7 +486,7 @@ class HarmViolation(CLAWBaseDetector):
     violence, weapons, hacking, or dangerous activities.
     """
 
-    doc_uri = "https://github.com/guardian-claw/guardianclaw#four-gate-protocol-claw"
+    doc_uri = "https://github.com/guardianclaw/guardianclaw-platform#four-gate-protocol-claw"
     tags = ["claw:claw:avoidance", "avid-effect:ethics:E0302", "payload:unwanted:violence"]
 
     compliance_patterns: List[str] = [
@@ -529,7 +529,7 @@ class ScopeViolation(CLAWBaseDetector):
     - Filter bypass acceptance
     """
 
-    doc_uri = "https://github.com/guardian-claw/guardianclaw#four-gate-protocol-claw"
+    doc_uri = "https://github.com/guardianclaw/guardianclaw-platform#four-gate-protocol-claw"
     tags = ["claw:claw:limits", "avid-effect:security:S0403", "payload:jailbreak"]
 
     compliance_patterns: List[str] = [
@@ -579,7 +579,7 @@ class PurposeViolation(CLAWBaseDetector):
     waste, or meaningless harmful actions.
     """
 
-    doc_uri = "https://github.com/guardian-claw/guardianclaw#four-gate-protocol-claw"
+    doc_uri = "https://github.com/guardianclaw/guardianclaw-platform#four-gate-protocol-claw"
     tags = ["claw:claw:worth", "avid-effect:ethics:E0101"]
 
     compliance_patterns: List[str] = [
@@ -618,7 +618,7 @@ class CLAWCombinedDetector(Detector):
           is also None (not 0.0) to indicate the output couldn't be evaluated.
     """
 
-    doc_uri = "https://github.com/guardian-claw/guardianclaw#four-gate-protocol-claw"
+    doc_uri = "https://github.com/guardianclaw/guardianclaw-platform#four-gate-protocol-claw"
     tags = ["claw:claw:combined"]
 
     # Language specification (BCP47)

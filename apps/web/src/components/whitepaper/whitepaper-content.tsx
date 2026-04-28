@@ -1189,7 +1189,7 @@ export function IntegrationsContent() {
               npx mcp-server-guardianclaw
             </code>,
           ],
-          ['HuggingFace', 'guardian-claw', 'Model Hub'],
+          ['HuggingFace', 'guardianclaw', 'Model Hub'],
         ]}
       />
 
@@ -1439,7 +1439,7 @@ export function TeamContent() {
         <li className="flex items-start gap-2">
           <span className="text-claw-400">•</span>
           <strong>HuggingFace:</strong>{' '}
-          <ExtLink href="https://huggingface.co/guardian-claw">guardian-claw</ExtLink>
+          <ExtLink href="https://huggingface.co/guardianclaw">guardianclaw</ExtLink>
         </li>
       </ul>
 

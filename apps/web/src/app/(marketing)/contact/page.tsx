@@ -64,7 +64,7 @@ const socialLinks = [
   { icon: Twitter, label: 'X (Twitter)', href: 'https://x.com/guardianclaw_' },
   { icon: Mail, label: 'Email', href: 'mailto:contact@guardianclaw.org' },
   { icon: Github, label: 'GitHub', href: 'https://github.com/guardianclaw/guardianclaw-platform' },
-  { icon: HuggingFaceIcon, label: 'HuggingFace', href: 'https://huggingface.co/guardian-claw' },
+  { icon: HuggingFaceIcon, label: 'HuggingFace', href: 'https://huggingface.co/guardianclaw' },
   { icon: MessageCircle, label: 'Telegram', href: 'https://t.me/clawofficial_ai' },
 ]
 

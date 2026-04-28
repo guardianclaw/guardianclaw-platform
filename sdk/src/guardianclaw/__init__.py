@@ -89,7 +89,7 @@ Framework Integrations:
     from guardianclaw.integrations.openai_agents import create_claw_agent
 
 Documentation: https://guardianclaw.org/docs
-GitHub: https://github.com/guardian-claw/guardianclaw
+GitHub: https://github.com/guardianclaw/guardianclaw-platform
 """
 
 from importlib.metadata import version as _pkg_version, PackageNotFoundError as _PackageNotFoundError

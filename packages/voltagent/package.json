@@ -64,12 +64,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/guardian-claw/guardianclaw.git",
+    "url": "git+https://github.com/guardianclaw/guardianclaw-platform.git",
     "directory": "packages/voltagent"
   },
-  "homepage": "https://github.com/guardian-claw/guardianclaw/tree/main/packages/voltagent",
+  "homepage": "https://github.com/guardianclaw/guardianclaw-platform/tree/main/packages/voltagent",
   "bugs": {
-    "url": "https://github.com/guardian-claw/guardianclaw/issues"
+    "url": "https://github.com/guardianclaw/guardianclaw-platform/issues"
   },
   "dependencies": {},
   "peerDependencies": {

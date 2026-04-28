@@ -274,7 +274,7 @@ This package depends on `@guardianclaw/core` which provides the CLAW validation 
 For production npm installations, the core patterns are bundled during the build process. If you're building from source, ensure you have the full monorepo cloned:
 
 ```bash
-git clone https://github.com/guardian-claw/guardianclaw.git
+git clone https://github.com/guardianclaw/guardianclaw-platform.git
 cd guardianclaw
 npm install
 npm run build -w packages/core
@@ -288,7 +288,7 @@ npm run build -w packages/voltagent
 
 ## Links
 
-- [GitHub](https://github.com/guardian-claw/guardianclaw/tree/main/packages/voltagent)
+- [GitHub](https://github.com/guardianclaw/guardianclaw-platform/tree/main/packages/voltagent)
 - [GuardianClaw Documentation](https://guardianclaw.org)
 - [VoltAgent Documentation](https://voltagent.dev/docs/)
 

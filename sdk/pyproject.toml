@@ -106,8 +106,8 @@ dev = [
 [project.urls]
 Homepage = "https://guardianclaw.org"
 Documentation = "https://guardianclaw.org/docs"
-Repository = "https://github.com/guardian-claw/guardianclaw"
-Issues = "https://github.com/guardian-claw/guardianclaw/issues"
+Repository = "https://github.com/guardianclaw/guardianclaw-platform"
+Issues = "https://github.com/guardianclaw/guardianclaw-platform/issues"
 
 [tool.setuptools.packages.find]
 where = ["src"]

@@ -394,4 +394,4 @@ from guardianclaw.integrations.agent_validation import (
 
 - **GuardianClaw:** https://guardianclaw.org
 - **PyPI:** https://pypi.org/project/guardianclaw
-- **GitHub:** https://github.com/guardian-claw/guardianclaw
+- **GitHub:** https://github.com/guardianclaw/guardianclaw-platform

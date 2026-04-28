@@ -43,8 +43,8 @@ all = ["openai>=1.0.0", "anthropic>=0.20.0"]
 [project.urls]
 Homepage = "https://guardianclaw.org"
 Documentation = "https://guardianclaw.org/docs/promptfoo"
-Repository = "https://github.com/guardian-claw/guardianclaw"
-Issues = "https://github.com/guardian-claw/guardianclaw/issues"
+Repository = "https://github.com/guardianclaw/guardianclaw-platform"
+Issues = "https://github.com/guardianclaw/guardianclaw-platform/issues"
 
 [tool.hatch.build.targets.wheel]
 packages = ["guardianclaw_promptfoo"]

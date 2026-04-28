@@ -461,7 +461,7 @@ import type {
 - [GuardianClaw Documentation](https://guardianclaw.org/docs)
 - [ElizaOS Documentation](https://docs.elizaos.ai)
 - [CLAW Protocol Specification](https://guardianclaw.org/docs/methodology)
-- [GitHub Repository](https://github.com/guardian-claw/guardianclaw)
+- [GitHub Repository](https://github.com/guardianclaw/guardianclaw-platform)
 - [Contact](mailto:contact@guardianclaw.org)
 
 ## License

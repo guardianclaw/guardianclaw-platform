@@ -385,5 +385,5 @@ if __name__ == "__main__":
     print("="*60)
     print("\nFor more information, see:")
     print("  - https://guardianclaw.org/docs")
-    print("  - https://github.com/guardian-claw/guardianclaw")
+    print("  - https://github.com/guardianclaw/guardianclaw-platform")
     print("  - https://docs.game.virtuals.io/")
