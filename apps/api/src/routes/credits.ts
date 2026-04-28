@@ -12,9 +12,9 @@
 
 import { Hono } from 'hono'
 import { z } from 'zod'
-import { createClient } from '@supabase/supabase-js'
 import { authMiddleware } from '../middleware/auth'
 import { walletRateLimitMiddleware } from '../middleware/rate-limit'
+import { getUserClient } from '../lib/supabase-client'
 import {
   getBalance,
   processDeposit,
@@ -37,6 +37,8 @@ import { getTokenPrice } from '../services/prices'
 type Bindings = {
   SUPABASE_URL: string
   SUPABASE_SERVICE_KEY: string
+  SUPABASE_ANON_KEY: string
+  SUPABASE_JWT_SECRET: string
   JWT_SECRET: string
   SOLANA_RPC_URL?: string
   TREASURY_WALLET?: string
@@ -85,7 +87,7 @@ creditsRoutes.get('/pricing', (c) => {
 // GET /credits/balance - Get current balance (requires auth)
 creditsRoutes.get('/balance', authMiddleware, walletRateLimitMiddleware(), async (c) => {
   const wallet = c.get('wallet')
-  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)
+  const supabase = await getUserClient(c.env, wallet)
 
   const balance = await getBalance(supabase, wallet)
   const warningLevel = getBalanceWarningLevel(balance.executions_remaining)
@@ -128,7 +130,7 @@ creditsRoutes.post('/deposit', authMiddleware, walletRateLimitMiddleware(), asyn
     return c.json({ error: 'Payment system not configured' }, 503)
   }
 
-  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)
+  const supabase = await getUserClient(c.env, wallet)
 
   // Replay check is now handled atomically inside process_deposit RPC
   // via UNIQUE constraint on tx_signature
@@ -447,7 +449,7 @@ creditsRoutes.get('/history', authMiddleware, walletRateLimitMiddleware(), async
     return c.json({ error: 'Invalid query parameters', details: query.error.flatten() }, 400)
   }
 
-  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)
+  const supabase = await getUserClient(c.env, wallet)
   const deposits = await getDepositHistory(supabase, wallet, query.data.limit, query.data.offset)
 
   return c.json({
@@ -472,7 +474,7 @@ creditsRoutes.get('/usage', authMiddleware, walletRateLimitMiddleware(), async (
     return c.json({ error: 'Invalid query parameters', details: query.error.flatten() }, 400)
   }
 
-  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)
+  const supabase = await getUserClient(c.env, wallet)
   const usage = await getUsageHistory(supabase, wallet, query.data.limit, query.data.offset)
 
   // Calculate totals

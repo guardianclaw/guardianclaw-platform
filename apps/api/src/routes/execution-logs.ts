@@ -8,13 +8,15 @@
 import { Hono } from 'hono'
 import { streamSSE } from 'hono/streaming'
 import { z } from 'zod'
-import { createClient } from '@supabase/supabase-js'
 import { authMiddleware } from '../middleware/auth'
 import { walletRateLimitMiddleware } from '../middleware/rate-limit'
+import { getServiceClient, getUserClient } from '../lib/supabase-client'
 
 type Bindings = {
   SUPABASE_URL: string
   SUPABASE_SERVICE_KEY: string
+  SUPABASE_ANON_KEY: string
+  SUPABASE_JWT_SECRET: string
   JWT_SECRET: string
   RATE_LIMIT_KV?: KVNamespace
   IP_HASH_SECRET?: string
@@ -115,7 +117,7 @@ executionLogsRoutes.get('/:agentId/executions', async (c) => {
 
   const { limit, offset, status, event_source, start_date, end_date } = queryResult.data
 
-  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)
+  const supabase = await getUserClient(c.env, wallet)
 
   // Verify agent ownership
   const { data: agent, error: agentError } = await supabase
@@ -192,7 +194,7 @@ executionLogsRoutes.get('/:agentId/executions/export', async (c) => {
 
   const { days } = queryResult.data
 
-  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)
+  const supabase = await getUserClient(c.env, wallet)
 
   // Verify agent ownership
   const { data: agent, error: agentError } = await supabase
@@ -265,7 +267,12 @@ executionLogsRoutes.get('/:agentId/executions/stream', async (c) => {
     return c.json({ error: 'Invalid agent ID format' }, 400)
   }
 
-  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)
+  // SSE handler stays on service-role for now: the minted JWT used by
+  // getUserClient is intentionally short-lived (60s) and would expire long
+  // before the 5-minute SSE window. The handler-side wallet predicate
+  // below remains the user-scope barrier for this surface; revisit when
+  // we add JWT refresh inside the streaming loop.
+  const supabase = getServiceClient(c.env)
 
   // Verify agent ownership before starting stream
   const { data: agent, error: agentError } = await supabase
@@ -409,7 +416,7 @@ executionLogsRoutes.get('/:agentId/executions/:logId', async (c) => {
     return c.json({ error: 'Invalid log ID format' }, 400)
   }
 
-  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)
+  const supabase = await getUserClient(c.env, wallet)
 
   // Verify agent ownership
   const { data: agent, error: agentError } = await supabase
@@ -452,7 +459,7 @@ executionLogsRoutes.get('/:agentId/health', async (c) => {
     return c.json({ error: 'Invalid agent ID format' }, 400)
   }
 
-  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)
+  const supabase = await getUserClient(c.env, wallet)
 
   // Verify agent ownership
   const { data: agent, error: agentError } = await supabase
@@ -531,7 +538,7 @@ executionLogsRoutes.delete('/:agentId/executions', async (c) => {
 
   const { before: beforeDate } = queryResult.data
 
-  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)
+  const supabase = await getUserClient(c.env, wallet)
 
   // Verify agent ownership
   const { data: agent, error: agentError } = await supabase
