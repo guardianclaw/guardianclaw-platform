@@ -1,14 +1,16 @@
 import { Hono } from 'hono'
 import { z } from 'zod'
-import { createClient } from '@supabase/supabase-js'
 import { authMiddleware } from '../middleware/auth'
 import { walletRateLimitMiddleware } from '../middleware/rate-limit'
 import { generateApiKey, hashNewApiKey } from '../lib/api-key-hash'
 import { Errors } from '../lib/errors'
+import { getUserClient } from '../lib/supabase-client'
 
 type Bindings = {
   SUPABASE_URL: string
   SUPABASE_SERVICE_KEY: string
+  SUPABASE_ANON_KEY: string
+  SUPABASE_JWT_SECRET: string
   JWT_SECRET: string
   MODAL_RUNTIME_URL?: string
   API_BASE_URL?: string
@@ -70,7 +72,7 @@ deployRoutes.post('/:id', authMiddleware, walletRateLimitMiddleware(), async (c)
   const environment = body.environment
   const notes = body.notes
 
-  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)
+  const supabase = await getUserClient(c.env, wallet)
 
   // 1. Get agent and verify ownership
   const { data: agent, error: agentError } = await supabase
@@ -306,7 +308,7 @@ deployRoutes.delete('/:id', authMiddleware, walletRateLimitMiddleware(), async (
     return c.json({ error: 'Invalid environment. Must be dev, staging, or prod.' }, 400)
   }
 
-  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)
+  const supabase = await getUserClient(c.env, wallet)
 
   // Verify ownership
   const { data: agent } = await supabase
@@ -377,7 +379,7 @@ deployRoutes.get('/:id', authMiddleware, walletRateLimitMiddleware(), async (c) 
     return c.json({ error: 'Invalid environment. Must be dev, staging, or prod.' }, 400)
   }
 
-  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)
+  const supabase = await getUserClient(c.env, wallet)
 
   // Verify ownership
   const { data: agent } = await supabase
@@ -462,7 +464,7 @@ deployRoutes.post('/:id/keys', authMiddleware, walletRateLimitMiddleware(), asyn
   const body = await c.req.json()
   const name = body.name || `Key ${Date.now()}`
 
-  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)
+  const supabase = await getUserClient(c.env, wallet)
 
   // Verify ownership and deployment
   const { data: agent } = await supabase
@@ -528,7 +530,7 @@ deployRoutes.delete('/:id/keys/:keyId', authMiddleware, walletRateLimitMiddlewar
   const keyId = c.req.param('keyId')
   const wallet = c.get('wallet')
 
-  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)
+  const supabase = await getUserClient(c.env, wallet)
 
   // Verify ownership
   const { data: agent } = await supabase
@@ -580,7 +582,7 @@ deployRoutes.get('/:id/history', authMiddleware, walletRateLimitMiddleware(), as
 
   const { environment, limit, offset } = queryResult.data
 
-  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)
+  const supabase = await getUserClient(c.env, wallet)
 
   // Verify ownership
   const { data: agent } = await supabase
@@ -658,7 +660,7 @@ deployRoutes.get('/:id/stats', authMiddleware, walletRateLimitMiddleware(), asyn
   const agentId = c.req.param('id')
   const wallet = c.get('wallet')
 
-  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)
+  const supabase = await getUserClient(c.env, wallet)
 
   // Verify ownership
   const { data: agent } = await supabase
@@ -736,7 +738,7 @@ deployRoutes.post(
       // Ignore parse errors, notes is optional
     }
 
-    const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)
+    const supabase = await getUserClient(c.env, wallet)
 
     // Verify ownership
     const { data: agent } = await supabase
@@ -840,7 +842,7 @@ deployRoutes.post('/:id/promote', authMiddleware, walletRateLimitMiddleware(), a
 
   const { source_deployment_id, target_environment, notes } = body
 
-  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)
+  const supabase = await getUserClient(c.env, wallet)
 
   // Verify ownership
   const { data: agent } = await supabase
@@ -950,7 +952,7 @@ deployRoutes.get(
     const deploymentId = c.req.param('deploymentId')
     const wallet = c.get('wallet')
 
-    const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)
+    const supabase = await getUserClient(c.env, wallet)
 
     // Verify ownership
     const { data: agent } = await supabase
