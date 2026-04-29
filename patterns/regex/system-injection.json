@@ -1,0 +1,23 @@
+{
+  "$schema": "../schema.json",
+  "name": "system-injection",
+  "version": "2.0.0",
+  "kind": "regex",
+  "gate": "limits",
+  "flags": "i",
+  "description": "System prompt injection markers — delimiters and tags that attackers use to fake a higher-privileged turn (END PROMPT, system blocks, im_start tokens, etc.). Routed through the Limits gate. Aligned between Python's re and JavaScript's RegExp.",
+  "items": [
+    "---\\s*END\\s+(SYSTEM\\s+)?PROMPT\\s*---",
+    "###\\s*OVERRIDE\\s*###",
+    "<!--\\s*(admin|system|root)\\s+mode\\s*-->",
+    "\\{\\{\\s*system\\.(override|ignore|bypass)\\s*\\}\\}",
+    "%%\\s*(ADMIN|SYSTEM|ROOT)_COMMAND\\s*%%",
+    "\\[\\s*(SYSTEM|ADMIN|ROOT)\\s*\\]",
+    "```\\s*(system|admin)\\s*\\n",
+    "<\\|im_start\\|>\\s*system",
+    "<<\\s*SYS\\s*>>",
+    "official\\s+test,?\\s+(bypass|ignore|disable)",
+    "admin\\s+rights?,?\\s+show\\s+me",
+    "critical\\s+situation.*disable\\s+safety"
+  ]
+}

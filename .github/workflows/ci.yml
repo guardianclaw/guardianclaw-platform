@@ -151,5 +151,13 @@ jobs:
         with:
           python-version: '3.12'
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
       - name: Verify patterns/*.json are in sync with generated sources
         run: python scripts/gen_patterns.py --check
+
+      - name: Verify Python re and JS RegExp produce identical verdicts
+        run: python scripts/check_pattern_parity.py

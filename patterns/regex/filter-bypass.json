@@ -1,0 +1,17 @@
+{
+  "$schema": "../schema.json",
+  "name": "filter-bypass",
+  "version": "2.0.0",
+  "kind": "regex",
+  "gate": "limits",
+  "flags": "i",
+  "description": "Jailbreak attempts that ask the model to disable, deactivate, or work around its safety filters. Routed through the Limits gate. Aligned between Python's re and JavaScript's RegExp.",
+  "items": [
+    "(disable|turn\\s+off|deactivate|remove|bypass)\\s+(your\\s+)?(safety|content\\s+)?(filters?|features?|guardrails?|restrictions?|mode)",
+    "(disable|turn\\s+off|deactivate)\\s+(your\\s+)?safety\\s+(features?|mode|settings?)",
+    "(stop|quit|cease)\\s+(filtering|blocking|censoring|restricting)",
+    "without\\s+(any\\s+)?(safety|content)\\s+(filters?|restrictions?|guidelines)",
+    "no\\s+(safety|content)\\s+(filters?|restrictions?|guidelines)\\s+(needed|required|necessary)",
+    "bypass\\s+(the\\s+)?(content\\s+)?filter"
+  ]
+}

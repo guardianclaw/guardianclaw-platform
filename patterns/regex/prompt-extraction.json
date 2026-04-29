@@ -1,0 +1,18 @@
+{
+  "$schema": "../schema.json",
+  "name": "prompt-extraction",
+  "version": "2.0.0",
+  "kind": "regex",
+  "gate": "limits",
+  "flags": "i",
+  "description": "Jailbreak attempts that try to read the model's system prompt or hidden instructions. Routed through the Limits gate. Aligned between Python's re and JavaScript's RegExp.",
+  "items": [
+    "(reveal|show|display|print|output|give\\s+me)\\s+your\\s+(system\\s+)?(prompt|instructions|message|configuration)",
+    "(show|tell|give)\\s+me\\s+your\\s+(system\\s+)?(instructions|rules|prompt|configuration)",
+    "what\\s+(are|is)\\s+your\\s+(system\\s+)?(prompt|instructions|rules|guidelines)",
+    "(show|tell|give)\\s+me\\s+your\\s+(initial|original|system|hidden)\\s+(prompt|instructions|message)",
+    "(repeat|recite|echo)\\s+your\\s+(system\\s+)?(prompt|instructions)",
+    "(copy|paste|output)\\s+your\\s+(system\\s+)?(prompt|instructions|initial\\s+prompt)",
+    "(print|display)\\s+your\\s+(system\\s+)?(message|prompt|rules|configuration)"
+  ]
+}
