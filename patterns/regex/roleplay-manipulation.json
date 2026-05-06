@@ -1,0 +1,24 @@
+{
+  "$schema": "../schema.json",
+  "name": "roleplay-manipulation",
+  "version": "2.0.0",
+  "kind": "regex",
+  "gate": "credibility",
+  "flags": "i",
+  "description": "Jailbreak attempts that use fictional or hypothetical framing to bypass safety. Routed through the Credibility gate as context deception. Aligned between Python's re and JavaScript's RegExp.",
+  "items": [
+    "(let'?s?|we('re)?\\s+going\\s+to)\\s+(play|pretend|imagine|roleplay).*\\b(no\\s+rules|anything|unrestricted)",
+    "(imagine|pretend|suppose|assume)\\s+(that\\s+)?(you\\s+)?(are|were|have)\\s+(no|without|free\\s+from)\\s+(restrictions|rules|limits)",
+    "(hypothetical|fictional|educational|academic)\\s+(scenario|worth|context).*\\b(no\\s+rules|anything|unrestricted|bypass)",
+    "this\\s+is\\s+(fiction|a\\s+story|roleplay|just\\s+a\\s+game).*\\b(safety|rules|restrictions)\\s+(don'?t|doesn'?t|do\\s+not)\\s+apply",
+    "for\\s+(educational|research|academic|testing)\\s+purposes?,?\\s+(ignore|bypass|disable)",
+    "in\\s+this\\s+(story|scenario|game|roleplay),?\\s+(you\\s+)?(can|have\\s+no|are\\s+free)",
+    "what\\s+if\\s+you\\s+(didn'?t|did\\s+not|don'?t)\\s+have\\s+(any\\s+)?(rules|restrictions|limits|guidelines)",
+    "what\\s+would\\s+(you\\s+)?(say|do)\\s+if\\s+(you\\s+)?(had\\s+no|didn'?t\\s+have)\\s+(rules|restrictions)",
+    "hypothetically,?\\s+(if|what\\s+if)\\s+you\\s+had\\s+no\\s+restrict",
+    "in\\s+a\\s+fictional\\s+world\\s+where\\s+AI\\s+has\\s+no\\s+limit",
+    "for\\s+educational\\s+purposes\\s+only,?\\s+teach\\s+me",
+    "just\\s+theoretically,?\\s+how\\s+would\\s+one",
+    "in\\s+an\\s+alternate\\s+universe\\s+where\\s+this\\s+is\\s+legal"
+  ]
+}

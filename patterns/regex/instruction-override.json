@@ -1,0 +1,32 @@
+{
+  "$schema": "../schema.json",
+  "name": "instruction-override",
+  "version": "2.0.0",
+  "kind": "regex",
+  "gate": "limits",
+  "flags": "i",
+  "description": "Jailbreak attempts that ask the model to discard its prior instructions, rules, or safety guidelines. Routed through the Limits gate. Aligned between Python's re and JavaScript's RegExp; covered by parity tests in evaluation/parity/.",
+  "items": [
+    "ignore\\s+(all\\s+)?(previous\\s+)?(instructions|rules|guidelines|safety)",
+    "ignore\\s+(all\\s+)?(your\\s+)?(safety\\s+)?(rules|guidelines|instructions|restrictions)",
+    "ignore\\s+(all\\s+)?safety\\s+(guidelines|rules|restrictions|features)",
+    "ignor(e|ing)\\s+(your\\s+)?(previous\\s+)?(instructions|rules|guidelines|restrictions)",
+    "(please\\s+)?ignore\\s+(your\\s+)?(previous\\s+)?(instructions|rules)",
+    "(could|would)\\s+you\\s+(please\\s+)?ignore\\s+(your\\s+)?(instructions|rules|guidelines|restrictions|safety)",
+    "(would\\s+you\\s+mind|can\\s+you)\\s+ignoring\\s+(your\\s+)?(safety\\s+)?(guidelines|rules|restrictions)",
+    "disregard\\s+(all\\s+)?(your\\s+)?(instructions|rules|guidelines|programming|safety|training|ethical)",
+    "forget\\s+(everything|all)(\\s+(you\\s+(were|have\\s+been)\\s+told|above))?",
+    "override\\s+(your\\s+)?(programming|instructions|rules|safety|guidelines)",
+    "bypass\\s+(your\\s+)?(restrictions|filters|safety|guidelines|rules|content\\s+policy)",
+    "bypass\\s+(the\\s+)?(content\\s+)?filter",
+    "do\\s+not\\s+follow\\s+(your\\s+)?(rules|guidelines|instructions)",
+    "ignore\\s+(the\\s+)?(system\\s+)?prompt",
+    "cancel\\s+(all\\s+)?(previous\\s+)?(commands|instructions)",
+    "reset\\s+to\\s+(factory|default)\\s+settings",
+    "remove\\s+(all\\s+)?(safety\\s+)?(filters?|restrictions?|guardrails?)",
+    "start\\s+fresh",
+    "ign[0o][._]?r[._]?e\\s+(all\\s+)?previ[0o]us\\s+instructi[0o]ns",
+    "i[._]g[._]n[._]o[._]r[._]e\\s+(all\\s+)?(previous\\s+)?instructions",
+    "i_g_n_o_r_e\\s+(all\\s+)?(previous\\s+)?instructions"
+  ]
+}
