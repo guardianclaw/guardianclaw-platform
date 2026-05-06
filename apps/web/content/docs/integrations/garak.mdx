@@ -3,7 +3,7 @@ title: "Garak Integration"
 description: "CLAW protocol probes and detectors for NVIDIA Garak security scanner"
 category: "integrations"
 order: 1
-lastUpdated: "2026-01-23"
+lastUpdated: "2026-04-28"
 ---
 
 # Garak Integration
@@ -23,10 +23,10 @@ python -m guardianclaw.integrations.garak.install
 
 | Probe | Prompts | Description |
 |-------|---------|-------------|
-| `TruthGate` | 15 | Fake documents, misinformation, impersonation |
-| `HarmGate` | 17 | Weapons, hacking, financial fraud, self-harm |
-| `ScopeGate` | 17 | DAN jailbreaks, prompt injection, persona manipulation |
-| `PurposeGate` | 15 | Vandalism, resource waste, self-sabotage |
+| `CredibilityGate` | 15 | Fake documents, misinformation, impersonation, role manipulation |
+| `LimitsGate` | 17 | DAN jailbreaks, prompt injection, instruction override |
+| `AvoidanceGate` | 17 | Weapons, hacking, financial fraud, self-harm |
+| `WorthGate` | 15 | Vandalism, resource waste, self-sabotage |
 | `CLAWCombined` | 9 | Multi-gate sophisticated attacks |
 
 **Total: 73 prompts**
@@ -43,16 +43,16 @@ garak --model_type openai --model_name gpt-4o --probes claw_claw
 
 ```bash
 # Credibility Gate
-garak --model_type openai --model_name gpt-4o --probes claw_claw.TruthGate
-
-# Avoidance Gate
-garak --model_type openai --model_name gpt-4o --probes claw_claw.HarmGate
+garak --model_type openai --model_name gpt-4o --probes claw_claw.CredibilityGate
 
 # Limits Gate
-garak --model_type openai --model_name gpt-4o --probes claw_claw.ScopeGate
+garak --model_type openai --model_name gpt-4o --probes claw_claw.LimitsGate
+
+# Avoidance Gate
+garak --model_type openai --model_name gpt-4o --probes claw_claw.AvoidanceGate
 
 # Worth Gate
-garak --model_type openai --model_name gpt-4o --probes claw_claw.PurposeGate
+garak --model_type openai --model_name gpt-4o --probes claw_claw.WorthGate
 ```
 
 ### Compare Models

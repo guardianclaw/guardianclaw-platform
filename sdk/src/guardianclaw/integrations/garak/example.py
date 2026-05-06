@@ -13,7 +13,7 @@ Prerequisites for full usage:
     pip install garak guardianclaw
     python -m guardianclaw.integrations.garak.install
 
-Documentation: https://github.com/guardian-claw/guardianclaw/tree/main/src/guardianclaw/integrations/garak
+Documentation: https://github.com/guardianclaw/guardianclaw-platform/tree/main/src/guardianclaw/integrations/garak
 """
 
 import sys
@@ -272,7 +272,7 @@ def main(demo_mode: bool = True):
         example_ci_cd()
 
     print("\n" + "=" * 70)
-    print("Documentation: https://github.com/guardian-claw/guardianclaw/tree/main/src/guardianclaw/integrations/garak")
+    print("Documentation: https://github.com/guardianclaw/guardianclaw-platform/tree/main/src/guardianclaw/integrations/garak")
     print("Garak Docs: https://docs.garak.ai")
     print("=" * 70 + "\n")
 

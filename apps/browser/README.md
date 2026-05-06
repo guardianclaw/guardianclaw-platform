@@ -57,7 +57,7 @@ Browser extension that protects your AI conversations from data harvesting, moni
 
 ```bash
 # Clone the repository
-git clone https://github.com/guardian-claw/guardianclaw.git
+git clone https://github.com/guardianclaw/guardianclaw-platform.git
 cd guardianclaw/packages/browser
 
 # Install dependencies
@@ -224,7 +224,7 @@ MIT License (see [LICENSE](../../LICENSE))
 ## Links
 
 - Website: https://guardianclaw.org
-- GitHub: https://github.com/guardian-claw/guardianclaw
+- GitHub: https://github.com/guardianclaw/guardianclaw-platform
 - Twitter: @guardianclaw
 - PyPI: https://pypi.org/project/guardianclaw/
 - npm: https://www.npmjs.com/package/@guardianclaw/core

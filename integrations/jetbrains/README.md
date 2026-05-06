@@ -2,7 +2,7 @@
 
 AI safety guardrails for LLM prompts using the CLAW protocol (Credibility, Limits, Avoidance, Worth).
 
-[![Build Status](https://github.com/guardian-claw/guardianclaw/actions/workflows/ci.yml/badge.svg)](https://github.com/guardian-claw/guardianclaw/actions)
+[![Build Status](https://github.com/guardianclaw/guardianclaw-platform/actions/workflows/ci.yml/badge.svg)](https://github.com/guardianclaw/guardianclaw-platform/actions)
 [![JetBrains Plugin](https://img.shields.io/badge/JetBrains-Plugin-blue)](https://plugins.jetbrains.com/plugin/29459-claw-ai-safety)
 [![Version](https://img.shields.io/badge/version-0.3.0-green)](CHANGELOG.md)
 
@@ -155,7 +155,7 @@ API keys are stored securely using the IDE's built-in credential storage (Passwo
 
 ```bash
 # Clone the repository
-git clone https://github.com/guardian-claw/guardianclaw.git
+git clone https://github.com/guardianclaw/guardianclaw-platform.git
 cd guardianclaw/packages/jetbrains
 
 # Build the plugin
@@ -237,5 +237,5 @@ MIT License - see [LICENSE](LICENSE)
 ## Links
 
 - [Documentation](https://guardianclaw.org/docs)
-- [GitHub](https://github.com/guardian-claw/guardianclaw)
+- [GitHub](https://github.com/guardianclaw/guardianclaw-platform)
 - [JetBrains Marketplace](https://plugins.jetbrains.com/plugin/29459-claw-ai-safety)

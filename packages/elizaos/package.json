@@ -47,12 +47,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/guardian-claw/guardianclaw.git",
+    "url": "git+https://github.com/guardianclaw/guardianclaw-platform.git",
     "directory": "packages/elizaos"
   },
   "homepage": "https://guardianclaw.org",
   "bugs": {
-    "url": "https://github.com/guardian-claw/guardianclaw/issues"
+    "url": "https://github.com/guardianclaw/guardianclaw-platform/issues"
   },
   "dependencies": {},
   "peerDependencies": {

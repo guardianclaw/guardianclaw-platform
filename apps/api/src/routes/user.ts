@@ -13,15 +13,17 @@
  */
 
 import { Hono } from 'hono'
-import { createClient } from '@supabase/supabase-js'
 import { authMiddleware } from '../middleware/auth'
 import { walletRateLimitMiddleware } from '../middleware/rate-limit'
 import { createSecureLogger, hashWallet } from '../lib/secure-logger'
 import { getRequestId, getClientIP } from '../middleware/logging'
+import { getServiceClient, getUserClient } from '../lib/supabase-client'
 
 type Bindings = {
   SUPABASE_URL: string
   SUPABASE_SERVICE_KEY: string
+  SUPABASE_ANON_KEY: string
+  SUPABASE_JWT_SECRET: string
   JWT_SECRET: string
   RATE_LIMIT_KV?: KVNamespace
   IP_HASH_SECRET?: string
@@ -57,7 +59,10 @@ userRoutes.get('/export', async (c) => {
   const clientIP = getClientIP(c)
   const logger = createSecureLogger({ IP_HASH_SECRET: c.env.IP_HASH_SECRET })
 
-  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)
+  // Read-only export: every query is wallet-scoped. RLS clamps each table
+  // to the caller's rows, so a forgotten predicate cannot leak another
+  // wallet's data.
+  const supabase = await getUserClient(c.env, wallet)
 
   try {
     // Log security event
@@ -176,7 +181,21 @@ userRoutes.delete('/data', async (c) => {
   const clientIP = getClientIP(c)
   const logger = createSecureLogger({ IP_HASH_SECRET: c.env.IP_HASH_SECRET })
 
-  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)
+  // GDPR erasure cascades across nine tables and writes an immutable row
+  // to deletion_audit_log. Several of those tables (auth_sessions,
+  // usage_daily, deletion_audit_log) lack the JWT DELETE/INSERT policies
+  // a user-client would need; switching this single handler to user-client
+  // would require either a much wider policy migration or a partial
+  // failure mode in the cascade.
+  //
+  // The right long-term shape is a single SECURITY DEFINER RPC,
+  // `purge_user_data(wallet)`, that runs the entire cascade in one
+  // transaction with explicit ownership predicates. That is queued for
+  // Frente B.2 (transactional writes RPC pattern). Until then this
+  // handler stays on service-role with the existing handler-side
+  // .eq('wallet_address') chain as the boundary, and SECURITY.md G-05
+  // continues to call this out as an open gap for the deletion path.
+  const supabase = getServiceClient(c.env)
 
   try {
     // Log security event - deletion initiated
@@ -405,7 +424,8 @@ userRoutes.get('/profile', async (c) => {
   const wallet = c.get('wallet')
   const requestId = getRequestId(c)
 
-  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)
+  // Single-row read of the caller's own profile — RLS-enforceable.
+  const supabase = await getUserClient(c.env, wallet)
 
   const { data, error } = await supabase
     .from('profiles')

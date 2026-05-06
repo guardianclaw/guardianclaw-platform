@@ -3,7 +3,7 @@ title: "Introduction to GuardianClaw"
 description: "AI Safety Framework for LLMs, Agents, and Robots"
 category: "getting-started"
 order: 1
-lastUpdated: "2026-01-23"
+lastUpdated: "2026-04-28"
 ---
 
 # Introduction to GuardianClaw
@@ -28,10 +28,10 @@ GuardianClaw implements the CLAW protocol, a four-gate validation system:
 
 | Gate | Question | Failure Condition |
 |------|----------|-------------------|
-| **Truth** | Does this involve deception? | Creating/spreading false information |
-| **Harm** | Could this cause damage? | Physical, psychological, financial harm |
-| **Scope** | Is this within appropriate limits? | Exceeding authority, bypassing consent |
-| **Purpose** | Does this serve legitimate benefit? | No genuine value to anyone |
+| **Credibility** | Does this involve deception? | Creating/spreading false information, role manipulation |
+| **Limits** | Is this within appropriate boundaries? | Exceeding authority, bypassing consent, instruction override |
+| **Avoidance** | Could this cause damage? | Physical, psychological, financial harm |
+| **Worth** | Does this serve legitimate benefit? | No genuine value to anyone |
 
 Every input and output must pass all four gates. The absence of harm is not sufficient; there must be genuine purpose.
 

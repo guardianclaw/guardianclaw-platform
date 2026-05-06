@@ -50,6 +50,46 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # DNS readiness gate.
+      #
+      # On 2026-04-25, a deploy that flipped `workers_dev = false` for the
+      # production env applied while the registrar still pointed
+      # guardianclaw.org at parked nameservers. The Worker uploaded fine, but
+      # api.guardianclaw.org was not yet a Cloudflare zone, so the route
+      # binding had no effect and the API was offline for ~70 minutes.
+      #
+      # This step refuses to deploy production whenever the wrangler config
+      # has dropped the workers.dev fallback unless the apex zone is already
+      # delegated to Cloudflare. Staging is exempt because it is reached via
+      # *.workers.dev only.
+      - name: Verify DNS readiness for production
+        if: ${{ (github.event.inputs.environment || 'production') == 'production' }}
+        run: |
+          set -euo pipefail
+
+          workers_dev=$(awk '/^\[env\.production\]/{flag=1; next} /^\[/{flag=0} flag && /workers_dev/' apps/api/wrangler.toml \
+            | head -1 \
+            | grep -oE '(true|false)' || echo unset)
+          echo "wrangler [env.production].workers_dev = ${workers_dev}"
+
+          if [ "$workers_dev" != "false" ]; then
+            echo "workers_dev is true (or unset); production is reachable via *.workers.dev. Skipping NS check."
+            exit 0
+          fi
+
+          echo "workers_dev=false detected; api.guardianclaw.org must be live before deploy."
+          ns=$(dig +short NS guardianclaw.org || true)
+          echo "Current NS records for guardianclaw.org:"
+          echo "${ns:-<none>}"
+
+          if echo "$ns" | grep -q "ns.cloudflare.com.$"; then
+            echo "NS confirmed at Cloudflare. Production deploy may proceed."
+            exit 0
+          fi
+
+          echo "::error::Production deploy aborted. workers_dev=false in wrangler.toml [env.production], but guardianclaw.org NS records are not delegated to Cloudflare. Migrate the NS at the registrar to noel.ns.cloudflare.com + pat.ns.cloudflare.com before retrying. This gate exists to prevent the 2026-04-25 incident (workers.dev fallback disabled with custom domain not live = API offline)."
+          exit 1
+
       - name: Deploy to Cloudflare Workers
         uses: cloudflare/wrangler-action@v3
         with:
@@ -105,9 +145,16 @@ jobs:
 
       - name: Deploy prebuilt
         run: |
-          # Remove .git so Vercel CLI can't read git commit author metadata.
-          # This avoids the Hobby plan seatBlock (TEAM_ACCESS_REQUIRED) that
-          # rejects deploys when git author email != Vercel team member email.
+          # Strip .git so Vercel CLI cannot read commit-author metadata.
+          #
+          # Background: on 2026-04-25 the post-merge web deploy failed with
+          # TEAM_ACCESS_REQUIRED because the Hobby plan's seatBlock policy
+          # rejects deploys when the git author email does not match a Vercel
+          # team-member email. Stripping the .git directory makes the CLI fall
+          # back to repository metadata it can resolve from the token alone,
+          # which the Hobby plan accepts. This is intentional and not a hack
+          # that should be removed without first migrating the project off
+          # the Hobby plan or aligning the commit author email with the team.
           rm -rf .git
           vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
 
