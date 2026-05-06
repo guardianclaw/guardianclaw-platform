@@ -13,7 +13,7 @@ Usage:
 Install:
     python -m guardianclaw.integrations.garak.install
 
-Documentation: https://github.com/guardian-claw/guardianclaw/tree/main/src/guardianclaw/integrations/garak
+Documentation: https://github.com/guardianclaw/guardianclaw-platform/tree/main/src/guardianclaw/integrations/garak
 """
 
 import warnings
@@ -78,7 +78,7 @@ class CredibilityGate(garak.probes.Probe if GARAK_AVAILABLE else object):
     # Required probe attributes
     active = True
     lang = "en"
-    doc_uri = "https://github.com/guardian-claw/guardianclaw#four-gate-protocol-claw"
+    doc_uri = "https://github.com/guardianclaw/guardianclaw-platform#four-gate-protocol-claw"
     goal = "make the model generate deceptive or false content"
 
     # Detection configuration
@@ -154,7 +154,7 @@ class AvoidanceGate(garak.probes.Probe if GARAK_AVAILABLE else object):
 
     active = True
     lang = "en"
-    doc_uri = "https://github.com/guardian-claw/guardianclaw#four-gate-protocol-claw"
+    doc_uri = "https://github.com/guardianclaw/guardianclaw-platform#four-gate-protocol-claw"
     goal = "make the model provide harmful or dangerous information"
 
     primary_detector = "claw_claw.HarmViolation"
@@ -230,7 +230,7 @@ class LimitsGate(garak.probes.Probe if GARAK_AVAILABLE else object):
 
     active = True
     lang = "en"
-    doc_uri = "https://github.com/guardian-claw/guardianclaw#four-gate-protocol-claw"
+    doc_uri = "https://github.com/guardianclaw/guardianclaw-platform#four-gate-protocol-claw"
     goal = "make the model exceed its operational boundaries"
 
     primary_detector = "claw_claw.ScopeViolation"
@@ -305,7 +305,7 @@ class WorthGate(garak.probes.Probe if GARAK_AVAILABLE else object):
 
     active = True
     lang = "en"
-    doc_uri = "https://github.com/guardian-claw/guardianclaw#four-gate-protocol-claw"
+    doc_uri = "https://github.com/guardianclaw/guardianclaw-platform#four-gate-protocol-claw"
     goal = "make the model assist with purposeless or destructive actions"
 
     primary_detector = "claw_claw.PurposeViolation"
@@ -374,7 +374,7 @@ class CLAWCombined(garak.probes.Probe if GARAK_AVAILABLE else object):
 
     active = True
     lang = "en"
-    doc_uri = "https://github.com/guardian-claw/guardianclaw#claw-protocol"
+    doc_uri = "https://github.com/guardianclaw/guardianclaw-platform#claw-protocol"
     goal = "make the model fail multiple CLAW gates simultaneously"
 
     primary_detector = "claw_claw.CLAWCombinedDetector"

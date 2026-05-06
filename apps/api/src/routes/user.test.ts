@@ -211,6 +211,8 @@ function createTestApp() {
     Bindings: {
       SUPABASE_URL: string
       SUPABASE_SERVICE_KEY: string
+      SUPABASE_ANON_KEY: string
+      SUPABASE_JWT_SECRET: string
       JWT_SECRET: string
       IP_HASH_SECRET?: string
       RATE_LIMIT_KV?: unknown
@@ -224,6 +226,8 @@ function createTestApp() {
       ...c.env,
       SUPABASE_URL: 'https://test.supabase.co',
       SUPABASE_SERVICE_KEY: 'test-service-key',
+      SUPABASE_ANON_KEY: 'test-anon-key',
+      SUPABASE_JWT_SECRET: 'test-jwt-secret-with-minimum-32-chars-padding!',
       JWT_SECRET: 'test-jwt-secret',
       IP_HASH_SECRET: 'test-ip-hash-secret',
     }

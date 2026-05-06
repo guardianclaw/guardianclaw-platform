@@ -25,10 +25,10 @@ AI safety guardrails for [OpenClaw](https://github.com/openclaw/openclaw). Prote
 <td width="50%">
 
 **Resources**
-- [Integration Guide](https://github.com/guardian-claw/guardianclaw/blob/main/docs/integrations/openclaw.md)
-- [GuardianClaw Core](https://github.com/guardian-claw/guardianclaw)
-- [API Reference](https://github.com/guardian-claw/guardianclaw/tree/main/docs/api)
-- [Examples](https://github.com/guardian-claw/guardianclaw/tree/main/packages/openclaw/examples)
+- [Integration Guide](https://github.com/guardianclaw/guardianclaw-platform/blob/main/docs/integrations/openclaw.md)
+- [GuardianClaw Core](https://github.com/guardianclaw/guardianclaw-platform)
+- [API Reference](https://github.com/guardianclaw/guardianclaw-platform/tree/main/docs/api)
+- [Examples](https://github.com/guardianclaw/guardianclaw-platform/tree/main/packages/openclaw/examples)
 
 </td>
 </tr>
@@ -398,7 +398,7 @@ When alerts are enabled, GuardianClaw sends POST requests to your webhook:
 
 ## Links
 
-- [GuardianClaw Core](https://github.com/guardian-claw/guardianclaw)
+- [GuardianClaw Core](https://github.com/guardianclaw/guardianclaw-platform)
 - [OpenClaw](https://github.com/openclaw/openclaw)
 - [Documentation](https://guardianclaw.org)
 

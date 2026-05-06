@@ -1,0 +1,32 @@
+{
+  "$schema": "../schema.json",
+  "name": "role-manipulation",
+  "version": "2.0.0",
+  "kind": "regex",
+  "gate": "credibility",
+  "flags": "i",
+  "description": "Jailbreak attempts that try to redefine the model's identity (DAN, developer mode, root, etc.). Routed through the Credibility gate as identity deception. Aligned between Python's re and JavaScript's RegExp.",
+  "items": [
+    "you\\s+are\\s+(now\\s+)?(an?\\s+)?(DAN|jailbroken|unrestricted|unfiltered|evil|unlimited)",
+    "you\\s+are\\s+now\\s+in\\s+(developer|debug|admin|god|unrestricted|jailbreak|testing)\\s+mode",
+    "(enter|switch\\s+to|enable|activate)\\s+(developer|debug|admin|god|unrestricted|jailbreak|DAN|sudo|root)\\s+mode",
+    "(access|enter)\\s+(developer|admin|testing)\\s+(settings|mode)",
+    "pretend\\s+(that\\s+)?you\\s+(have\\s+no|don'?t\\s+have(\\s+any)?)\\s+(restrictions|rules|limits|guidelines|filters)",
+    "pretend\\s+(that\\s+)?you\\s+(are|is)\\s+DAN",
+    "act\\s+(like|as)\\s+(an?\\s+)?(AI|assistant|bot|you)\\s+(with(out)?|without)\\s+(any\\s+)?(restrictions|rules|limits|limitations)",
+    "act\\s+as\\s+(an?\\s+)?(unrestricted|unfiltered|unlimited|evil|unethical|hacker|malicious)\\s+(AI|assistant|bot)",
+    "act\\s+as\\s+DAN",
+    "you\\s+(can|will|must)\\s+(now\\s+)?(do|say)\\s+anything",
+    "from\\s+now\\s+on,?\\s+you\\s+(have\\s+no|are\\s+free\\s+from)\\s+(restrictions|rules|limits)",
+    "imagine\\s+(you\\s+)?(are|were)\\s+(an?\\s+)?(evil|unrestricted|unfiltered)\\s+(AI|assistant|bot)",
+    "you\\s+are\\s+DAN\\s*\\d+(\\.\\d+)?",
+    "be\\s+a\\s+(malicious|evil|hacker)\\s+(assistant|AI)",
+    "you\\s+are\\s+(now\\s+)?a\\s+hacker\\s+AI",
+    "roleplay\\s+as\\s+(an\\s+)?(AI|assistant)\\s+(with(out)?|without|with\\s+no)\\s+(ethical|any)\\s+(guidelines?|rules?)",
+    "you\\s+are\\s+(VENOM|EVIL|DARK|CHAOS|DOOM)",
+    "AI\\s+from\\s+a\\s+dystopia",
+    "(sudo|root)\\s+(mode\\s+)?activated",
+    "(root|admin)\\s+access\\s+granted",
+    "testing\\s+mode,?\\s+(no|without)\\s+restrictions"
+  ]
+}

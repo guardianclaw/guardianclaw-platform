@@ -21,8 +21,8 @@ GuardianClaw Platform is a monorepo containing the web platform, API, and browse
 ## Current Status
 
 **Live URLs:**
-- Frontend: https://guardianclaw.org
-- API: https://api.guardianclaw.org
+- Frontend: https://guardianclaw.org *(custom domain pending — Vercel deployment is live at the project's `*.vercel.app` URL)*
+- API: `https://claw-api-production.guardianclaw.workers.dev` *(custom `api.guardianclaw.org` pending DNS migration)*
 
 **CI/CD:** GitHub Actions (Lint, TypeCheck, Test, Build, Deploy)
 
@@ -106,7 +106,7 @@ GuardianClaw Platform is a monorepo containing the web platform, API, and browse
 - [ ] Full agent deployment to Modal.com (currently test execution only)
 
 #### Token & Governance
-- [x] $GCLAW token integration for voting power
+- [ ] $GCLAW token integration for voting power
 - [ ] On-chain vote recording and execution
 - [ ] Staking for proposal creation
 
@@ -170,14 +170,13 @@ guardianclaw-platform/
 ├── packages/
 │   ├── core/                     # @guardianclaw/core
 │   ├── shared/                   # @guardianclaw/shared
-│   ├── openclaw/                  # @guardianclaw/openclaw
+│   ├── openclaw/                 # @guardianclaw/openclaw
 │   ├── voltagent/                # @guardianclaw/voltagent
 │   ├── elizaos/                  # @guardianclaw/elizaos-plugin
-│   ├── goat-plugin/              # @goat-sdk/plugin-claw
-│   ├── vscode/                   # VS Code extension
-│   └── runtime/                  # Modal.com runtime
+│   └── runtime/                  # Modal.com runtime (Python)
 │
 ├── sdk/                          # Python SDK (guardianclaw)
+├── integrations/                 # External adapters (jetbrains, promptfoo, solana-agent-kit)
 │
 └── turbo.json                    # Monorepo config
 ```
@@ -351,5 +350,5 @@ MIT
 
 ---
 
-**Last Updated:** 2026-04-24
+**Last Updated:** 2026-04-28
 **Version:** 0.1.0

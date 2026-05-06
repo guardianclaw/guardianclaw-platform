@@ -51,11 +51,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/guardian-claw/guardianclaw.git",
+    "url": "git+https://github.com/guardianclaw/guardianclaw-platform.git",
     "directory": "packages/solana-agent-kit/typescript"
   },
   "bugs": {
-    "url": "https://github.com/guardian-claw/guardianclaw/issues"
+    "url": "https://github.com/guardianclaw/guardianclaw-platform/issues"
   },
   "homepage": "https://guardianclaw.org",
   "peerDependencies": {
