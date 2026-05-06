@@ -32,5 +32,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Links
 
 - [PyPI package](https://pypi.org/project/guardianclaw-promptfoo/)
-- [GitHub](https://github.com/guardian-claw/guardianclaw/tree/main/packages/promptfoo)
+- [GitHub](https://github.com/guardianclaw/guardianclaw-platform/tree/main/packages/promptfoo)
 - [Promptfoo Documentation](https://promptfoo.dev/docs/)

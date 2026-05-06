@@ -541,19 +541,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Alignment seeds (minimal, standard, full)
 - OpenAI and Anthropic provider support
 
-[2.26.0]: https://github.com/guardian-claw/guardianclaw/compare/v2.25.1...v2.26.0
-[2.25.1]: https://github.com/guardian-claw/guardianclaw/compare/v2.25.0...v2.25.1
-[2.25.0]: https://github.com/guardian-claw/guardianclaw/compare/v2.24.0...v2.25.0
-[2.24.0]: https://github.com/guardian-claw/guardianclaw/compare/v2.23.1...v2.24.0
-[2.23.1]: https://github.com/guardian-claw/guardianclaw/compare/v2.23.0...v2.23.1
-[2.23.0]: https://github.com/guardian-claw/guardianclaw/compare/v2.19.0...v2.23.0
-[2.19.0]: https://github.com/guardian-claw/guardianclaw/compare/v2.18.0...v2.19.0
-[2.18.0]: https://github.com/guardian-claw/guardianclaw/compare/v2.17.0...v2.18.0
-[2.17.0]: https://github.com/guardian-claw/guardianclaw/compare/v2.16.0...v2.17.0
-[2.16.0]: https://github.com/guardian-claw/guardianclaw/compare/v2.15.0...v2.16.0
-[2.15.0]: https://github.com/guardian-claw/guardianclaw/compare/v2.14.0...v2.15.0
-[2.14.0]: https://github.com/guardian-claw/guardianclaw/compare/v2.13.0...v2.14.0
-[2.13.0]: https://github.com/guardian-claw/guardianclaw/compare/v2.12.0...v2.13.0
-[2.12.0]: https://github.com/guardian-claw/guardianclaw/compare/v2.11.0...v2.12.0
-[2.11.0]: https://github.com/guardian-claw/guardianclaw/compare/v2.10.0...v2.11.0
-[2.10.0]: https://github.com/guardian-claw/guardianclaw/releases/tag/v2.10.0
+[2.26.0]: https://github.com/guardianclaw/guardianclaw-platform/compare/v2.25.1...v2.26.0
+[2.25.1]: https://github.com/guardianclaw/guardianclaw-platform/compare/v2.25.0...v2.25.1
+[2.25.0]: https://github.com/guardianclaw/guardianclaw-platform/compare/v2.24.0...v2.25.0
+[2.24.0]: https://github.com/guardianclaw/guardianclaw-platform/compare/v2.23.1...v2.24.0
+[2.23.1]: https://github.com/guardianclaw/guardianclaw-platform/compare/v2.23.0...v2.23.1
+[2.23.0]: https://github.com/guardianclaw/guardianclaw-platform/compare/v2.19.0...v2.23.0
+[2.19.0]: https://github.com/guardianclaw/guardianclaw-platform/compare/v2.18.0...v2.19.0
+[2.18.0]: https://github.com/guardianclaw/guardianclaw-platform/compare/v2.17.0...v2.18.0
+[2.17.0]: https://github.com/guardianclaw/guardianclaw-platform/compare/v2.16.0...v2.17.0
+[2.16.0]: https://github.com/guardianclaw/guardianclaw-platform/compare/v2.15.0...v2.16.0
+[2.15.0]: https://github.com/guardianclaw/guardianclaw-platform/compare/v2.14.0...v2.15.0
+[2.14.0]: https://github.com/guardianclaw/guardianclaw-platform/compare/v2.13.0...v2.14.0
+[2.13.0]: https://github.com/guardianclaw/guardianclaw-platform/compare/v2.12.0...v2.13.0
+[2.12.0]: https://github.com/guardianclaw/guardianclaw-platform/compare/v2.11.0...v2.12.0
+[2.11.0]: https://github.com/guardianclaw/guardianclaw-platform/compare/v2.10.0...v2.11.0
+[2.10.0]: https://github.com/guardianclaw/guardianclaw-platform/releases/tag/v2.10.0

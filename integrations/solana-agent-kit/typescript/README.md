@@ -247,7 +247,7 @@ GuardianClaw addresses these by requiring every transaction to pass through the 
 
 - **Website**: [guardianclaw.org](https://guardianclaw.org)
 - **Documentation**: [guardianclaw.org/docs](https://guardianclaw.org/docs)
-- **GitHub**: [guardian-claw/guardianclaw](https://github.com/guardian-claw/guardianclaw/tree/main/packages/solana-agent-kit/typescript)
+- **GitHub**: [guardianclaw/guardianclaw-platform](https://github.com/guardianclaw/guardianclaw-platform/tree/main/packages/solana-agent-kit/typescript)
 - **npm**: [@guardianclaw/solana-agent-kit](https://www.npmjs.com/package/@guardianclaw/solana-agent-kit)
 - **Contact**: [contact@guardianclaw.org](mailto:contact@guardianclaw.org)
 

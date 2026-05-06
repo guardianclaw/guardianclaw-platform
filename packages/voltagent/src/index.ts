@@ -25,7 +25,7 @@
  * });
  * ```
  *
- * @see https://github.com/guardian-claw/guardianclaw/tree/main/packages/voltagent
+ * @see https://github.com/guardianclaw/guardianclaw-platform/tree/main/packages/voltagent
  * @see https://voltagent.dev/docs/
  */
 

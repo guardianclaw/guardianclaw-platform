@@ -604,12 +604,12 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
               <div style={styles.aboutRow}>
                 <span>{t('github')}</span>
                 <a
-                  href="https://github.com/guardian-claw/guardianclaw"
+                  href="https://github.com/guardianclaw/guardianclaw-platform"
                   target="_blank"
                   rel="noopener noreferrer"
                   style={styles.link}
                 >
-                  guardian-claw/guardianclaw
+                  guardianclaw/guardianclaw-platform
                 </a>
               </div>
             </div>

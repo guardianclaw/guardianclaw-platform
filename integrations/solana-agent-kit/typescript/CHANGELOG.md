@@ -57,5 +57,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Links
 
 - [npm package](https://www.npmjs.com/package/@guardianclaw/solana-agent-kit)
-- [GitHub](https://github.com/guardian-claw/guardianclaw/tree/main/packages/solana-agent-kit/typescript)
+- [GitHub](https://github.com/guardianclaw/guardianclaw-platform/tree/main/packages/solana-agent-kit/typescript)
 - [Documentation](https://guardianclaw.org/docs)

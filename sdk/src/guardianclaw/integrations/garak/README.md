@@ -336,5 +336,5 @@ print(f"Requires Garak >= {MIN_GARAK_VERSION}")
 
 - [Garak Documentation](https://docs.garak.ai)
 - [Garak GitHub](https://github.com/NVIDIA/garak)
-- [GuardianClaw CLAW Protocol](https://github.com/guardian-claw/guardianclaw#claw-protocol)
+- [GuardianClaw CLAW Protocol](https://github.com/guardianclaw/guardianclaw-platform#claw-protocol)
 - [OWASP LLM Top 10](https://genai.owasp.org/)
