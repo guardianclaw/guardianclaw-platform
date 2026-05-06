@@ -250,7 +250,12 @@ The API runtime uses the Supabase `service_role` key across most user-scoped rou
 
 ### G-05 — Writes With Application-Level Ownership Predicate
 
-The `social-deliveries` approval path moved to a server-side predicate on 2026-04-26 (see **Implemented Controls → Server-Side Ownership Predicate**). The remaining user-scoped write paths (`memories`, `character`, `user` deletion) still rely on a handler-side ownership check followed by a write keyed on the record `id` without reaffirming the predicate at the write boundary. Safe in practice today, but tightening this pattern is part of the ownership-predicate hardening in flight (Onda 3 Frente B.2).
+The `social-deliveries` approval path moved to a server-side predicate on 2026-04-26 (see **Implemented Controls → Server-Side Ownership Predicate**). The Frente B.1 migration to JWT-claims RLS (2026-04-26 → 2026-04-28) has shifted reads on `memories`, `character`, and the user-scoped read paths in `/user` to a runtime barrier: those queries now run under an anon-key client whose minted JWT carries the wallet as a custom claim, and parallel RLS policies reject cross-tenant access at the database. Two ownership paths remain on the older shape:
+
+1. **DELETE /user/data (GDPR right to erasure).** Cascades across nine tables and writes an immutable row to `deletion_audit_log`. Currently runs with service-role and a handler-side `.eq('wallet_address', wallet)` chain. The right shape is a single `SECURITY DEFINER` RPC `purge_user_data(wallet)` that performs the entire cascade in one transaction with explicit ownership predicates — queued for Onda 3 Frente B.2.
+2. **`memories` and `character` write paths (mutations).** Reads use the JWT-claims path; writes still mix handler-side predicates with service-role cascades. Same B.2 RPC pattern applies.
+
+Until B.2 lands, defense in depth: every relevant handler retains the explicit `.eq('wallet_address', wallet)` predicate.
 
 ### G-06 — Branch Protection and CODEOWNERS Gating Not Active
 
