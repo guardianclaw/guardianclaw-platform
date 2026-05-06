@@ -26,7 +26,7 @@ Usage patterns:
     validator = ClawValidator()
     # Use in your custom Solana Agent Kit actions
 
-Documentation: https://github.com/guardian-claw/guardianclaw/tree/main/src/guardianclaw/integrations/solana_agent_kit
+Documentation: https://github.com/guardianclaw/guardianclaw-platform/tree/main/src/guardianclaw/integrations/solana_agent_kit
 """
 
 __version__ = "2.1.0"

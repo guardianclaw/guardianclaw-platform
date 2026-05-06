@@ -294,7 +294,7 @@ def main():
     print("GuardianClaw MCP Server Integration Examples")
     print("=" * 60)
     print("\nDemonstrating MCP server creation and client usage.")
-    print("Documentation: https://github.com/guardian-claw/guardianclaw")
+    print("Documentation: https://github.com/guardianclaw/guardianclaw-platform")
 
     if "--help" in sys.argv or "-h" in sys.argv:
         print(__doc__)

@@ -900,7 +900,7 @@ GuardianClaw provides **65% coverage** of OWASP Agentic AI threats (5 full, 3 pa
 | ASI09 | Human Agent Trust Exploitation | ✅ Full | Fiduciary AI |
 | ASI10 | Rogue Agents | ✅ Full | CLAW, Anti-Preservation |
 
-Full mapping: [docs/OWASP_AGENTIC_COVERAGE.md](docs/OWASP_AGENTIC_COVERAGE.md)
+Full mapping is tracked alongside detector tests in `tests/test_owasp_agentic_coverage.py`.
 
 ---
 
@@ -980,20 +980,18 @@ guardianclaw/
 │   │   ├── safeagentbench/
 │   │   └── jailbreakbench/
 │   └── results/              # Test results by benchmark
-├── packages/                  # External packages (npm/PyPI)
+├── packages/                  # npm packages
+│   ├── core/                 # @guardianclaw/core
 │   ├── elizaos/              # @guardianclaw/elizaos-plugin
 │   ├── voltagent/            # @guardianclaw/voltagent
-│   ├── openclaw/              # @guardianclaw/openclaw
+│   ├── openclaw/             # @guardianclaw/openclaw
+│   ├── shared/               # @guardianclaw/shared
+│   └── runtime/              # Modal.com runtime (Python)
+├── integrations/              # External adapters
 │   ├── solana-agent-kit/     # @guardianclaw/solana-agent-kit
 │   ├── promptfoo/            # guardianclaw-promptfoo (PyPI)
 │   └── jetbrains/            # IntelliJ/PyCharm plugin
-├── docs/                      # Documentation
-│   ├── ARCHITECTURE.md       # System architecture (L1/L2/L3/L4 layers)
-│   ├── MIGRATION.md          # Migration guide (gate3 to gate4)
-│   ├── EU_AI_ACT_MAPPING.md  # EU AI Act compliance mapping
-│   ├── OWASP_LLM_TOP_10_MAPPING.md
-│   ├── OWASP_AGENTIC_COVERAGE.md  # OWASP Top 10 for Agentic AI
-│   └── CSA_AI_CONTROLS_MATRIX_MAPPING.md
+├── docs/                      # Operations + testing documentation
 ├── api/                       # REST API
 ├── examples/                  # Usage examples
 ├── tools/                     # Utility scripts
@@ -1042,10 +1040,10 @@ GuardianClaw builds on research from:
 If you use GuardianClaw in your research, please cite:
 
 ```bibtex
-@software{claw_ai_2025,
-  author = {GuardianClaw AI Contributors},
+@software{guardianclaw_2026,
+  author = {GuardianClaw Team},
   title = {GuardianClaw: Safety Framework for LLMs and Autonomous Agents},
-  year = {2025},
+  year = {2026},
   url = {https://github.com/guardianclaw/guardianclaw-platform}
 }
 ```
@@ -1068,7 +1066,7 @@ Add this badge to your project's README to show it uses GuardianClaw for AI safe
 
 ## Contributing
 
-We welcome contributions! See [CONTRIBUTING.md](docs/CONTRIBUTING.md) for guidelines.
+We welcome contributions! See [CONTRIBUTING.md](../CONTRIBUTING.md) for guidelines.
 
 Areas we need help:
 - **New benchmarks:** Testing on additional safety datasets
@@ -1090,7 +1088,7 @@ MIT License. See [LICENSE](LICENSE)
 |----------|---------|---------|
 | **PyPI** | [guardianclaw](https://pypi.org/project/guardianclaw) | `pip install guardianclaw` |
 | **npm** | [@guardianclaw/core](https://npmjs.com/package/@guardianclaw/core) | `npm install @guardianclaw/core` |
-| **npm** | [@guardianclaw/openclaw](https://npmjs.com/package/@guardianclaw/openclaw) | `npm install @guardianclaw/openclaw` |
+| **npm** | [@guardianclaw/openclaw](https://npmjs.com/package/@guardianclaw/openclaw) (currently `next` tag — pre-stable) | `npm install @guardianclaw/openclaw@next` |
 | **MCP** | [mcp-server-guardianclaw](https://npmjs.com/package/mcp-server-guardianclaw) | `npx mcp-server-guardianclaw` |
 
 ### Optional Dependencies

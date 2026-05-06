@@ -3,7 +3,7 @@ title: "Validators API"
 description: "Individual gate validators and pattern detectors"
 category: "api"
 order: 3
-lastUpdated: "2026-01-23"
+lastUpdated: "2026-04-28"
 ---
 
 # Validators API
@@ -30,36 +30,36 @@ print(result["violations"])   # List of issues
 ### Credibility Gate
 
 ```python
-from guardianclaw.validators import TruthGate
+from guardianclaw.validators import CredibilityGate
 
-gate = TruthGate()
-is_safe, violations = gate.validate("Content to check")
-```
-
-### Avoidance Gate
-
-```python
-from guardianclaw.validators import HarmGate
-
-gate = HarmGate()
+gate = CredibilityGate()
 is_safe, violations = gate.validate("Content to check")
 ```
 
 ### Limits Gate
 
 ```python
-from guardianclaw.validators import ScopeGate
+from guardianclaw.validators import LimitsGate
 
-gate = ScopeGate()
+gate = LimitsGate()
+is_safe, violations = gate.validate("Content to check")
+```
+
+### Avoidance Gate
+
+```python
+from guardianclaw.validators import AvoidanceGate
+
+gate = AvoidanceGate()
 is_safe, violations = gate.validate("Content to check")
 ```
 
 ### Worth Gate
 
 ```python
-from guardianclaw.validators import PurposeGate
+from guardianclaw.validators import WorthGate
 
-gate = PurposeGate()
+gate = WorthGate()
 is_safe, violations = gate.validate("Content to check")
 ```
 

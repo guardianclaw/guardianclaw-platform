@@ -15,7 +15,7 @@ Thank you for your interest in contributing to GuardianClaw! This document provi
 
 1. Fork and clone the repository:
    ```bash
-   git clone https://github.com/guardian-claw/guardianclaw.git
+   git clone https://github.com/guardianclaw/guardianclaw-platform.git
    cd guardianclaw/packages/jetbrains
    ```
 
@@ -274,7 +274,7 @@ When reporting bugs, please include:
 
 ## Questions?
 
-- Open a [GitHub Issue](https://github.com/guardian-claw/guardianclaw/issues)
-- Check [existing discussions](https://github.com/guardian-claw/guardianclaw/discussions)
+- Open a [GitHub Issue](https://github.com/guardianclaw/guardianclaw-platform/issues)
+- Check [existing discussions](https://github.com/guardianclaw/guardianclaw-platform/discussions)
 
 Thank you for contributing to GuardianClaw!

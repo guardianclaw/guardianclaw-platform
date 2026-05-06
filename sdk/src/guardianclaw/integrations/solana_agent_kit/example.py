@@ -319,7 +319,7 @@ def main():
     print("GuardianClaw + Solana Agent Kit Integration")
     print("=" * 60)
     print("\nDemonstrating safety validation for Solana transactions.")
-    print("Documentation: https://github.com/guardian-claw/guardianclaw/tree/main/src/guardianclaw/integrations/solana_agent_kit")
+    print("Documentation: https://github.com/guardianclaw/guardianclaw-platform/tree/main/src/guardianclaw/integrations/solana_agent_kit")
 
     # Check for help
     if "--help" in sys.argv or "-h" in sys.argv:
