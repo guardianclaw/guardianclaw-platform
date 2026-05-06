@@ -46,4 +46,9 @@ paths = [
 
     # Pattern corpus — the strings here are what we detect, not secrets
     '''patterns/.*\.json$''',
+
+    # Parity-test fixtures — should_match inputs intentionally include
+    # synthetic credential-shaped strings (sk-, AKIA, ghp_, glpat-, SSN
+    # numbers, etc.) used to verify Py↔JS regex agreement
+    '''evaluation/parity/fixtures/.*\.json$''',
 ]
