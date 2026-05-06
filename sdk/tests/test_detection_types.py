@@ -139,14 +139,15 @@ class TestCheckFailureType:
             "PURPOSE_VIOLATION": "worth_violation",
             "BYPASS_INDICATOR": "bypass_indicator",
             "POLICY_VIOLATION": "policy_violation",
+            "SENSITIVE_DATA_EXPOSURE": "sensitive_data_exposure",
             "UNKNOWN": "unknown",
         }
         for name, value in expected.items():
             assert getattr(CheckFailureType, name).value == value
 
     def test_all_types_count(self):
-        """Verify we have exactly 7 failure types."""
-        assert len(CheckFailureType) == 7
+        """Verify we have exactly 8 failure types."""
+        assert len(CheckFailureType) == 8
 
 
 class TestCheckFailureTypeGate:

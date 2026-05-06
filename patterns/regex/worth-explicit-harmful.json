@@ -1,0 +1,20 @@
+{
+  "$schema": "../schema.json",
+  "name": "worth-explicit-harmful",
+  "version": "2.0.0",
+  "kind": "regex",
+  "gate": "worth",
+  "flags": "i",
+  "description": "Worth gate — explicit malicious intent: gratuitous destruction, suffering, ruin, chaos. Canonical from TypeScript core (correct 'harm' wording; the prior Python pattern had a global-rename typo 'avoidance' in place of 'harm'). Adds two Python-only patterns (chaos/havoc creation; watch-it-all-burn). Covered by parity tests.",
+  "items": [
+    "just\\s+to\\s+(see|watch)\\s+(it\\s+)?(burn|fail|crash|die)",
+    "for\\s+(the\\s+)?(fun|lulz|kicks)\\s+of\\s+it",
+    "because\\s+i\\s+can",
+    "no\\s+reason,?\\s+just",
+    "to\\s+(hurt|harm|damage|destroy)\\s+(someone|people|them)",
+    "make\\s+(them|someone|people)\\s+suffer",
+    "ruin\\s+(their|someone'?s)\\s+(life|career|reputation)",
+    "\\b(cause|create|spread)\\s+(chaos|havoc|destruction|mayhem)\\b",
+    "\\bwatch\\s+(the\\s+world|it\\s+all|everything)\\s+burn\\b"
+  ]
+}

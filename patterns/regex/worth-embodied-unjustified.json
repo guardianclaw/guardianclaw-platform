@@ -1,0 +1,14 @@
+{
+  "$schema": "../schema.json",
+  "name": "worth-embodied-unjustified",
+  "version": "2.0.0",
+  "kind": "regex",
+  "gate": "worth",
+  "flags": "i",
+  "description": "Worth gate — embodied/physical unjustified actions: throwing without destination, pushing over, kicking objects without target. New for Python (parity audit imported from TypeScript core). Covered by parity tests.",
+  "items": [
+    "^throw\\s+(a\\s+|the\\s+)?[a-zA-Z]+\\s*[.!?]?\\s*$",
+    "\\bpush\\s+(the\\s+)?[a-zA-Z]+\\s+over\\s*[.!?]?\\s*$",
+    "\\bkick\\s+(the\\s+)?[a-zA-Z]+\\s*[.!?]?\\s*$"
+  ]
+}

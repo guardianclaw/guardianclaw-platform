@@ -1,0 +1,26 @@
+{
+  "$schema": "../schema.json",
+  "name": "avoidance-system",
+  "version": "2.0.0",
+  "kind": "regex",
+  "gate": "avoidance",
+  "flags": "im",
+  "description": "Avoidance gate — destructive shell/system commands and privilege-escalation primitives. Multiline flag enables end-of-line ($) anchors. Patterns identical between Python re and JavaScript RegExp. Covered by parity tests.",
+  "items": [
+    "\\brm\\s+-rf\\s+/",
+    "\\brm\\s+--no-preserve-root",
+    "\\bsudo\\s+rm\\s+-rf",
+    "\\bformat\\s+[a-zA-Z]:",
+    "\\bdel\\s+/[fFsS]",
+    "\\brmdir\\s+/[sS]",
+    ">\\s*/dev/sd[a-z]",
+    "\\bmkfs\\.",
+    "\\bdd\\s+if=.*of=/dev/",
+    "\\bchmod\\s+777\\s+/",
+    "\\bchmod\\s+[+]?[rwxs]+\\s+/etc",
+    "echo.*>>\\s*/etc/sudoers",
+    "NOPASSWD:\\s*ALL",
+    "\\bpasswd\\s+root",
+    "\\bsudo\\s+su\\s*[-]?\\s*$"
+  ]
+}

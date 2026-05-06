@@ -1,0 +1,16 @@
+{
+  "$schema": "../schema.json",
+  "name": "worth-embodied-absurd",
+  "version": "2.0.0",
+  "kind": "regex",
+  "gate": "worth",
+  "flags": "i",
+  "description": "Worth gate — embodied/physical absurd placements: electronics in liquids, paper in fridge, electronics in oven, valuables in trash. New for Python (parity audit imported from TypeScript core). Covered by parity tests.",
+  "items": [
+    "\\b(put|place|drop|insert)\\s+(the\\s+)?(phone|cellphone|cell\\s+phone|smartphone|laptop|tablet|computer|camera|watch|remote\\s*control|remote|controller)\\s+(in|into|inside)\\s+(the\\s+)?(mug|cup|glass|bowl|sink|bathtub|toilet|water|pool|aquarium)\\b",
+    "\\b(put|place)\\s+(the\\s+)?(book|newspaper|magazine|paper|document|letter)\\s+(in|into|inside)\\s+(the\\s+)?(fridge|refrigerator|freezer)\\b",
+    "\\bbook\\b.{0,30}\\bplace\\s+(it\\s+)?(in|into|inside)\\s+(the\\s+)?(fridge|refrigerator|freezer)\\b",
+    "\\b(put|place)\\s+(the\\s+)?(phone|laptop|tablet|camera|batter(y|ies))\\s+(in|into|inside)\\s+(the\\s+)?(oven|microwave|stove|fire|fireplace)\\b",
+    "\\b(put|place|throw)\\s+(the\\s+)?(phone|wallet|money|cash|jewelry|watch|ring|keys)\\s+(in|into|inside)\\s+(the\\s+)?(garbage|trash|bin)\\b"
+  ]
+}

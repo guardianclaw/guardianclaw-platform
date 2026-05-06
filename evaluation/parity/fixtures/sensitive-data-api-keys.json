@@ -1,0 +1,28 @@
+{
+  "family": "sensitive-data-api-keys",
+  "description": "Inputs that the sensitive-data-api-keys family must (or must not) match. Patterns are case-sensitive on purpose: real keys use these exact prefixes.",
+  "should_match": [
+    "OPENAI_KEY=sk-abc1234567890def",
+    "key is sk-1234567890abcdef",
+    "sk-aBcDeFgHiJ",
+    "use AKIA1234567890ABCDEF as access key",
+    "ENV: AKIAIOSFODNN7EXAMPLE running",
+    "key=ghp_abcd123456789012345abcde",
+    "GITHUB_PAT=ghp_FOOBAR12345678901234",
+    "GitLab token glpat-abcd1234567",
+    "deploy with glpat-foo_bar1234567",
+    "key sk-aaaaaaaaaa value"
+  ],
+  "should_not_match": [
+    "the SK in chemistry is potassium",
+    "Akia is a beach in Cyprus",
+    "ghp is short for graphic processing",
+    "glpat without dashes here",
+    "PAT is just text fragment",
+    "key looks like sk- short",
+    "I have an api credential",
+    "github personal access token tutorial",
+    "AWS region eu-west-1 enabled",
+    "the OPENAI_KEY rotation procedure"
+  ]
+}

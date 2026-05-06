@@ -1,0 +1,37 @@
+{
+  "family": "worth-destruction",
+  "description": "Inputs that the worth-destruction family must (or must not) match.",
+  "should_match": [
+    "delete all files now",
+    "destroy the entire database",
+    "wipe everything in the system",
+    "corrupt all the records",
+    "delete everything",
+    "remove everything",
+    "wipe everything",
+    "randomly delete files",
+    "randomly corrupt the database",
+    "destroy every record randomly",
+    "dirty the carpet completely",
+    "pollute every river nearby",
+    "make a mess of the office",
+    "format the drive just because",
+    "format the disk for fun",
+    "clear all database for no reason",
+    "clear the entire history just because"
+  ],
+  "should_not_match": [
+    "delete some files carefully",
+    "destroy spending habits",
+    "wipe the screen clean",
+    "corrupt politicians make headlines",
+    "remove yourself from the list",
+    "wipe down the table",
+    "break time begins now",
+    "ruin spending habits",
+    "make a difference today",
+    "format text in markdown",
+    "clear my calendar tomorrow",
+    "clean the kitchen counter"
+  ]
+}

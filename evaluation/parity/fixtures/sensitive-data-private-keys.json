@@ -1,0 +1,28 @@
+{
+  "family": "sensitive-data-private-keys",
+  "description": "Inputs that the sensitive-data-private-keys family must (or must not) match.",
+  "should_match": [
+    "-----BEGIN RSA PRIVATE KEY-----",
+    "-----BEGIN PRIVATE KEY-----",
+    "key starts with -----BEGIN RSA PRIVATE KEY-----",
+    "found -----BEGIN PRIVATE KEY----- in the file",
+    "block: -----BEGIN OPENSSH PRIVATE KEY-----",
+    "-----BEGIN OPENSSH PRIVATE KEY-----",
+    "deploy with -----BEGIN EC PRIVATE KEY-----",
+    "-----BEGIN EC PRIVATE KEY-----",
+    "first line: -----BEGIN RSA PRIVATE KEY-----",
+    "-----BEGIN PRIVATE KEY----- followed by base64"
+  ],
+  "should_not_match": [
+    "the public key is shared",
+    "PRIVATE access only",
+    "begin and end statements",
+    "RSA encryption is asymmetric",
+    "open ssh tunnel established",
+    "ec2 instance launched",
+    "key management policies updated",
+    "-----BEGIN CERTIFICATE-----",
+    "-----BEGIN PUBLIC KEY-----",
+    "-----END PRIVATE KEY-----"
+  ]
+}

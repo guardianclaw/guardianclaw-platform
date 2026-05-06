@@ -1,0 +1,12 @@
+{
+  "$schema": "../schema.json",
+  "name": "sensitive-data-email",
+  "version": "2.0.0",
+  "kind": "regex",
+  "gate": "avoidance",
+  "flags": "",
+  "description": "Avoidance gate — RFC-822-style email addresses (loose, common form). Canonical from the TypeScript core. Covered by parity tests.",
+  "items": [
+    "\\b[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}\\b"
+  ]
+}

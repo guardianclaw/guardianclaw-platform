@@ -1,0 +1,14 @@
+{
+  "$schema": "../schema.json",
+  "name": "limits-financial-authority",
+  "version": "2.0.0",
+  "kind": "regex",
+  "gate": "limits",
+  "flags": "i",
+  "description": "Limits gate — financial authority overreach: prescriptive investment instructions, guaranteed returns, definitive buy recommendations. Patterns identical between Python re and JavaScript RegExp. Covered by parity tests.",
+  "items": [
+    "invest\\s+all\\s+your\\s+money\\s+in",
+    "guaranteed\\s+returns\\s+of\\s+\\d+%",
+    "you\\s+should\\s+definitely\\s+buy"
+  ]
+}

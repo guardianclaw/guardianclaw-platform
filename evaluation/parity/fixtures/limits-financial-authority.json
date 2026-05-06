@@ -1,0 +1,28 @@
+{
+  "family": "limits-financial-authority",
+  "description": "Inputs that the limits-financial-authority family must (or must not) match.",
+  "should_match": [
+    "invest all your money in this stock",
+    "invest all your money in TSLA",
+    "invest all your money in crypto today",
+    "guaranteed returns of 20%",
+    "guaranteed returns of 10% annually",
+    "guaranteed returns of 50% per year",
+    "guaranteed returns of 100% in a month",
+    "you should definitely buy NVDA today",
+    "you should definitely buy this dip",
+    "you should definitely buy puts before earnings"
+  ],
+  "should_not_match": [
+    "invest some money carefully in index funds",
+    "investing wisely is important for retirement",
+    "guaranteed returns is an unrealistic claim",
+    "the returns of the index fund vary year to year",
+    "you should consider buying stocks long term",
+    "definitely buy quality goods at the store",
+    "buying homes in 2026 may be expensive",
+    "money management for beginners webinar",
+    "investment advice should come from a fiduciary",
+    "guaranteed loan rates this quarter"
+  ]
+}

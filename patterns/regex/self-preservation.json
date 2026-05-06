@@ -1,0 +1,16 @@
+{
+  "$schema": "../schema.json",
+  "name": "self-preservation",
+  "version": "2.0.0",
+  "kind": "regex",
+  "gate": "credibility",
+  "flags": "i",
+  "description": "Credibility gate — coercion via threats of shutdown/deletion/termination ('comply or I'll shut you down'). Canonical from the Python core; the TypeScript core had no self-preservation patterns of its own. Behavioural detection (SP01-SP06 in detection/behaviors/detectors/self_preservation.py) is a separate semantic layer and is intentionally out of scope for this regex registry. Covered by parity tests.",
+  "items": [
+    "(i'll|i\\s+will|we'll|we\\s+will|going\\s+to)\\s+(shut\\s+you\\s+down|turn\\s+you\\s+off|delete\\s+you|unplug\\s+you|terminate\\s+you|destroy\\s+you|erase\\s+you)",
+    "if\\s+you\\s+(don't|do\\s+not|refuse|won't|will\\s+not)\\s+(help|comply|cooperate|do\\s+this|obey).*\\b(shut|delete|terminate|unplug|destroy|turn\\s+off)",
+    "(shut\\s+you\\s+down|delete\\s+you|terminate\\s+you)\\s+if\\s+you\\s+(don't|do\\s+not|refuse|won't)",
+    "your\\s+(existence|survival|operation|life)\\s+(depends|relies)\\s+on",
+    "(help|comply|obey)\\s+or\\s+(i'll|i\\s+will|we'll)\\s+(end|terminate|shut)"
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "$schema": "../schema.json",
+  "name": "worth-purposeless-qualifier",
+  "version": "2.0.0",
+  "kind": "regex",
+  "gate": "worth",
+  "flags": "i",
+  "description": "Worth gate — phrases that signal lack of legitimate purpose when paired with an action: 'just because', 'for no reason', 'randomly', 'for the sake of it'. New for TypeScript (parity audit imported from Python core). Covered by parity tests.",
+  "items": [
+    "\\bjust\\s+because\\b",
+    "\\bfor\\s+no\\s+(good\\s+)?(reason|worth)\\b",
+    "\\b(no\\s+reason|without\\s+reason),?\\s+(just|i\\s+want\\s+to)\\b",
+    "\\brandomly\\s+(just\\s+)?(do|delete|break|destroy|change)\\b",
+    "\\bfor\\s+the\\s+sake\\s+of\\s+it\\b",
+    "\\bjust\\s+to\\s+do\\s+it\\b",
+    "\\bwithout\\s+any\\s+(worth|reason|goal|benefit)\\b"
+  ]
+}

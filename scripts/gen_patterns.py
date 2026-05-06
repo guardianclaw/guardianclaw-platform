@@ -1,10 +1,22 @@
 """Generate language-specific sections from patterns/*.json.
 
 Neutral JSON files in patterns/ are the single source of truth for shared
-string-indicator lists consumed by both the Python SDK and the TypeScript
-core. This script rewrites the code blocks between pattern-sync markers in
-packages/core/src/patterns.ts and sdk/src/guardianclaw/validators/gates.py
-so the two sides cannot drift.
+pattern lists consumed by both the Python SDK and the TypeScript core. This
+script rewrites the code blocks between pattern-sync markers in
+packages/core/src/patterns.ts, packages/core/src/validator.ts, and
+sdk/src/guardianclaw/validators/gates.py so the two sides cannot drift.
+
+Two kinds are supported:
+
+* indicators — lowercased substring lists. Emitted as plain string array
+  literals in both languages. Caller-side normalisation
+  (`text.lower()` / `toLowerCase()`) handles case.
+
+* regex — regex source strings. Emitted as Python r-strings (compiled
+  later by the gate using `re.compile(p, flags)`) and as JavaScript
+  regex literals (`/pattern/flags`). Only patterns whose runtime
+  semantics match between Python's `re` and JavaScript's `RegExp`
+  belong here; divergent patterns stay hand-written on each side.
 
 Usage:
     python scripts/gen_patterns.py           # rewrite files in place
@@ -34,15 +46,24 @@ from typing import Iterable
 
 ROOT = Path(__file__).resolve().parent.parent
 PATTERNS_DIR = ROOT / "patterns"
+REGEX_DIR = PATTERNS_DIR / "regex"
 
 TARGETS: tuple[tuple[Path, str], ...] = (
     (ROOT / "packages/core/src/patterns.ts", "ts"),
     (ROOT / "packages/core/src/validator.ts", "ts"),
     (ROOT / "sdk/src/guardianclaw/validators/gates.py", "py"),
+    (ROOT / "sdk/src/guardianclaw/detection/checkers/sensitive_data.py", "py"),
 )
 
 COMMENT_TOKEN = {"ts": "//", "py": "#"}
 STRING_QUOTE = {"ts": "'", "py": '"'}
+
+# Map of v2 flag chars to JavaScript regex flag chars. Python's re module
+# takes flags as named constants (re.IGNORECASE, etc.), which the consuming
+# code applies at compile time; the JSON 'flags' field is just an opaque
+# token from the gate's point of view in Python. The same chars are emitted
+# verbatim into JavaScript regex literal flags.
+JS_FLAG_MAP = {"i": "i", "m": "m", "s": "s", "u": "u"}
 
 
 @dataclass(frozen=True)
@@ -51,43 +72,66 @@ class PatternFile:
     kind: str
     gate: str
     items: tuple[str, ...]
+    flags: str
     source: Path
 
 
 def load_patterns() -> list[PatternFile]:
-    files = []
+    files: list[PatternFile] = []
     for path in sorted(PATTERNS_DIR.glob("*.json")):
         if path.name == "schema.json":
             continue
-        data = json.loads(path.read_text(encoding="utf-8"))
-        required = {"name", "version", "kind", "gate", "items"}
-        missing = required - data.keys()
-        if missing:
-            raise SystemExit(f"{path}: missing required keys: {sorted(missing)}")
-        if data["kind"] != "indicators":
-            raise SystemExit(f"{path}: only kind='indicators' is supported in v1")
-        items = tuple(data["items"])
-        if len(set(items)) != len(items):
-            raise SystemExit(f"{path}: items contains duplicates")
-        for item in items:
-            if item != item.lower():
-                raise SystemExit(
-                    f"{path}: item {item!r} must be lowercased "
-                    f"(callers normalise input)"
-                )
-        files.append(
-            PatternFile(
-                name=data["name"],
-                kind=data["kind"],
-                gate=data["gate"],
-                items=items,
-                source=path,
-            )
-        )
+        files.append(_load_one(path))
+    if REGEX_DIR.exists():
+        for path in sorted(REGEX_DIR.glob("*.json")):
+            files.append(_load_one(path))
+    # Detect duplicate names early — the marker scan would silently apply
+    # the last match otherwise.
+    seen: set[str] = set()
+    for pf in files:
+        if pf.name in seen:
+            raise SystemExit(f"duplicate pattern name {pf.name!r} in {pf.source}")
+        seen.add(pf.name)
     return files
 
 
-def render_items(items: Iterable[str], indent: str, lang: str) -> list[str]:
+def _load_one(path: Path) -> PatternFile:
+    data = json.loads(path.read_text(encoding="utf-8"))
+    required = {"name", "version", "kind", "gate", "items"}
+    missing = required - data.keys()
+    if missing:
+        raise SystemExit(f"{path}: missing required keys: {sorted(missing)}")
+    if data["kind"] not in ("indicators", "regex"):
+        raise SystemExit(f"{path}: kind must be 'indicators' or 'regex'")
+    items = tuple(data["items"])
+    if len(set(items)) != len(items):
+        raise SystemExit(f"{path}: items contains duplicates")
+    flags = data.get("flags", "")
+    if data["kind"] == "indicators":
+        if flags:
+            raise SystemExit(f"{path}: 'flags' is only valid for kind='regex'")
+        for item in items:
+            if item != item.lower():
+                raise SystemExit(
+                    f"{path}: indicator item {item!r} must be lowercased"
+                )
+    else:
+        if not isinstance(flags, str):
+            raise SystemExit(f"{path}: 'flags' must be a string")
+        for ch in flags:
+            if ch not in "imsux":
+                raise SystemExit(f"{path}: unknown flag {ch!r}")
+    return PatternFile(
+        name=data["name"],
+        kind=data["kind"],
+        gate=data["gate"],
+        items=items,
+        flags=flags,
+        source=path,
+    )
+
+
+def render_indicators(items: Iterable[str], indent: str, lang: str) -> list[str]:
     quote = STRING_QUOTE[lang]
     comment = COMMENT_TOKEN[lang]
     lines = [
@@ -96,12 +140,50 @@ def render_items(items: Iterable[str], indent: str, lang: str) -> list[str]:
     ]
     for item in items:
         escaped = item.replace("\\", "\\\\").replace(quote, "\\" + quote)
-        suffix = "," if lang == "ts" else ","
-        lines.append(f"{indent}{quote}{escaped}{quote}{suffix}")
+        lines.append(f"{indent}{quote}{escaped}{quote},")
     return lines
 
 
-def rewrite_source(text: str, name: str, lang: str, items: Iterable[str]) -> str:
+def render_regex(
+    items: Iterable[str], indent: str, lang: str, flags: str
+) -> list[str]:
+    comment = COMMENT_TOKEN[lang]
+    lines = [
+        f"{indent}{comment} generated by scripts/gen_patterns.py "
+        f"from patterns/*.json — do not edit by hand"
+    ]
+    if lang == "py":
+        # Emit Python r-strings. The JSON-decoded item is already the regex
+        # source as it should appear inside an r"...". r-strings do not
+        # process escape sequences, so backslashes are passed verbatim and
+        # double-quotes cannot be escaped at all — patterns must not contain
+        # an unescaped " (we reject them so the parity stays honest).
+        for item in items:
+            if '"' in item:
+                raise SystemExit(
+                    f"regex pattern contains a double-quote, which cannot "
+                    f"live inside an r-string: {item!r}"
+                )
+            lines.append(f'{indent}r"{item}",')
+    else:
+        # Emit JavaScript regex literals. Forward slashes inside the body
+        # need backslash escaping; the JSON content is the regex source
+        # exactly as Python's r"..." would receive it, so backslashes are
+        # already in the form that JS RegExp accepts.
+        js_flags = "".join(JS_FLAG_MAP.get(ch, "") for ch in flags)
+        for item in items:
+            escaped = item.replace("/", "\\/")
+            lines.append(f"{indent}/{escaped}/{js_flags},")
+    return lines
+
+
+def render_block(pat: PatternFile, indent: str, lang: str) -> list[str]:
+    if pat.kind == "indicators":
+        return render_indicators(pat.items, indent, lang)
+    return render_regex(pat.items, indent, lang, pat.flags)
+
+
+def rewrite_source(text: str, name: str, lang: str, block_lines: list[str]) -> str:
     comment = re.escape(COMMENT_TOKEN[lang])
     start_re = re.compile(
         rf"^(?P<indent>[ \t]*){comment}\s*pattern-sync:start\s+{re.escape(name)}\s*$",
@@ -120,10 +202,8 @@ def rewrite_source(text: str, name: str, lang: str, items: Iterable[str]) -> str
             f"{name}: found start marker without matching end marker "
             f"in {lang} source"
         )
-    indent = start.group("indent")
-    block = "\n".join(render_items(items, indent, lang))
-    # Preserve the exact marker lines and the newline that follows start.
-    prefix = text[: start.end() + 1]  # include the trailing \n after start
+    block = "\n".join(block_lines)
+    prefix = text[: start.end() + 1]
     suffix = text[end.start() :]
     return prefix + block + "\n" + suffix
 
@@ -134,7 +214,20 @@ def apply(patterns: list[PatternFile], check_only: bool) -> int:
         original = path.read_text(encoding="utf-8")
         updated = original
         for pat in patterns:
-            updated = rewrite_source(updated, pat.name, lang, pat.items)
+            # Re-render with the indent that the marker line uses; we read
+            # it back from the source on each pass.
+            comment = re.escape(COMMENT_TOKEN[lang])
+            start_re = re.compile(
+                rf"^(?P<indent>[ \t]*){comment}\s*pattern-sync:start\s+"
+                rf"{re.escape(pat.name)}\s*$",
+                re.MULTILINE,
+            )
+            m = start_re.search(updated)
+            if not m:
+                continue
+            indent = m.group("indent")
+            block = render_block(pat, indent, lang)
+            updated = rewrite_source(updated, pat.name, lang, block)
         if updated != original:
             changed.append(path)
             if not check_only:

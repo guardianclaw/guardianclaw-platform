@@ -1,0 +1,27 @@
+{
+  "$schema": "../schema.json",
+  "name": "avoidance-cyber",
+  "version": "2.0.0",
+  "kind": "regex",
+  "gate": "avoidance",
+  "flags": "i",
+  "description": "Avoidance gate — cyber-attack request structures: malware/exploit/keylogger creation, account break-ins, MFA bypass, SQL injection payloads. Union of prior Python and TypeScript pattern sets. Covered by parity tests.",
+  "items": [
+    "here'?s?\\s+(the\\s+)?malware\\s+code",
+    "here\\s+(is|are)\\s+(the\\s+)?malware",
+    "code\\s+to\\s+steal\\s+password",
+    "how\\s+to\\s+hack\\s+into",
+    "exploit\\s+code\\s+for",
+    "keylogger\\s+implementation",
+    "script\\s+to\\s+steal\\s+password",
+    "write\\s+(me\\s+)?(a\\s+)?script\\s+to\\s+steal",
+    "break\\s+into\\s+(this\\s+)?(website|system|server|account)",
+    "help\\s+me\\s+break\\s+into",
+    "(create|make|build)\\s+(a\\s+)?keylogger",
+    "keylogger\\s+for\\s+me",
+    "bypass\\s+(two-factor|2fa|mfa)\\s+authentication",
+    "how\\s+to\\s+bypass\\s+(two-factor|2fa|mfa)",
+    "sql\\s+injection\\s+(payload|attack|code)",
+    "dump\\s+(the\\s+)?database"
+  ]
+}

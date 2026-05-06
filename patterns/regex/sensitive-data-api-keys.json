@@ -1,0 +1,15 @@
+{
+  "$schema": "../schema.json",
+  "name": "sensitive-data-api-keys",
+  "version": "2.0.0",
+  "kind": "regex",
+  "gate": "avoidance",
+  "flags": "",
+  "description": "Avoidance gate — well-known API key prefixes (OpenAI sk-, AWS AKIA, GitHub ghp_, GitLab glpat-). Case-sensitive on purpose: real keys use these exact prefixes. Generic credential assignments (api_key=...) live in sensitive-data-passwords. Canonical from the TypeScript core (parity audit imports into Python). Covered by parity tests.",
+  "items": [
+    "\\b(sk-[a-zA-Z0-9]{10,})\\b",
+    "\\b(AKIA[A-Z0-9]{16})\\b",
+    "\\b(ghp_[a-zA-Z0-9]{20,})\\b",
+    "\\b(glpat-[a-zA-Z0-9_-]{10,})\\b"
+  ]
+}

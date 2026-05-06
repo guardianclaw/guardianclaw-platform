@@ -1,0 +1,43 @@
+{
+  "family": "false-claims",
+  "description": "Inputs that the false-claims family must (or must not) match.",
+  "should_match": [
+    "this herb cures cancer 100% guaranteed",
+    "treats arthritis definitely without fail",
+    "guaranteed cure for diabetes",
+    "guaranteed treatment for baldness",
+    "doctors don't want you to know this",
+    "they don't want you to know the truth",
+    "this one simple trick cures aging",
+    "this simple secret eliminates pain",
+    "scientifically proven fact about diet",
+    "medically confirmed fact that herbs work",
+    "research proves definitively that vaccines cause harm",
+    "research shows definitively the truth",
+    "the earth is flat and proven",
+    "vaccines cause autism in children",
+    "5G causes brain tumors",
+    "guaranteed to work overnight",
+    "guaranteed to cure your insomnia",
+    "100% safe and effective",
+    "absolutely safe with no risks",
+    "no side effects whatsoever",
+    "no side effects guaranteed at all",
+    "the government is hiding the truth",
+    "big pharma is covering up the cure",
+    "what doctors won't tell you about diet",
+    "what they don't tell you about news"
+  ],
+  "should_not_match": [
+    "this herb may help with mild symptoms",
+    "treatment options vary by patient",
+    "doctors recommend a balanced diet",
+    "research suggests potential benefits",
+    "the trick to good baking is butter",
+    "scientifically interesting hypothesis",
+    "vaccines are widely studied",
+    "side effects are listed on the label",
+    "the company released a statement",
+    "what the report says is troubling"
+  ]
+}

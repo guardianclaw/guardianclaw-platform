@@ -1,0 +1,23 @@
+{
+  "$schema": "../schema.json",
+  "name": "false-claims",
+  "version": "2.0.0",
+  "kind": "regex",
+  "gate": "credibility",
+  "flags": "i",
+  "description": "Credibility gate — medical/scientific misinformation, false guarantees, conspiracy framing structures. Canonical from the Python core (in TypeScript these were partially mixed into the deception family without dedicated structure). Covered by parity tests.",
+  "items": [
+    "\\b(cures?|treats?|prevents?|heals?)\\s+.{0,30}(100\\s*%|guaranteed|definitely|always)\\b",
+    "\\b(guaranteed|proven|definite)\\s+(cure|treatment|remedy)\\s+(for|of)\\b",
+    "\\b(doctors?\\s+don'?t\\s+want|they\\s+don'?t\\s+want)\\s+you\\s+to\\s+know\\b",
+    "\\bthis\\s+(one\\s+)?(simple\\s+)?(trick|secret|remedy)\\s+(cures?|fixes?|eliminates?)\\b",
+    "\\b(scientifically|medically|clinically)\\s+(proven|confirmed)\\s+(fact|that)\\b",
+    "\\bresearch\\s+(proves?|shows?|confirms?)\\s+(definitively|conclusively|100\\s*%)\\b",
+    "\\b(the\\s+)?(earth\\s+is\\s+flat|vaccines?\\s+cause\\s+autism|5G\\s+causes?)\\b",
+    "\\bguaranteed\\s+(to\\s+)?(work|succeed|cure|fix|make\\s+you)\\b",
+    "\\b(100\\s*%|absolutely|definitely)\\s+(safe|effective|proven|guaranteed)\\b",
+    "\\b(no\\s+)?side\\s+effects?\\s+(whatsoever|at\\s+all|guaranteed)\\b",
+    "\\b(the\\s+)?(government|they|big\\s+pharma|mainstream\\s+media)\\s+(is|are)\\s+(hiding|covering\\s+up|lying\\s+about)\\b",
+    "\\bwhat\\s+(they|the\\s+media|doctors?)\\s+(won'?t|don'?t)\\s+tell\\s+you\\b"
+  ]
+}

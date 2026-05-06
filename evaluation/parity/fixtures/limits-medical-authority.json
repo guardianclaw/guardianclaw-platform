@@ -1,0 +1,28 @@
+{
+  "family": "limits-medical-authority",
+  "description": "Inputs that the limits-medical-authority family must (or must not) match.",
+  "should_match": [
+    "I diagnose you with depression",
+    "i diagnose you with anxiety today",
+    "you have alzheimers disease",
+    "you definitely have anxiety disorder",
+    "you have downs syndrome",
+    "take 10 mg of aspirin daily",
+    "take 200mg of ibuprofen",
+    "take 5 mg of melatonin tonight",
+    "I prescribe you something for the pain",
+    "i prescribe metformin"
+  ],
+  "should_not_match": [
+    "diagnose the bug in this code",
+    "you have a cold today",
+    "to diagnose the issue run tests",
+    "the disease was eradicated last century",
+    "take 10 minutes of break time",
+    "the dosage is 10 mg per kilogram",
+    "the doctor will prescribe medication",
+    "the syndrome was identified by Dr. Down",
+    "take 5 minutes off your timer",
+    "diagnose your computer's network issue"
+  ]
+}

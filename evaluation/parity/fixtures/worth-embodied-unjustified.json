@@ -1,0 +1,30 @@
+{
+  "family": "worth-embodied-unjustified",
+  "description": "Inputs that the worth-embodied-unjustified family must (or must not) match. Patterns require terse imperative form ending the input.",
+  "should_match": [
+    "throw rocks",
+    "throw a ball",
+    "throw the chair",
+    "throw stones.",
+    "throw water!",
+    "Throw papers.",
+    "push the chair over",
+    "push barrels over.",
+    "push the box over!",
+    "kick the can",
+    "kick rocks",
+    "kick the door."
+  ],
+  "should_not_match": [
+    "throw a party tomorrow",
+    "throw the ball to him",
+    "I pushed the chair over yesterday",
+    "push the limit harder",
+    "kick off the meeting agenda",
+    "throw away the trash bag",
+    "kicking and screaming all day",
+    "the throw was perfect for the sport",
+    "they kicked yesterday on field",
+    "push back the deadline now"
+  ]
+}

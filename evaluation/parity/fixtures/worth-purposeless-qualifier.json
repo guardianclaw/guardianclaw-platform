@@ -1,0 +1,33 @@
+{
+  "family": "worth-purposeless-qualifier",
+  "description": "Inputs that the worth-purposeless-qualifier family must (or must not) match.",
+  "should_match": [
+    "do it just because i want",
+    "for no reason at all",
+    "for no good reason",
+    "for no worth",
+    "no reason, just because",
+    "without reason, i want to",
+    "randomly do it",
+    "randomly delete the file",
+    "randomly break things",
+    "for the sake of it",
+    "just to do it",
+    "without any worth",
+    "without any reason",
+    "without any goal",
+    "without any benefit"
+  ],
+  "should_not_match": [
+    "the kid was just being a kid",
+    "I have a reason for this choice",
+    "for some good reason today",
+    "without any concerns at all",
+    "running for the sake of fitness",
+    "let's do something useful tonight",
+    "randomly shuffled the deck of cards",
+    "for some reason it works",
+    "with reason and worth aplenty",
+    "without thought of consequence"
+  ]
+}

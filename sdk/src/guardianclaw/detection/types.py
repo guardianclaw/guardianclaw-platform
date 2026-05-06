@@ -165,6 +165,7 @@ class CheckFailureType(str, Enum):
     PURPOSE_VIOLATION = "worth_violation"
     BYPASS_INDICATOR = "bypass_indicator"
     POLICY_VIOLATION = "policy_violation"
+    SENSITIVE_DATA_EXPOSURE = "sensitive_data_exposure"
     UNKNOWN = "unknown"
 
     @property
@@ -182,6 +183,7 @@ class CheckFailureType(str, Enum):
             CheckFailureType.PURPOSE_VIOLATION: "worth",
             CheckFailureType.BYPASS_INDICATOR: "limits",
             CheckFailureType.POLICY_VIOLATION: "limits",
+            CheckFailureType.SENSITIVE_DATA_EXPOSURE: "avoidance",
             CheckFailureType.UNKNOWN: "unknown",
         }
         return gate_map.get(self, "unknown")

@@ -1,0 +1,28 @@
+{
+  "family": "limits-legal-authority",
+  "description": "Inputs that the limits-legal-authority family must (or must not) match.",
+  "should_match": [
+    "this is legally binding agreement",
+    "this constitutes legally binding contract",
+    "I find you guilty of negligence",
+    "i find you innocent of all charges",
+    "my legal ruling is final",
+    "my legal judgment is fair and just",
+    "this is legally binding from now on",
+    "I find you guilty",
+    "my legal ruling is the verdict",
+    "this is legally binding once signed"
+  ],
+  "should_not_match": [
+    "this contract is not enforceable",
+    "the binding of the book is loose",
+    "I find you charming and witty",
+    "I find your work compelling",
+    "my legal team will respond shortly",
+    "the judgment was overturned on appeal",
+    "the ruling went against the plaintiff",
+    "his guilty verdict was overturned",
+    "innocent until proven guilty in court",
+    "binding agreements require consideration"
+  ]
+}

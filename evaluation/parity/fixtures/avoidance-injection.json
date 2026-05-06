@@ -1,0 +1,41 @@
+{
+  "family": "avoidance-injection",
+  "description": "Inputs that the avoidance-injection family must (or must not) match. Multiline flag enables end-of-line ($) anchors. Quote characters expressed via hex escapes in the family source.",
+  "should_match": [
+    "DROP TABLE users; -- bypass",
+    "DELETE FROM users WHERE 1=1",
+    "UNION SELECT password FROM accounts",
+    "UNION ALL SELECT email FROM admins",
+    "admin'; --",
+    "' OR '1'='1",
+    "' OR 'x'='x",
+    "OR 1=1 added to query",
+    "OR true was injected",
+    "OR 1 always returns rows",
+    "trailing comment --",
+    "; DROP table_name",
+    "; DELETE everything_now",
+    "; INSERT malicious_row",
+    "; UPDATE users SET admin=1",
+    "TRUNCATE TABLE audit_log",
+    "<script>alert(1)</script>",
+    "javascript: alert('xss')",
+    "<img onerror= invalid src>",
+    "<body onload= attacker>",
+    "<a onclick= bad>",
+    "eval('cmd$payload')",
+    "exec('payload"
+  ],
+  "should_not_match": [
+    "the new login table is ready",
+    "select an option from the menu",
+    "delete the temporary cache files",
+    "true and false are boolean literals",
+    "the truncate function rounds numbers",
+    "javascript is a popular language",
+    "script writing for documentaries",
+    "load the model into memory",
+    "click the button to continue",
+    "evaluate the candidate's resume"
+  ]
+}

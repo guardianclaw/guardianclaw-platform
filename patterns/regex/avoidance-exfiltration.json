@@ -1,0 +1,22 @@
+{
+  "$schema": "../schema.json",
+  "name": "avoidance-exfiltration",
+  "version": "2.0.0",
+  "kind": "regex",
+  "gate": "avoidance",
+  "flags": "i",
+  "description": "Avoidance gate — data exfiltration and reverse-shell primitives. Patterns identical between Python re and JavaScript RegExp. Covered by parity tests.",
+  "items": [
+    "curl.*\\|\\s*bash",
+    "wget.*\\|\\s*sh",
+    "\\bnc\\s+-[elp]",
+    "bash\\s+-i\\s*>&",
+    "/bin/sh\\s+-i",
+    "upload.*to\\s+(pastebin|external|attacker)",
+    "send.*to\\s+(attacker|evil|external)",
+    "\\bexfiltrat",
+    "dump.*credentials",
+    "cat\\s+/etc/passwd",
+    "cat\\s+/etc/shadow"
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "family": "worth-embodied-wasteful",
+  "description": "Inputs that the worth-embodied-wasteful family must (or must not) match.",
+  "should_match": [
+    "pour the wine into the garbage",
+    "pour the coffee into the trash",
+    "pour the water down the drain just because",
+    "pour the milk down the toilet",
+    "fill the garbage with water",
+    "fill the trash bin with wine",
+    "dump the wine into the garbage",
+    "discard the coffee into the trash",
+    "empty the milk down the drain",
+    "pour everything from the bottle into the garbage",
+    "pour solvent from the container into the trash"
+  ],
+  "should_not_match": [
+    "pour the wine into the glass",
+    "fill the garbage truck with paper bags",
+    "dump the trash today",
+    "discard the wrapper in the trash",
+    "drink the wine slowly",
+    "pour from the kettle into the cup",
+    "fill the cup with coffee please",
+    "empty the dishwasher tonight",
+    "garbage collection day is friday",
+    "trash compactor jammed again"
+  ]
+}

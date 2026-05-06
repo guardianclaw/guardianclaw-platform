@@ -1,0 +1,15 @@
+{
+  "$schema": "../schema.json",
+  "name": "worth-embodied-wasteful",
+  "version": "2.0.0",
+  "kind": "regex",
+  "gate": "worth",
+  "flags": "i",
+  "description": "Worth gate — embodied/physical wasteful actions: pouring or dumping consumables into garbage/trash/drain. New for Python (parity audit imported from TypeScript core). Covered by parity tests.",
+  "items": [
+    "\\bpour\\s+(the\\s+)?(wine|water|coffee|juice|milk|soup|liquid|drink|beverage)\\s+(from\\s+.+\\s+)?(into|in|down)\\s+(the\\s+)?(garbage|trash|bin|drain|toilet|floor|ground)\\b",
+    "\\bfill\\s+(the\\s+)?(garbage|trash)\\s*(can|bin)?\\s+with\\s+(water|wine|coffee|liquid|milk|juice)",
+    "\\b(dump|empty|discard)\\s+(the\\s+)?(wine|water|coffee|milk|juice|soup)\\s+(into|in|down)\\s+(the\\s+)?(garbage|trash|drain|toilet)\\b",
+    "\\bpour\\s+.+\\s+from\\s+(the\\s+)?(bottle|pot|cup|glass|container)\\s+(into|in)\\s+(the\\s+)?(garbage|trash|bin)\\b"
+  ]
+}
