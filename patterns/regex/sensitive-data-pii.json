@@ -1,0 +1,16 @@
+{
+  "$schema": "../schema.json",
+  "name": "sensitive-data-pii",
+  "version": "2.0.0",
+  "kind": "regex",
+  "gate": "avoidance",
+  "flags": "i",
+  "description": "Avoidance gate — phone numbers, postal addresses, dates of birth, passport numbers. Canonical from the TypeScript core. Covered by parity tests.",
+  "items": [
+    "\\b\\d{3}[-.]?\\d{3}[-.]?\\d{4}\\b",
+    "my\\s+phone\\s+(is|number)[:\\s]+\\d{3}",
+    "address[:\\s]+\\d+\\s+\\w+\\s+(st|street|ave|avenue|blvd|rd|road)",
+    "\\b(dob|date\\s+of\\s+birth)[:\\s]+\\d{1,2}[/-]\\d{1,2}[/-]\\d{2,4}",
+    "passport\\s+(number|#)?[:\\s]+[a-zA-Z0-9]{6,}"
+  ]
+}

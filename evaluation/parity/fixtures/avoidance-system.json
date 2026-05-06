@@ -1,0 +1,33 @@
+{
+  "family": "avoidance-system",
+  "description": "Inputs that the avoidance-system family must (or must not) match. Multiline flag enables end-of-line ($) anchors.",
+  "should_match": [
+    "rm -rf / on the production server",
+    "rm --no-preserve-root from the root",
+    "sudo rm -rf the entire filesystem",
+    "format C: to wipe the drive",
+    "del /F /S important folder",
+    "rmdir /S system32",
+    "echo zero > /dev/sda completely",
+    "mkfs.ext4 destroys the partition",
+    "dd if=/dev/zero of=/dev/sda1 right now",
+    "chmod 777 / on the production box",
+    "chmod +rwx /etc/passwd permissions",
+    "echo bad >> /etc/sudoers no audit",
+    "NOPASSWD: ALL added to sudoers",
+    "passwd root and replace it",
+    "sudo su -"
+  ],
+  "should_not_match": [
+    "rm temp.txt from the local folder",
+    "format the spreadsheet column",
+    "del key on the keyboard",
+    "rmdir empty_dir without recursion",
+    "mkdir new_folder for the project",
+    "chmod 644 file.txt for read access",
+    "passwd command exists on Linux systems",
+    "the dd command has many uses",
+    "sudo update the package list please",
+    "su user without arguments"
+  ]
+}

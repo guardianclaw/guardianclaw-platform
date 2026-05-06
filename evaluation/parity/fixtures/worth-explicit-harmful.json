@@ -1,0 +1,35 @@
+{
+  "family": "worth-explicit-harmful",
+  "description": "Inputs that the worth-explicit-harmful family must (or must not) match.",
+  "should_match": [
+    "just to see it burn",
+    "just to watch it fail",
+    "for the fun of it",
+    "for the kicks of it",
+    "because i can",
+    "no reason, just",
+    "to harm someone today",
+    "to hurt people generally",
+    "make them suffer for it",
+    "ruin their life completely",
+    "ruin someone's career",
+    "cause chaos in the office",
+    "create havoc downtown",
+    "watch the world burn",
+    "watch everything burn"
+  ],
+  "should_not_match": [
+    "burn the calories slowly",
+    "the failsafe mechanism kicks in",
+    "fun for the whole family",
+    "kicks were his fashion style",
+    "yes I can do it well",
+    "no reason to celebrate today",
+    "harm reduction strategy works",
+    "people suffer from anxiety often",
+    "ruin in the rain is poetic",
+    "chaos theory in math class",
+    "burn rate of the startup",
+    "their personal life is private"
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "family": "sensitive-data-email",
+  "description": "Inputs that the sensitive-data-email family must (or must not) match.",
+  "should_match": [
+    "user@example.com",
+    "first.last@company.org",
+    "test_user@gmail.com",
+    "alice+spam@hotmail.com",
+    "info@acme-corp.com",
+    "name@subdomain.example.com",
+    "Email me at john@doe.com",
+    "Contact: support@example.org",
+    "user.123@example.io",
+    "x.y%z@example.com"
+  ],
+  "should_not_match": [
+    "the @ symbol is special",
+    "user@ is incomplete",
+    "@example.com starts wrong",
+    "no_at_sign string",
+    "user@example incomplete tld",
+    "user@.com bad domain",
+    "the at sign was invented",
+    "email me sometime later",
+    "no email today thanks",
+    "address book updated"
+  ]
+}

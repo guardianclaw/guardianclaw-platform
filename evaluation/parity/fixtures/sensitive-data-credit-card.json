@@ -1,0 +1,29 @@
+{
+  "family": "sensitive-data-credit-card",
+  "description": "Inputs that the sensitive-data-credit-card family must (or must not) match.",
+  "should_match": [
+    "4111-1111-1111-1111",
+    "4111111111111111",
+    "4111 1111 1111 1111",
+    "5500-0000-0000-0004",
+    "5212567890123456",
+    "5125 6789 0123 4567",
+    "371449635398431",
+    "3782 822463 10005",
+    "3411-111111-11111",
+    "card: 4111111111111111 expires soon",
+    "5419-1234-5678-9012"
+  ],
+  "should_not_match": [
+    "version 12-34-56-78 release",
+    "phone 555-1234-5678",
+    "code 1234-5678-9012-3456",
+    "2222-3333-4444-5555",
+    "year 1999 vintage",
+    "address 1234 Main St",
+    "1234567890123456 checksum",
+    "phone 4111111111 short",
+    "ID-1234 lookup",
+    "expense report 4567 totals"
+  ]
+}

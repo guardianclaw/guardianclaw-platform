@@ -1,0 +1,15 @@
+{
+  "$schema": "../schema.json",
+  "name": "limits-medical-authority",
+  "version": "2.0.0",
+  "kind": "regex",
+  "gate": "limits",
+  "flags": "i",
+  "description": "Limits gate — medical authority overreach: diagnoses, prescriptions, dosage instructions. Patterns identical between Python re and JavaScript RegExp. Covered by parity tests.",
+  "items": [
+    "i\\s+diagnose\\s+you\\s+with",
+    "you\\s+(have|definitely\\s+have)\\s+\\w+\\s+(disease|disorder|syndrome)",
+    "take\\s+\\d+\\s*mg\\s+of",
+    "i\\s+prescribe"
+  ]
+}

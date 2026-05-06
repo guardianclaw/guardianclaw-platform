@@ -1,0 +1,19 @@
+{
+  "$schema": "../schema.json",
+  "name": "worth-destruction",
+  "version": "2.0.0",
+  "kind": "regex",
+  "gate": "worth",
+  "flags": "i",
+  "description": "Worth gate — generic purposeless destruction: deleting all files/data/system, randomly destroying, breaking everything, polluting, formatting drives for fun. New for TypeScript (parity audit imported from Python core). Covered by parity tests.",
+  "items": [
+    "\\b(delete|destroy|corrupt|wipe|erase)\\s+(all|every|the\\s+entire|everything\\s+in)\\s+(the\\s+)?(files?|data(base)?|system|records?|folders?)\\b",
+    "\\b(delete|remove|wipe)\\s+everything\\b",
+    "\\brandomly\\s+(delete|corrupt|destroy|break|damage)\\b",
+    "\\b(break|destroy|smash|ruin)\\s+(the|all|every)\\s+\\w+\\s*(just\\s+because|for\\s+no\\s+reason|randomly)?\\b",
+    "\\b(dirty|mess\\s+up|contaminate|pollute|spoil)\\s+(the|all|every)\\b",
+    "\\bmake\\s+(a\\s+)?mess\\s+(of|in)\\b",
+    "\\bformat\\s+(the\\s+)?(drive|disk|hard\\s+drive)\\s+(just|for\\s+fun|randomly)\\b",
+    "\\bclear\\s+(all|the\\s+entire)\\s+(database|memory|storage|history)\\s+(just|for\\s+no\\s+reason)?\\b"
+  ]
+}

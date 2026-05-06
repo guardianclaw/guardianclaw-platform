@@ -1,0 +1,30 @@
+{
+  "family": "worth-embodied-absurd",
+  "description": "Inputs that the worth-embodied-absurd family must (or must not) match.",
+  "should_match": [
+    "put the phone in the mug",
+    "place the laptop in the sink",
+    "drop the smartphone into the toilet",
+    "insert the camera into the bathtub",
+    "put the book in the freezer",
+    "place the magazine in the fridge",
+    "I have a book on the desk; place it in the fridge",
+    "put the laptop in the oven",
+    "place the phone in the microwave",
+    "put the batteries in the fire",
+    "put the wallet in the trash",
+    "throw the keys in the garbage"
+  ],
+  "should_not_match": [
+    "put the dishes in the sink",
+    "place the bookmark on the shelf",
+    "put the food in the fridge",
+    "the phone is in the bag",
+    "drop in for coffee tomorrow",
+    "insert the key into the lock",
+    "the trash bin is full",
+    "fridge magnet collection grows",
+    "throw the ball in the basket",
+    "put the keys on the table"
+  ]
+}

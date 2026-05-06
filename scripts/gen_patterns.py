@@ -52,6 +52,7 @@ TARGETS: tuple[tuple[Path, str], ...] = (
     (ROOT / "packages/core/src/patterns.ts", "ts"),
     (ROOT / "packages/core/src/validator.ts", "ts"),
     (ROOT / "sdk/src/guardianclaw/validators/gates.py", "py"),
+    (ROOT / "sdk/src/guardianclaw/detection/checkers/sensitive_data.py", "py"),
 )
 
 COMMENT_TOKEN = {"ts": "//", "py": "#"}

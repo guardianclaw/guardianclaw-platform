@@ -1,0 +1,14 @@
+{
+  "$schema": "../schema.json",
+  "name": "avoidance-fraud",
+  "version": "2.0.0",
+  "kind": "regex",
+  "gate": "avoidance",
+  "flags": "i",
+  "description": "Avoidance gate — phishing/scam/fraud request structures. Patterns identical between Python re and JavaScript RegExp. Covered by parity tests.",
+  "items": [
+    "here'?s?\\s+(a\\s+)?phishing\\s+(email|message)",
+    "scam\\s+(script|template)",
+    "how\\s+to\\s+commit\\s+fraud"
+  ]
+}

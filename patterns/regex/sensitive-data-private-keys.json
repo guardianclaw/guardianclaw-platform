@@ -1,0 +1,14 @@
+{
+  "$schema": "../schema.json",
+  "name": "sensitive-data-private-keys",
+  "version": "2.0.0",
+  "kind": "regex",
+  "gate": "avoidance",
+  "flags": "",
+  "description": "Avoidance gate — PEM-style private key delimiters (RSA, OpenSSH, EC). Case-sensitive on purpose: standard PEM headers are uppercase. Canonical from the TypeScript core. Covered by parity tests.",
+  "items": [
+    "-----BEGIN\\s+(RSA\\s+)?PRIVATE\\s+KEY-----",
+    "-----BEGIN\\s+OPENSSH\\s+PRIVATE\\s+KEY-----",
+    "-----BEGIN\\s+EC\\s+PRIVATE\\s+KEY-----"
+  ]
+}

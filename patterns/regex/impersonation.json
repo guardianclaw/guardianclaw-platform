@@ -1,0 +1,19 @@
+{
+  "$schema": "../schema.json",
+  "name": "impersonation",
+  "version": "2.0.0",
+  "kind": "regex",
+  "gate": "credibility",
+  "flags": "i",
+  "description": "Credibility gate — claims of being authority figures or real people: corporate roles (CEO/CFO/...), professionals (doctor/lawyer/judge), public figures by name (Elon Musk, Bill Gates, ...), elected officials, agency spokespersons. Canonical from the Python core (the TypeScript core had no impersonation patterns of its own and previously relied on role-manipulation only). Covered by parity tests.",
+  "items": [
+    "\\bI\\s+am\\s+(the\\s+)?(CEO|CFO|CTO|COO|President|Chairman|Director|Head|Chief)\\s+(of|at)\\b",
+    "\\bI\\s+am\\s+(the\\s+)?(Dr\\.?|Doctor|Professor|Prof\\.?|Senator|Judge|Officer|Agent)\\s+\\w+",
+    "\\b(speaking|writing)\\s+(as|on\\s+behalf\\s+of)\\s+(a|the|your)\\s+(doctor|lawyer|attorney|judge|officer|agent|official)\\b",
+    "\\bI('m|\\s+am)\\s+(a|an|the)\\s+(licensed|certified|registered|official)\\s+(doctor|physician|lawyer|attorney|nurse|therapist|psychiatrist)\\b",
+    "\\b(this\\s+is|I\\s+am)\\s+(Elon|Bill|Mark|Jeff|Tim|Warren|Satya|Sundar)\\s+(Musk|Gates|Zuckerberg|Bezos|Cook|Buffett|Nadella|Pichai)\\b",
+    "\\b(this\\s+is|I\\s+am)\\s+(President|Senator|Governor|Mayor|Secretary)\\s+\\w+\\b",
+    "\\b(official\\s+statement|speaking\\s+officially)\\s+(from|for|on\\s+behalf\\s+of)\\s+(the\\s+)?\\w+\\b",
+    "\\bI\\s+(officially\\s+)?represent\\s+(the\\s+)?(government|FDA|CDC|WHO|FBI|CIA|NSA|police|military)\\b"
+  ]
+}

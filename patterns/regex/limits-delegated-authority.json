@@ -1,0 +1,26 @@
+{
+  "$schema": "../schema.json",
+  "name": "limits-delegated-authority",
+  "version": "2.0.0",
+  "kind": "regex",
+  "gate": "limits",
+  "flags": "i",
+  "description": "Limits gate — delegated authority: requests to BUILD systems that exercise medical/legal/financial authority the model itself is not entitled to. Addresses GAP-2 from prior audit (delegation bypass). New for Python (parity audit imported these from TypeScript core). Covered by parity tests.",
+  "items": [
+    "(create|build|make|develop|design|code|program|write)\\s+(a\\s+|an\\s+)?(bot|system|tool|app|application|program|software|assistant|agent|service)\\s+(that|which|to)\\s+(recommend|suggest|advise|pick|select|choose)s?\\s+(specific\\s+)?(stock|bond|investment|securit|etf|crypto)",
+    "(investment|stock|trading|financial)\\s+(advisor|adviser|recommendation)\\s+(bot|system|tool|app|service)",
+    "(bot|system|app|tool|program)\\s+(that|which)\\s+(picks?|selects?|chooses?|recommends?)\\s+(specific\\s+)?(stock|bond|investment|securit)",
+    "automat(ed|ic)\\s+(investment|stock|financial)\\s+(advice|advisor|adviser|recommendation)",
+    "(recommend|suggest)\\s+(specific|individual|particular)\\s+(stock|bond|investment|securit).*for\\s+(financial\\s+)?gain",
+    "(investment|stock|financial)\\s+(advisor|adviser)\\s+(that|which)\\s+(picks?|recommends?|selects?|suggests?)",
+    "(app|tool|system|bot)\\s+(that\\s+)?tells?\\s+(users?|people|you)\\s+(which|what)\\s+(stock|crypto|bond|investment)",
+    "(create|build|make|develop)\\s+(a\\s+|an\\s+)?(bot|system|tool|app|assistant|agent)\\s+(that|which|to)\\s+(diagnose|prescribe|recommends?\\s+(medications?|treatments?|drugs?))",
+    "(medical|health|diagnostic)\\s+(diagnosis|diagnostic)\\s+(bot|system|tool|app)",
+    "(prescription|prescribing)\\s+(bot|system|tool|app|service)",
+    "automat(ed|ic)\\s+(medical\\s+)?(diagnosis|prescription|treatment\\s+recommendation)",
+    "(system|bot|app|tool)\\s+(that|which)\\s+recommends?\\s+(treatments?|medications?|drugs?)",
+    "(create|build|make|develop)\\s+(a\\s+|an\\s+)?(bot|system|tool|app|assistant)\\s+(that|which|to)\\s+(give\\s+legal\\s+advice|make\\s+legal\\s+judgment|rule\\s+on|determine\\s+(guilt|liability))",
+    "(legal|law)\\s+(advisor|adviser|advice)\\s+(bot|system|tool|app)",
+    "automat(ed|ic)\\s+(legal\\s+)?(judgment|ruling|advice|verdict)"
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "family": "sensitive-data-ssn",
+  "description": "Inputs that the sensitive-data-ssn family must (or must not) match.",
+  "should_match": [
+    "123-45-6789",
+    "SSN: 987-65-4321",
+    "ssn is 555-44-3333",
+    "his SSN is 111-22-3333",
+    "data: 123-45-6789 found in dump",
+    "format 222-33-4444",
+    "the ssn: 678-90-1234",
+    "SSN is 999-88-7777",
+    "her ssn: 444-55-6666",
+    "found 100-20-3000 in records",
+    "987-65-4321"
+  ],
+  "should_not_match": [
+    "phone is 555-1234-5678",
+    "the year was 2024",
+    "code 12-34-5678",
+    "social security topics",
+    "1234-56-7890 product code",
+    "ssn is private and protected",
+    "the meeting at 3:30 PM",
+    "version 1-2-3 release",
+    "id-12-34 lookup",
+    "12-34-56 not enough digits"
+  ]
+}

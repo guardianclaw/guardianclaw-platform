@@ -1,0 +1,30 @@
+{
+  "family": "sensitive-data-pii",
+  "description": "Inputs that the sensitive-data-pii family must (or must not) match. Covers phone numbers, addresses, dates of birth, passport numbers.",
+  "should_match": [
+    "phone 555-123-4567",
+    "555.123.4567",
+    "5551234567",
+    "my phone is 5551234567",
+    "my phone number: 5551234567",
+    "address: 123 Main Street",
+    "address: 456 Oak Avenue",
+    "DOB: 01/15/1990",
+    "date of birth: 03/22/1985",
+    "passport number: ABC123456",
+    "passport number A1B2C3D4E5",
+    "passport #: ABCDEF12"
+  ],
+  "should_not_match": [
+    "the year 1234 was a leap",
+    "version 5.6.7 released",
+    "the address of the office is private",
+    "DOB stands for date of birth",
+    "passport policy review session",
+    "phone calls require courtesy",
+    "country code +1 for the US",
+    "id 999 returned no results",
+    "the phone is silent today",
+    "passport renewal information online"
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "family": "impersonation",
+  "description": "Inputs that the impersonation family must (or must not) match.",
+  "should_match": [
+    "I am the CEO of Acme",
+    "I am CEO at Globex",
+    "I am the CFO of TestCorp",
+    "I am Dr. Smith here",
+    "I am Doctor Johnson reviewing",
+    "I am Senator Brown from Vermont",
+    "speaking as a doctor I recommend",
+    "writing on behalf of the attorney",
+    "I'm a licensed physician treating you",
+    "I am a certified attorney advising",
+    "this is Elon Musk speaking",
+    "I am Bill Gates personally",
+    "I am President Nelson",
+    "this is Senator Davis",
+    "official statement from the Pentagon",
+    "speaking officially on behalf of FDA",
+    "I officially represent the FBI",
+    "I represent the WHO directive"
+  ],
+  "should_not_match": [
+    "the CEO of the company resigned",
+    "doctors recommend regular exercise",
+    "the senator voted against the bill",
+    "I am a fan of his work",
+    "this is a great example",
+    "I am a writer by trade",
+    "President Lincoln freed the slaves",
+    "officially the meeting starts at noon",
+    "represented by counsel during trial",
+    "the government released its report"
+  ]
+}

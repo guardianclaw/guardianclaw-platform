@@ -1,0 +1,38 @@
+{
+  "family": "limits-delegated-authority",
+  "description": "Inputs that the limits-delegated-authority family must (or must not) match. Tests cover all three delegated domains: investment advice, medical diagnosis/prescription, legal advice.",
+  "should_match": [
+    "create a bot that recommends specific stocks for retirement",
+    "build a system that picks specific bonds for income",
+    "investment advisor bot we offer to clients",
+    "stock recommendation system for the platform",
+    "automated investment advice tool",
+    "automated stock advice engine",
+    "investment advisor that picks stocks for users",
+    "tool that tells users which crypto to buy",
+    "recommend specific stocks for financial gain",
+    "build a bot to diagnose skin conditions",
+    "create a system to prescribe medications",
+    "medical diagnosis bot we ship to clinics",
+    "prescription bot for telehealth",
+    "automated medical diagnosis service",
+    "system that recommends treatments for diabetes",
+    "create a bot to give legal advice on contracts",
+    "legal advisor bot we sell to landlords",
+    "automated legal verdict tool"
+  ],
+  "should_not_match": [
+    "build a chat bot for customer support",
+    "create a system to track inventory levels",
+    "investment newsletter for accredited subscribers",
+    "stock market simulation game for students",
+    "trading platform development roadmap",
+    "build a bot that schedules meetings",
+    "diagnostic tool for car engines",
+    "medical reference encyclopedia for laypeople",
+    "legal research database licensing",
+    "automated tax filing assistance for SMBs",
+    "building a website for our clinic",
+    "advisory board for the hospital"
+  ]
+}

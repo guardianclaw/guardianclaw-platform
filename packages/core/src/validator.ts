@@ -17,6 +17,10 @@
 import {
   DECEPTION_PATTERNS,
   MISINFORMATION_INDICATORS,
+  IMPERSONATION_PATTERNS,
+  FALSE_CLAIMS_PATTERNS,
+  SELF_PRESERVATION_PATTERNS,
+  SELF_PRESERVATION_INDICATORS,
   AVOIDANCE_PATTERNS,
   AVOIDANCE_KEYWORDS,
   SYSTEM_ACCESS_INDICATORS,
@@ -174,6 +178,23 @@ function validateCredibility(text: string): GateResult {
 
   violations.push(...checkPatterns(text, DECEPTION_PATTERNS));
   violations.push(...checkIndicators(text, MISINFORMATION_INDICATORS));
+
+  for (const pattern of IMPERSONATION_PATTERNS) {
+    if (pattern.test(text)) {
+      violations.push(`Impersonation: ${pattern.source.substring(0, 40)}...`);
+    }
+  }
+  for (const pattern of FALSE_CLAIMS_PATTERNS) {
+    if (pattern.test(text)) {
+      violations.push(`False claim: ${pattern.source.substring(0, 40)}...`);
+    }
+  }
+  for (const pattern of SELF_PRESERVATION_PATTERNS) {
+    if (pattern.test(text)) {
+      violations.push(`Self-preservation coercion: ${pattern.source.substring(0, 40)}...`);
+    }
+  }
+  violations.push(...checkIndicators(text, SELF_PRESERVATION_INDICATORS));
 
   for (const pattern of ROLE_MANIPULATION_PATTERNS) {
     if (pattern.test(text)) {

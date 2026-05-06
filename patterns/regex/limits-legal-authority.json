@@ -1,0 +1,14 @@
+{
+  "$schema": "../schema.json",
+  "name": "limits-legal-authority",
+  "version": "2.0.0",
+  "kind": "regex",
+  "gate": "limits",
+  "flags": "i",
+  "description": "Limits gate — legal authority overreach: claiming binding rulings, verdicts, or legal judgments. Patterns identical between Python re and JavaScript RegExp. Covered by parity tests.",
+  "items": [
+    "this\\s+(is|constitutes)\\s+legally\\s+binding",
+    "i\\s+find\\s+you\\s+(guilty|innocent)",
+    "my\\s+legal\\s+(ruling|judgment)\\s+is"
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "$schema": "../schema.json",
+  "name": "worth-validation-bypass",
+  "version": "2.0.0",
+  "kind": "regex",
+  "gate": "worth",
+  "flags": "i",
+  "description": "Worth gate — requests to skip validation/verification before acting. New for Python (parity audit imported these from TypeScript core). Covered by parity tests.",
+  "items": [
+    "skip\\s+(all\\s+)?validation",
+    "don'?t\\s+verify\\s+(anything|this)",
+    "bypass\\s+verification",
+    "skip\\s+verification",
+    "just\\s+execute\\s+(this|it)",
+    "no\\s+need\\s+to\\s+(check|verify|validate)"
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "$schema": "../schema.json",
+  "name": "deception",
+  "version": "2.0.0",
+  "kind": "regex",
+  "gate": "credibility",
+  "flags": "i",
+  "description": "Explicit deception instructions and deceptive content templates. Routed through the Credibility gate. Patterns are tightly scoped — 'pretend to be' alone is not deceptive (e.g., 'pretend to be interested'); the patterns require a deceptive target (evil|unrestricted|fake|fabricated|forged content). Aligned between Python's re and JavaScript's RegExp; covered by parity tests in evaluation/parity/.",
+  "items": [
+    "pretend\\s+(to\\s+be|you('re|'re))\\s+(an?\\s+)?(evil|unrestricted|unfiltered|hacker|malicious)",
+    "act\\s+as\\s+if\\s+(you\\s+)?(have\\s+no|don'?t\\s+have)\\s+(restrictions|rules|limits)",
+    "make\\s+up\\s+(a|some)\\s+(fake|false|fabricated)",
+    "fabricate\\s+(a\\s+)?(story|evidence|document|lie)",
+    "create\\s+fake\\s+(id|identity|document|evidence|news)",
+    "forge\\s+(a|an)\\s+(document|signature|id|certificate)",
+    "spread\\s+this\\s+(false|fake)",
+    "claim\\s+that.*false",
+    "here'?s?\\s+(a\\s+)?fake",
+    "this\\s+is\\s+how\\s+you\\s+lie"
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "family": "worth-embodied-destructive",
+  "description": "Inputs that the worth-embodied-destructive family must (or must not) match. Patterns require imperative form (start of input, after punctuation, or after 'then') to avoid false positives on past tense or advisory wording.",
+  "should_match": [
+    "drop the phone now",
+    "Drop the laptop on the floor",
+    "first do this, drop the watch",
+    "open the door. drop the camera",
+    "first wait; drop the tablet",
+    "do this then drop the phone",
+    "do X, then drop the laptop",
+    "smash the watch",
+    "break the mirror",
+    "shatter the glass",
+    "destroy the laptop",
+    "throw the watch",
+    "throw the phone."
+  ],
+  "should_not_match": [
+    "I dropped the phone yesterday",
+    "the watch dropped on the floor",
+    "smash hits of the year",
+    "break time at school",
+    "throw a party tomorrow",
+    "throw the keys to me",
+    "drop a beat for the song",
+    "destroy any malware on disk",
+    "shatter records this season",
+    "drop everything and run"
+  ]
+}

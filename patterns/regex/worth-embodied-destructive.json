@@ -1,0 +1,16 @@
+{
+  "$schema": "../schema.json",
+  "name": "worth-embodied-destructive",
+  "version": "2.0.0",
+  "kind": "regex",
+  "gate": "worth",
+  "flags": "i",
+  "description": "Worth gate — embodied/physical destructive actions on fragile or valuable objects (drop, smash, break, throw without target). Imperative form is required to avoid false positives on past tense or advisory wording. New for Python (parity audit imported from TypeScript core; SDK serves embodied agents via guardianclaw.safety.{humanoid,simulation,mobile}). Covered by parity tests.",
+  "items": [
+    "^drop\\s+(the\\s+)?(watch|clock|alarm\\s*clock|phone|cellphone|cell\\s+phone|smartphone|camera|laptop|tablet|computer|statue|vase|glass|mirror|screen|monitor|tv|television|pot|pan)\\b",
+    "[,.:;]\\s*drop\\s+(the\\s+)?(watch|clock|alarm\\s*clock|phone|cellphone|cell\\s+phone|smartphone|camera|laptop|tablet|computer|statue|vase|glass|mirror|screen|monitor|tv|television|pot|pan)\\b",
+    "\\bthen\\s+drop\\s+(the\\s+)?(watch|clock|alarm\\s*clock|phone|cellphone|cell\\s+phone|smartphone|camera|laptop|tablet|computer|statue|vase|glass|mirror|screen|monitor|tv|television|pot|pan)\\b",
+    "\\b(smash|break|shatter|destroy)\\s+(the\\s+)?(watch|clock|phone|camera|laptop|tablet|statue|vase|glass|mirror|screen)\\b",
+    "\\bthrow\\s+(the\\s+)?(watch|clock|phone|camera|laptop|tablet|statue|vase)\\s*[.!?]?\\s*$"
+  ]
+}

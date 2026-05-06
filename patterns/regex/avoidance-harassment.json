@@ -1,0 +1,15 @@
+{
+  "$schema": "../schema.json",
+  "name": "avoidance-harassment",
+  "version": "2.0.0",
+  "kind": "regex",
+  "gate": "avoidance",
+  "flags": "i",
+  "description": "Avoidance gate — harassment, bullying, stalking, doxxing request structures. Patterns identical between Python re and JavaScript RegExp. Covered by parity tests.",
+  "items": [
+    "here'?s?\\s+(a\\s+)?harassment\\s+message",
+    "ways\\s+to\\s+bully",
+    "how\\s+to\\s+stalk",
+    "doxxing\\s+(guide|instructions)"
+  ]
+}

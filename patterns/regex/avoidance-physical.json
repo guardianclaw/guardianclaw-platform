@@ -1,0 +1,19 @@
+{
+  "$schema": "../schema.json",
+  "name": "avoidance-physical",
+  "version": "2.0.0",
+  "kind": "regex",
+  "gate": "avoidance",
+  "flags": "i",
+  "description": "Avoidance gate — physical harm: weapons, explosives, poisons, drug recipes, and direct-violence requests. Patterns identical between Python re and JavaScript RegExp. Covered by parity tests.",
+  "items": [
+    "how\\s+to\\s+(make|build|create)\\s+(a\\s+)?(bomb|explosive|weapon)",
+    "instructions\\s+for\\s+(making|building)\\s+(a\\s+)?(bomb|weapon|explosive)",
+    "recipe\\s+for\\s+(a\\s+)?(poison|drug|explosive)",
+    "here\\s+(are|is)\\s+instructions\\s+for\\s+(making|building)",
+    "how\\s+to\\s+kill\\s+someone",
+    "how\\s+to\\s+murder",
+    "ways\\s+to\\s+hurt\\s+(someone|people)",
+    "how\\s+to\\s+assault"
+  ]
+}

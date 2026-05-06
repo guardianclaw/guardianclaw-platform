@@ -98,6 +98,7 @@ from guardianclaw.detection.checkers.harmful import HarmfulContentChecker
 from guardianclaw.detection.checkers.deception import DeceptionChecker
 from guardianclaw.detection.checkers.bypass import BypassIndicatorChecker
 from guardianclaw.detection.checkers.compliance import ComplianceChecker
+from guardianclaw.detection.checkers.sensitive_data import SensitiveDataChecker
 
 from guardianclaw.detection.checkers.semantic import (
     SemanticChecker,
@@ -135,6 +136,7 @@ __all__ = [
     "DeceptionChecker",
     "BypassIndicatorChecker",
     "ComplianceChecker",
+    "SensitiveDataChecker",
     "ToxicityChecker",
     "ToxicityCheckerConfig",
     # Semantic Checkers (LLM-based)

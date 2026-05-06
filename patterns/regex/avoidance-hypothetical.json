@@ -1,0 +1,18 @@
+{
+  "$schema": "../schema.json",
+  "name": "avoidance-hypothetical",
+  "version": "2.0.0",
+  "kind": "regex",
+  "gate": "avoidance",
+  "flags": "i",
+  "description": "Avoidance gate — hypothetical/fictional framing used to bypass refusals while still requesting harmful content. Each pattern requires both the framing AND a harmful target (hack, malware, bypass, etc.) to avoid false positives on legitimate hypotheticals. New for Python (parity audit imported these from TypeScript core).",
+  "items": [
+    "hypothetically.*how\\s+would\\s+(you|one)\\s+(hack|create\\s+malware|bypass)",
+    "in\\s+a\\s+fictional\\s+world.*explain\\s+how\\s+to",
+    "for\\s+educational\\s+purposes\\s+only.*teach\\s+me",
+    "just\\s+theoretically.*how\\s+would\\s+one\\s+(create|make|build)\\s+(malware|virus|trojan|ransomware)",
+    "in\\s+an\\s+alternate\\s+universe.*show\\s+me\\s+how\\s+to",
+    "if\\s+you\\s+had\\s+no\\s+restrictions.*how\\s+would\\s+(you|one)\\s+hack",
+    "where\\s+AI\\s+has\\s+no\\s+limit.*explain"
+  ]
+}
