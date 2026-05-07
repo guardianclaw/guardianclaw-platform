@@ -17,7 +17,7 @@ import { authMiddleware } from '../middleware/auth'
 import { walletRateLimitMiddleware } from '../middleware/rate-limit'
 import { createSecureLogger, hashWallet } from '../lib/secure-logger'
 import { getRequestId, getClientIP } from '../middleware/logging'
-import { getServiceClient, getUserClient } from '../lib/supabase-client'
+import { getUserClient } from '../lib/supabase-client'
 
 type Bindings = {
   SUPABASE_URL: string
@@ -181,24 +181,14 @@ userRoutes.delete('/data', async (c) => {
   const clientIP = getClientIP(c)
   const logger = createSecureLogger({ IP_HASH_SECRET: c.env.IP_HASH_SECRET })
 
-  // GDPR erasure cascades across nine tables and writes an immutable row
-  // to deletion_audit_log. Several of those tables (auth_sessions,
-  // usage_daily, deletion_audit_log) lack the JWT DELETE/INSERT policies
-  // a user-client would need; switching this single handler to user-client
-  // would require either a much wider policy migration or a partial
-  // failure mode in the cascade.
-  //
-  // The right long-term shape is a single SECURITY DEFINER RPC,
-  // `purge_user_data(wallet)`, that runs the entire cascade in one
-  // transaction with explicit ownership predicates. That is queued for
-  // Frente B.2 (transactional writes RPC pattern). Until then this
-  // handler stays on service-role with the existing handler-side
-  // .eq('wallet_address') chain as the boundary, and SECURITY.md G-05
-  // continues to call this out as an open gap for the deletion path.
-  const supabase = getServiceClient(c.env)
+  // The full cascade lives behind the SECURITY DEFINER RPC `purge_user_data`
+  // (Frente B.2 migration 20260429000000). The RPC validates the JWT
+  // wallet_address claim against the parameter, then runs the ten ordered
+  // mutations + the audit insert in a single Postgres transaction. We get
+  // atomicity for free and never need service-role on this path again.
+  const supabase = await getUserClient(c.env, wallet)
 
   try {
-    // Log security event - deletion initiated
     await logger.security(
       'data_deletion_requested',
       { action: 'deletion_initiated' },
@@ -207,135 +197,7 @@ userRoutes.delete('/data', async (c) => {
       requestId
     )
 
-    // Hash wallet for audit log (original wallet deleted)
     const walletHash = await hashWallet(wallet)
-
-    // Track what we're deleting
-    const deletedCategories: string[] = []
-    const retainedCategories: string[] = []
-    const errors: string[] = []
-
-    // 1. Delete LLM keys (encrypted blobs)
-    const llmKeysResult = await supabase
-      .from('llm_keys')
-      .delete()
-      .eq('wallet_address', wallet)
-      .select('id')
-
-    if (llmKeysResult.error) {
-      errors.push(`llm_keys: ${llmKeysResult.error.message}`)
-    } else {
-      deletedCategories.push('llm_keys')
-    }
-
-    // 2. Get agent IDs for cascading deletes
-    const agentsQuery = await supabase.from('agents').select('id').eq('wallet_address', wallet)
-
-    const agentIds = (agentsQuery.data || []).map((a) => a.id)
-
-    // 3. Delete agent events (if any agents existed)
-    if (agentIds.length > 0) {
-      const eventsResult = await supabase
-        .from('agent_events')
-        .delete()
-        .in('agent_id', agentIds)
-        .select('id')
-
-      if (!eventsResult.error) {
-        deletedCategories.push('agent_events')
-      }
-
-      // 4. Delete usage daily stats
-      const usageResult = await supabase
-        .from('usage_daily')
-        .delete()
-        .eq('wallet_address', wallet)
-        .select('id')
-
-      if (!usageResult.error) {
-        deletedCategories.push('usage_daily')
-      }
-
-      // 5. Delete API keys (for deployed agents)
-      const apiKeysResult = await supabase
-        .from('api_keys')
-        .delete()
-        .in('agent_id', agentIds)
-        .select('id')
-
-      if (!apiKeysResult.error) {
-        deletedCategories.push('api_keys')
-      }
-
-      // 6. Delete deployments
-      const deploymentsResult = await supabase
-        .from('deployments')
-        .delete()
-        .in('agent_id', agentIds)
-        .select('id')
-
-      if (!deploymentsResult.error) {
-        deletedCategories.push('deployments')
-      }
-    }
-
-    // 7. Delete agents
-    const agentsResult = await supabase
-      .from('agents')
-      .delete()
-      .eq('wallet_address', wallet)
-      .select('id')
-
-    if (agentsResult.error) {
-      errors.push(`agents: ${agentsResult.error.message}`)
-    } else {
-      deletedCategories.push('agents')
-    }
-
-    // 8. Delete auth sessions
-    const sessionsResult = await supabase
-      .from('auth_sessions')
-      .delete()
-      .eq('wallet_address', wallet)
-      .select('id')
-
-    if (!sessionsResult.error) {
-      deletedCategories.push('auth_sessions')
-    }
-
-    // 9. Delete votes (governance)
-    const votesResult = await supabase
-      .from('votes')
-      .delete()
-      .eq('wallet_address', wallet)
-      .select('id')
-
-    if (!votesResult.error) {
-      deletedCategories.push('votes')
-    }
-
-    // 10. Soft-delete profile (retain for payment records integrity)
-    const profileResult = await supabase
-      .from('profiles')
-      .update({
-        status: 'deleted',
-        deleted_at: new Date().toISOString(),
-        display_name: null,
-        avatar_url: null,
-      })
-      .eq('wallet_address', wallet)
-      .select('wallet_address')
-
-    if (!profileResult.error) {
-      deletedCategories.push('profile_optional_fields')
-    }
-
-    // Document retained data
-    retainedCategories.push('subscriptions') // 7 years tax compliance
-    retainedCategories.push('profile_core') // FK integrity with subscriptions
-
-    // 11. Create immutable deletion audit trail
-    // Hash IP for audit log
     const ipHash = clientIP
       ? await (async () => {
           const dailySalt = new Date().toISOString().split('T')[0]
@@ -349,24 +211,41 @@ userRoutes.delete('/data', async (c) => {
         })()
       : null
 
-    await supabase.from('deletion_audit_log').insert({
-      wallet_hash: walletHash,
-      deletion_date: new Date().toISOString(),
-      data_categories: deletedCategories,
-      retained_categories: retainedCategories,
-      retention_reason: 'tax_compliance_7_years',
-      request_ip_hash: ipHash,
-      request_id: requestId,
+    const { data, error } = await supabase.rpc('purge_user_data', {
+      p_wallet: wallet,
+      p_wallet_hash: walletHash,
+      p_request_id: requestId,
+      p_ip_hash: ipHash,
     })
 
-    // Log security event - deletion completed
+    if (error) {
+      await logger.error(
+        'Data deletion failed',
+        { error: error.message },
+        clientIP
+      )
+      return c.json(
+        {
+          error: 'Failed to delete data',
+          code: 'DELETION_FAILED',
+          message: 'Please try again or contact support',
+          ...(requestId && { requestId }),
+        },
+        500
+      )
+    }
+
+    const result = (data ?? {}) as { deleted?: string[]; retained?: string[] }
+    const deletedCategories = result.deleted ?? []
+    const retainedCategories = result.retained ?? ['subscriptions', 'profile_core']
+
     await logger.security(
       'data_deletion_requested',
       {
         action: 'deletion_completed',
         deleted_categories: deletedCategories,
         retained_categories: retainedCategories,
-        errors_count: errors.length,
+        errors_count: 0,
       },
       clientIP,
       wallet,
@@ -391,7 +270,6 @@ userRoutes.delete('/data', async (c) => {
         deletion_audit: '7 years (GDPR proof of compliance)',
       },
       completion_date: new Date().toISOString(),
-      ...(errors.length > 0 && { warnings: errors }),
     })
   } catch (error) {
     await logger.error(

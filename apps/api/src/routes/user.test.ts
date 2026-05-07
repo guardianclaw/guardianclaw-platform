@@ -39,6 +39,30 @@ const mockData = {
 // Mock Supabase client with comprehensive table support
 vi.mock('@supabase/supabase-js', () => ({
   createClient: vi.fn(() => ({
+    rpc: vi.fn(async (fn: string, params: Record<string, unknown>) => {
+      if (fn === 'purge_user_data') {
+        const deleted = ['llm_keys', 'agents', 'auth_sessions', 'votes', 'profile_optional_fields']
+        mockData.deletedTables.push(...deleted)
+        mockData.deletionAuditLog.push({
+          wallet_hash: params.p_wallet_hash,
+          deletion_date: new Date().toISOString(),
+          data_categories: deleted,
+          retained_categories: ['subscriptions', 'profile_core'],
+          retention_reason: 'tax_compliance_7_years',
+          request_ip_hash: params.p_ip_hash,
+          request_id: params.p_request_id,
+        })
+        return {
+          data: {
+            success: true,
+            deleted,
+            retained: ['subscriptions', 'profile_core'],
+          },
+          error: null,
+        }
+      }
+      return { data: null, error: { message: `unknown rpc ${fn}` } }
+    }),
     from: vi.fn((table: string) => {
       const createChainedMethods = (selectData: unknown) => ({
         eq: vi.fn(() => createChainedMethods(selectData)),
