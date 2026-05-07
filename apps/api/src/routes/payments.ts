@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { authMiddleware } from '../middleware/auth'
 import { walletRateLimitMiddleware } from '../middleware/rate-limit'
 import { getUserClient } from '../lib/supabase-client'
+import { IdempotencyLayer, generateAutoKey } from '../lib/idempotency'
 
 type Bindings = {
   SUPABASE_URL: string
@@ -282,11 +283,40 @@ paymentsRoutes.post('/verify', authMiddleware, walletRateLimitMiddleware(), asyn
 
   const { tx_signature, plan, payment_token } = parsed.data
 
+  // Idempotency: prefer client-supplied key; fall back to a deterministic hash
+  // of the payment intent so replays of the same Solana transaction return the
+  // same response. The key flows through both the KV cache (fast path) and the
+  // record_payment RPC (durable UNIQUE (wallet_address, idempotency_key)).
+  const idempotencyKeyHeader = c.req.header('Idempotency-Key')
+  const idempotencyKey =
+    idempotencyKeyHeader ||
+    (await generateAutoKey(wallet, tx_signature, JSON.stringify({ plan, payment_token })))
+  const idempotency = new IdempotencyLayer(c.env.RATE_LIMIT_KV || null)
+
+  const existingEntry = await idempotency.check(idempotencyKey)
+  if (existingEntry?.status === 'complete' && existingEntry.response) {
+    c.header('X-Idempotent-Replay', 'true')
+    return c.json(
+      existingEntry.response as Record<string, unknown>,
+      (existingEntry.statusCode || 200) as 200
+    )
+  }
+  if (existingEntry?.status === 'processing') {
+    c.header('Retry-After', '5')
+    return c.json(
+      { error: 'Request already in progress', code: 'DUPLICATE_REQUEST' },
+      409
+    )
+  }
+
   // Get treasury wallet
   const treasuryWallet = c.env.TREASURY_WALLET
   if (!treasuryWallet) {
+    // 503 is transient — do not cache. Stakeholder fixes config and the client retries.
     return c.json({ error: 'Payment system not configured' }, 503)
   }
+
+  await idempotency.markProcessing(idempotencyKey)
 
   const supabase = await getUserClient(c.env, wallet)
 
@@ -552,25 +582,42 @@ paymentsRoutes.post('/verify', authMiddleware, walletRateLimitMiddleware(), asyn
       p_amount_lamports: amountSmallestUnit,
       p_period_start: periodStart.toISOString(),
       p_period_end: periodEnd.toISOString(),
+      p_idempotency_key: idempotencyKey,
     })
 
     if (rpcError) {
       console.error('Failed to record payment:', rpcError)
+      // Transient backend failure — clear the in-flight marker so the client
+      // can retry under the same idempotency key.
+      await idempotency.remove(idempotencyKey)
       return c.json({ error: 'Failed to create subscription' }, 500)
     }
 
     const result = rpcData as
-      | { success: true; plan: string; period_start: string; period_end: string }
+      | {
+          success: true
+          replayed?: boolean
+          plan: string
+          period_start: string
+          period_end: string
+          subscription_id?: string
+          tx_signature?: string
+        }
       | { success: false; error: string; existing_subscription_id?: string }
 
     if (!result.success) {
       if (result.error === 'tx_signature_already_used') {
-        return c.json({ error: 'Transaction already used' }, 409)
+        const conflictBody = { error: 'Transaction already used' }
+        // Deterministic conflict — cache so the next retry returns the same
+        // 409 immediately instead of re-running Solana validation.
+        await idempotency.markComplete(idempotencyKey, conflictBody, 409)
+        return c.json(conflictBody, 409)
       }
+      await idempotency.remove(idempotencyKey)
       return c.json({ error: result.error || 'Failed to record payment' }, 500)
     }
 
-    return c.json({
+    const responseBody = {
       success: true,
       plan,
       payment_token,
@@ -578,9 +625,17 @@ paymentsRoutes.post('/verify', authMiddleware, walletRateLimitMiddleware(), asyn
       period_start: periodStart.toISOString(),
       period_end: periodEnd.toISOString(),
       message: `Successfully upgraded to ${PLAN_PRICING[plan].name}!`,
-    })
+      ...(result.replayed ? { replayed: true } : {}),
+    }
+    await idempotency.markComplete(idempotencyKey, responseBody, 200)
+    if (result.replayed) {
+      c.header('X-Idempotent-Replay', 'true')
+    }
+    return c.json(responseBody)
   } catch (error) {
     console.error('Payment verification error:', error)
+    // Transient — drop the marker so the client can retry.
+    await idempotency.remove(idempotencyKey)
     return c.json(
       {
         error: 'Failed to verify transaction',
