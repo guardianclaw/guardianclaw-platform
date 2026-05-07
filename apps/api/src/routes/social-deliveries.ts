@@ -7,9 +7,9 @@
 
 import { Hono } from 'hono'
 import { z } from 'zod'
-import { createClient } from '@supabase/supabase-js'
 import { authMiddleware } from '../middleware/auth'
 import { walletRateLimitMiddleware } from '../middleware/rate-limit'
+import { getServiceClient, getUserClient } from '../lib/supabase-client'
 import {
   executeSocialDelivery,
   type SocialOutputConfig,
@@ -19,6 +19,8 @@ import {
 type Bindings = {
   SUPABASE_URL: string
   SUPABASE_SERVICE_KEY: string
+  SUPABASE_ANON_KEY: string
+  SUPABASE_JWT_SECRET: string
   JWT_SECRET: string
   RATE_LIMIT_KV?: KVNamespace
   IP_HASH_SECRET?: string
@@ -56,7 +58,7 @@ socialDeliveriesRoutes.get('/', async (c) => {
     return c.json({ error: 'Invalid agent_id format' }, 400)
   }
 
-  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)
+  const supabase = await getUserClient(c.env, wallet)
 
   // Verify agent ownership
   const { data: agent, error: agentErr } = await supabase
@@ -99,15 +101,24 @@ socialDeliveriesRoutes.post('/:id/approve', async (c) => {
     return c.json({ error: 'Invalid delivery ID format' }, 400)
   }
 
-  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)
+  // Two clients: the user JWT client authorises and runs the SECURITY DEFINER
+  // approve RPC (verifies wallet claim, transitions draft -> pending atomically);
+  // the service client executes the downstream delivery, which inserts/updates
+  // social_deliveries rows and calls platform-specific RPCs that have not been
+  // migrated to JWT policies. Authorization has already happened at the RPC
+  // boundary, so the service client here is a system-level execution path.
+  const userSupabase = await getUserClient(c.env, wallet)
+  const supabase = getServiceClient(c.env)
 
-  // RPC enforces ownership and state transition atomically (mig 20260426000000).
-  // No revert path needed: if the caller does not own the agent the RPC simply
-  // returns success=false without touching the row.
-  const { data: approveResult, error: rpcError } = await supabase.rpc('approve_social_delivery', {
-    p_delivery_id: deliveryId,
-    p_wallet_address: wallet,
-  })
+  // RPC enforces ownership and state transition atomically; under JWT the
+  // function additionally checks jwt_wallet_address() == p_wallet_address.
+  const { data: approveResult, error: rpcError } = await userSupabase.rpc(
+    'approve_social_delivery',
+    {
+      p_delivery_id: deliveryId,
+      p_wallet_address: wallet,
+    }
+  )
 
   if (rpcError) {
     return c.json({ error: 'Failed to approve delivery', details: rpcError.message }, 500)
