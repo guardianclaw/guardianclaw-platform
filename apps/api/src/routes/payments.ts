@@ -1,12 +1,14 @@
 import { Hono } from 'hono'
 import { z } from 'zod'
-import { createClient } from '@supabase/supabase-js'
 import { authMiddleware } from '../middleware/auth'
 import { walletRateLimitMiddleware } from '../middleware/rate-limit'
+import { getUserClient } from '../lib/supabase-client'
 
 type Bindings = {
   SUPABASE_URL: string
   SUPABASE_SERVICE_KEY: string
+  SUPABASE_ANON_KEY: string
+  SUPABASE_JWT_SECRET: string
   JWT_SECRET: string
   SOLANA_RPC_URL?: string
   TREASURY_WALLET?: string
@@ -109,7 +111,7 @@ paymentsRoutes.get('/plans', (c) => {
 paymentsRoutes.get('/status', authMiddleware, walletRateLimitMiddleware(), async (c) => {
   const wallet = c.get('wallet')
 
-  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)
+  const supabase = await getUserClient(c.env, wallet)
 
   // Get profile with plan info
   const { data: profile } = await supabase
@@ -286,20 +288,11 @@ paymentsRoutes.post('/verify', authMiddleware, walletRateLimitMiddleware(), asyn
     return c.json({ error: 'Payment system not configured' }, 503)
   }
 
-  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)
-
-  // Check if transaction was already used
-  const { data: existingTx } = await supabase
-    .from('subscriptions')
-    .select('id')
-    .eq('tx_signature', tx_signature)
-    .single()
-
-  if (existingTx) {
-    return c.json({ error: 'Transaction already used' }, 409)
-  }
+  const supabase = await getUserClient(c.env, wallet)
 
   // Verify transaction on Solana
+  // (Cross-tenant tx_signature uniqueness check is enforced atomically inside
+  // the record_payment SECURITY DEFINER RPC further below.)
   const rpcUrl = c.env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com'
 
   try {
@@ -541,43 +534,40 @@ paymentsRoutes.post('/verify', authMiddleware, walletRateLimitMiddleware(), asyn
       )
     }
 
-    // Create subscription record
+    // Atomically: cross-tenant tx_signature uniqueness check, subscription
+    // insert, profile plan update — all behind record_payment SECURITY DEFINER
+    // (mig 20260507000000). The RPC verifies the JWT wallet claim matches
+    // p_wallet so a misbehaving handler cannot record a payment against a
+    // wallet other than the authenticated caller's.
     const periodStart = new Date()
     const periodEnd = new Date()
     periodEnd.setDate(periodEnd.getDate() + PLAN_PRICING[plan].duration_days)
-
-    // Convert amount to smallest unit for storage
     const amountSmallestUnit = Math.floor(verifiedAmount * Math.pow(10, decimals))
 
-    const { error: subscriptionError } = await supabase.from('subscriptions').insert({
-      wallet_address: wallet,
-      plan,
-      payment_token,
-      amount_lamports: amountSmallestUnit,
-      tx_signature,
-      period_start: periodStart.toISOString(),
-      period_end: periodEnd.toISOString(),
-      status: 'active',
+    const { data: rpcData, error: rpcError } = await supabase.rpc('record_payment', {
+      p_wallet: wallet,
+      p_tx_signature: tx_signature,
+      p_plan: plan,
+      p_payment_token: payment_token,
+      p_amount_lamports: amountSmallestUnit,
+      p_period_start: periodStart.toISOString(),
+      p_period_end: periodEnd.toISOString(),
     })
 
-    if (subscriptionError) {
-      console.error('Failed to create subscription:', subscriptionError)
+    if (rpcError) {
+      console.error('Failed to record payment:', rpcError)
       return c.json({ error: 'Failed to create subscription' }, 500)
     }
 
-    // Update profile with new plan
-    const { error: profileError } = await supabase
-      .from('profiles')
-      .update({
-        plan,
-        plan_expires_at: periodEnd.toISOString(),
-        updated_at: new Date().toISOString(),
-      })
-      .eq('wallet_address', wallet)
+    const result = rpcData as
+      | { success: true; plan: string; period_start: string; period_end: string }
+      | { success: false; error: string; existing_subscription_id?: string }
 
-    if (profileError) {
-      console.error('Failed to update profile:', profileError)
-      // Note: Subscription was created, so don't return error
+    if (!result.success) {
+      if (result.error === 'tx_signature_already_used') {
+        return c.json({ error: 'Transaction already used' }, 409)
+      }
+      return c.json({ error: result.error || 'Failed to record payment' }, 500)
     }
 
     return c.json({
@@ -605,7 +595,7 @@ paymentsRoutes.post('/verify', authMiddleware, walletRateLimitMiddleware(), asyn
 paymentsRoutes.get('/history', authMiddleware, walletRateLimitMiddleware(), async (c) => {
   const wallet = c.get('wallet')
 
-  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_SERVICE_KEY)
+  const supabase = await getUserClient(c.env, wallet)
 
   const { data: subscriptions, error } = await supabase
     .from('subscriptions')

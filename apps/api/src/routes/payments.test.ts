@@ -6,6 +6,8 @@ import { paymentsRoutes } from './payments'
 const mockEnv = {
   SUPABASE_URL: 'https://test.supabase.co',
   SUPABASE_SERVICE_KEY: 'test-service-key',
+  SUPABASE_ANON_KEY: 'test-anon-key',
+  SUPABASE_JWT_SECRET: 'test-supabase-jwt-secret-with-minimum-32-chars!',
   JWT_SECRET: 'test-jwt-secret-with-minimum-32-chars!',
   TREASURY_WALLET: 'TestTreasuryWallet123456789012345678901234',
   SOLANA_RPC_URL: 'https://api.mainnet-beta.solana.com',
