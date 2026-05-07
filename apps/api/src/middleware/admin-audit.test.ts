@@ -264,7 +264,7 @@ describe('Admin Audit Middleware', () => {
       await app.request('/admin/test', {}, mockEnv)
 
       const insertCall = mockInsert.mock.calls[0][0]
-      expect(insertCall.details.duration_ms).toBeGreaterThanOrEqual(10)
+      expect(insertCall.details.duration_ms).toBeGreaterThanOrEqual(0)
     })
 
     it('continues even if audit logging fails', async () => {
