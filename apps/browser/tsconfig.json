@@ -19,7 +19,10 @@
     "paths": {
       "@/*": ["src/*"],
       "@lib/*": ["src/lib/*"],
-      "@components/*": ["src/popup/components/*"]
+      "@components/*": ["src/popup/components/*"],
+      "@guardianclaw/core": ["../../packages/core/src/index.ts"],
+      "@guardianclaw/core/patterns": ["../../packages/core/src/patterns.ts"],
+      "@guardianclaw/core/memory-patterns": ["../../packages/core/src/memory-patterns.ts"]
     }
   },
   "include": ["src/**/*"],
