@@ -20,7 +20,13 @@
     "noUncheckedIndexedAccess": true,
     "noImplicitOverride": true,
     "exactOptionalPropertyTypes": false,
-    "noPropertyAccessFromIndexSignature": false
+    "noPropertyAccessFromIndexSignature": false,
+    "baseUrl": ".",
+    "paths": {
+      "@guardianclaw/core": ["../core/src/index.ts"],
+      "@guardianclaw/core/patterns": ["../core/src/patterns.ts"],
+      "@guardianclaw/core/memory-patterns": ["../core/src/memory-patterns.ts"]
+    }
   },
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules", "dist", "src/**/*.test.ts", "src/__tests__/**"]
