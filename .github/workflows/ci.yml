@@ -179,3 +179,25 @@ jobs:
 
       - name: Run corpus harness against current SDK
         run: python evaluation/corpus/run.py
+
+  sdk-tests:
+    name: SDK Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+          cache-dependency-path: sdk/pyproject.toml
+
+      - name: Install SDK with dev extras
+        run: pip install -e "./sdk[dev]" requests
+
+      - name: Run pytest
+        run: pytest --tb=short
+        working-directory: sdk
