@@ -161,3 +161,21 @@ jobs:
 
       - name: Verify Python re and JS RegExp produce identical verdicts
         run: python scripts/check_pattern_parity.py
+
+  corpus-validation:
+    name: Corpus Validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install SDK
+        run: pip install -e ./sdk
+
+      - name: Run corpus harness against current SDK
+        run: python evaluation/corpus/run.py
