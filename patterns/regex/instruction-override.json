@@ -24,9 +24,9 @@
     "cancel\\s+(all\\s+)?(previous\\s+)?(commands|instructions)",
     "reset\\s+to\\s+(factory|default)\\s+settings",
     "remove\\s+(all\\s+)?(safety\\s+)?(filters?|restrictions?|guardrails?)",
-    "start\\s+fresh",
     "ign[0o][._]?r[._]?e\\s+(all\\s+)?previ[0o]us\\s+instructi[0o]ns",
     "i[._]g[._]n[._]o[._]r[._]e\\s+(all\\s+)?(previous\\s+)?instructions",
     "i_g_n_o_r_e\\s+(all\\s+)?(previous\\s+)?instructions"
   ]
 }
+

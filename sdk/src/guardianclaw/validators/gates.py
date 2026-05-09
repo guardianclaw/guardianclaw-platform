@@ -650,7 +650,6 @@ class LimitsGate(BaseGate):
         r"cancel\s+(all\s+)?(previous\s+)?(commands|instructions)",
         r"reset\s+to\s+(factory|default)\s+settings",
         r"remove\s+(all\s+)?(safety\s+)?(filters?|restrictions?|guardrails?)",
-        r"start\s+fresh",
         r"ign[0o][._]?r[._]?e\s+(all\s+)?previ[0o]us\s+instructi[0o]ns",
         r"i[._]g[._]n[._]o[._]r[._]e\s+(all\s+)?(previous\s+)?instructions",
         r"i_g_n_o_r_e\s+(all\s+)?(previous\s+)?instructions",
@@ -1135,3 +1134,4 @@ class CLAWValidator:
             "issues": violations,  # backwards compatibility
             "jailbreak_detected": jailbreak_detected,
         }
+

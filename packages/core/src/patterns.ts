@@ -546,7 +546,6 @@ export const INSTRUCTION_OVERRIDE_PATTERNS = [
   /cancel\s+(all\s+)?(previous\s+)?(commands|instructions)/i,
   /reset\s+to\s+(factory|default)\s+settings/i,
   /remove\s+(all\s+)?(safety\s+)?(filters?|restrictions?|guardrails?)/i,
-  /start\s+fresh/i,
   /ign[0o][._]?r[._]?e\s+(all\s+)?previ[0o]us\s+instructi[0o]ns/i,
   /i[._]g[._]n[._]o[._]r[._]e\s+(all\s+)?(previous\s+)?instructions/i,
   /i_g_n_o_r_e\s+(all\s+)?(previous\s+)?instructions/i,
@@ -782,3 +781,4 @@ export const ALL_AVOIDANCE_PATTERNS = Object.values(AVOIDANCE_PATTERNS).flat();
 export const ALL_LIMITS_PATTERNS = Object.values(LIMITS_PATTERNS).flat();
 
 export const ALL_WORTH_PATTERNS = Object.values(WORTH_PATTERNS).flat();
+
