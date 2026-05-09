@@ -196,7 +196,7 @@ jobs:
           cache-dependency-path: sdk/pyproject.toml
 
       - name: Install SDK with dev extras
-        run: pip install -e "./sdk[dev]"
+        run: pip install -e "./sdk[dev]" requests
 
       - name: Run pytest
         run: pytest --tb=short
