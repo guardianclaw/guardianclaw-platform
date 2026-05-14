@@ -92,15 +92,18 @@ export default defineConfig({
     // },
   ],
 
-  // Local dev server configuration
-  webServer: {
-    command: 'npm run dev',
-    url: 'http://localhost:3000',
-    reuseExistingServer: !process.env.CI,
-    timeout: 120 * 1000,
-    stdout: 'ignore',
-    stderr: 'pipe',
-  },
+  // Local dev server configuration. Set PLAYWRIGHT_NO_WEBSERVER=1 to skip
+  // (e.g. when running against deployed staging or production).
+  webServer: process.env.PLAYWRIGHT_NO_WEBSERVER
+    ? undefined
+    : {
+        command: 'npm run dev',
+        url: 'http://localhost:3000',
+        reuseExistingServer: !process.env.CI,
+        timeout: 120 * 1000,
+        stdout: 'ignore',
+        stderr: 'pipe',
+      },
 
   // Output directory for test artifacts
   outputDir: 'e2e-results/',
