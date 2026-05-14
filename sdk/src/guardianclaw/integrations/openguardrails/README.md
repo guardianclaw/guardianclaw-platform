@@ -2,6 +2,10 @@
 
 > Bidirectional integration between GuardianClaw and OpenGuardrails framework
 
+> Validated against `openguardrails@3.0.2` (latest on PyPI) on 2026-04-24.
+> This integration talks to OpenGuardrails over HTTP — no Python package is
+> imported at runtime — so there is no PyPI floor to pin.
+
 ## Overview
 
 This integration provides two-way compatibility:

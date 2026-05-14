@@ -1,6 +1,6 @@
 {
   "name": "@guardianclaw/voltagent",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "description": "AI safety guardrails for VoltAgent: CLAW protocol validation, OWASP protection, and PII detection for autonomous AI agents",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
@@ -73,7 +73,7 @@
   },
   "dependencies": {},
   "peerDependencies": {
-    "@voltagent/core": ">=0.1.0"
+    "@voltagent/core": ">=2.0.0"
   },
   "peerDependenciesMeta": {
     "@voltagent/core": {
@@ -86,7 +86,7 @@
     "@typescript-eslint/eslint-plugin": "^6.15.0",
     "@typescript-eslint/parser": "^6.15.0",
     "@vitest/coverage-v8": "^1.1.0",
-    "@voltagent/core": "^1.5.2",
+    "@voltagent/core": "^2.7.2",
     "eslint": "^8.56.0",
     "tsup": "^8.0.1",
     "typescript": "^5.3.3",

@@ -1,0 +1,172 @@
+﻿---
+title: "OpenClaw Integration"
+description: "Security guardrails for OpenClaw agents"
+category: "integrations"
+order: 6
+lastUpdated: "2026-01-28"
+---
+
+# OpenClaw Integration
+
+Security guardrails for OpenClaw with real-time validation, data leak prevention, and threat detection. Designed as a copilot, not a gatekeeper.
+
+## Installation
+
+```bash
+npm install @guardianclaw/openclaw
+```
+
+Add to your OpenClaw config:
+
+```json
+{
+  "plugins": {
+    "claw": {
+      "level": "watch"
+    }
+  }
+}
+```
+
+## Protection Levels
+
+| Level | Blocking | Alerting | Best For |
+|-------|----------|----------|----------|
+| `off` | None | None | Disable GuardianClaw |
+| `watch` | None | All threats | Daily use, full visibility |
+| `guard` | Critical | High+ threats | Sensitive data environments |
+| `shield` | Maximum | All threats | High-security workflows |
+
+The default `watch` mode provides full monitoring with zero blocking. Higher levels add protection you can always bypass when needed.
+
+## How It Works
+
+GuardianClaw integrates with OpenClaw hooks to provide layered protection:
+
+| Layer | Hook | Function | Can Block |
+|-------|------|----------|-----------|
+| L1 | `message_received` | Analyze input for threats | No (alerts only) |
+| L2 | `before_agent_start` | Inject safety seed | No (context only) |
+| L3 | `message_sending` | Validate output content | Yes |
+| L4 | `before_tool_call` | Validate tool calls | Yes |
+
+### What Gets Detected
+
+Input Analysis detects prompt injection attempts, jailbreak patterns, role manipulation, and system prompt extraction.
+
+Output Validation catches API keys (OpenAI, Anthropic, AWS), passwords, private keys, tokens, credit card numbers, and SSNs.
+
+Tool Validation blocks destructive commands (rm, drop, truncate), system path access, dangerous network operations, and privilege escalation.
+
+## Escape Hatches
+
+When you need to bypass protection:
+
+```bash
+/claw pause 5m          # Pause for 5 minutes
+/claw allow-once        # Allow next action
+/claw trust bash        # Trust a tool for the session
+/claw resume            # Resume protection
+```
+
+## Configuration
+
+```json
+{
+  "plugins": {
+    "claw": {
+      "level": "guard",
+      "alerts": {
+        "enabled": true,
+        "webhook": "https://your-webhook.com/claw",
+        "minSeverity": "high"
+      },
+      "ignorePatterns": ["MY_SAFE_TOKEN"],
+      "logLevel": "warn"
+    }
+  }
+}
+```
+
+## Programmatic API
+
+### Hook Factory
+
+```typescript
+import { createGuardianClawHooks } from '@guardianclaw/openclaw';
+
+const hooks = createGuardianClawHooks({
+  level: 'guard',
+  alerts: {
+    enabled: true,
+    webhook: 'https://your-webhook.com/claw'
+  }
+});
+
+export const openclaw_hooks = {
+  message_received: hooks.messageReceived,
+  before_agent_start: hooks.beforeAgentStart,
+  message_sending: hooks.messageSending,
+  before_tool_call: hooks.beforeToolCall,
+  agent_end: hooks.agentEnd,
+};
+```
+
+### Validators
+
+```typescript
+import { validateOutput, validateTool, analyzeInput, getLevelConfig } from '@guardianclaw/openclaw';
+
+const levelConfig = getLevelConfig('guard');
+
+const outputResult = await validateOutput(content, levelConfig);
+if (outputResult.shouldBlock) {
+  console.log('Blocked:', outputResult.issues);
+}
+
+const toolResult = await validateTool('bash', { command: 'ls' }, levelConfig);
+const inputResult = await analyzeInput(userMessage);
+```
+
+### Escape Manager
+
+```typescript
+import { EscapeManager } from '@guardianclaw/openclaw';
+
+const escapes = new EscapeManager();
+
+escapes.grantAllowOnce('session-id', { scope: 'output' });
+escapes.pauseProtection('session-id', { durationMs: 300000 });
+escapes.trustTool('session-id', 'bash', { level: 'session' });
+```
+
+### Audit Log
+
+```typescript
+import { AuditLog } from '@guardianclaw/openclaw';
+
+const audit = new AuditLog({ maxEntries: 1000 });
+
+const recent = audit.getRecent(10);
+const stats = audit.getStats();
+```
+
+## CLI Commands
+
+```bash
+/claw status            # Current status
+/claw level [new]       # View/change level
+/claw log [count]       # View recent audit entries
+/claw pause <duration>  # Pause protection
+/claw resume            # Resume protection
+/claw allow-once [scope]# One-time bypass
+/claw trust <tool>      # Trust a tool
+/claw untrust <tool>    # Revoke trust
+/claw help              # Show all commands
+```
+
+## Links
+
+- [npm package](https://www.npmjs.com/package/@guardianclaw/openclaw)
+- [OpenClaw](https://github.com/openclaw/openclaw)
+- [Source Repository](https://github.com/guardianclaw/guardianclaw-platform)

@@ -7,6 +7,8 @@
 
 Protect your AI agents from executing harmful, unauthorized, or suspicious transactions on Solana.
 
+> Validated against `solana-agent-kit@2.0.10` and `@solana/web3.js@1.98.4` on 2026-04-24.
+
 ## Features
 
 - **CLAW Protocol**: Four-gate validation (Credibility, Limits, Avoidance, Worth)

@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import Link from 'next/link'
 import { Bot, MoreVertical, Play, Settings, Trash2, ExternalLink, Shield } from 'lucide-react'
@@ -36,7 +36,7 @@ const frameworkLabels: Record<string, string> = {
   virtuals_protocol: 'Virtuals',
   elizaos: 'ElizaOS',
   voltagent: 'VoltAgent',
-  moltbot: 'Moltbot',
+  openclaw: 'OpenClaw',
   custom: 'Custom',
 }
 

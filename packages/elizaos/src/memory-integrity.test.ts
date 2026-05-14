@@ -39,7 +39,7 @@ describe('MemoryIntegrityChecker', () => {
       expect(metadata?.claw_integrity_hash).toBeDefined();
       expect(metadata?.claw_signed_at).toBeDefined();
       expect(metadata?.claw_source).toBe('user_direct');
-      expect(metadata?.claw_integrity_version).toBe('1.0');
+      expect(metadata?.claw_integrity_version).toBe('2.0');
     });
 
     it('should preserve original memory content', () => {
@@ -95,8 +95,8 @@ describe('MemoryIntegrityChecker', () => {
       const memory = createTestMemory('Test');
       const signed = checker.signMemory(memory, 'user_direct');
 
-      // Change version
-      (signed.content!.metadata as any).claw_integrity_version = '2.0';
+      // Change to a version outside the accepted set ('1.0' and '2.0')
+      (signed.content!.metadata as any).claw_integrity_version = '3.0';
 
       const result = checker.verifyMemory(signed);
       expect(result.valid).toBe(false);

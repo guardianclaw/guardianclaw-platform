@@ -2,6 +2,10 @@
 
 CLAW-based safety guardrails for Google ADK agents and multi-agent systems.
 
+> Validated against `google-adk@1.31.1` (and floor `google-adk@1.7.0`) on 2026-04-24.
+> Minimum floor is `1.7.0` because `google.adk.plugins.base_plugin` (required
+> by `GuardianClawPlugin`) does not exist in earlier releases.
+
 ## Overview
 
 This integration provides two approaches for adding GuardianClaw safety validation to Google ADK:

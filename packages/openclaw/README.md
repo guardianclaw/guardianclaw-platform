@@ -1,0 +1,407 @@
+﻿# @guardianclaw/openclaw
+
+[![npm version](https://img.shields.io/npm/v/@guardianclaw/openclaw.svg)](https://www.npmjs.com/package/@guardianclaw/openclaw)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![Node.js](https://img.shields.io/badge/Node.js-18%2B-green.svg)](https://nodejs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.0%2B-blue.svg)](https://www.typescriptlang.org/)
+[![Tests](https://img.shields.io/badge/Tests-745%20passed-brightgreen.svg)]()
+[![Coverage](https://img.shields.io/badge/Coverage-86%25-brightgreen.svg)]()
+
+AI safety guardrails for [OpenClaw](https://github.com/openclaw/openclaw). Protect your personal AI agent with real-time validation, data leak prevention, and threat detection.
+
+> *"GuardianClaw sees everything, alerts when it matters, and only intervenes if you want."*
+
+<table>
+<tr>
+<td width="50%">
+
+**Documentation**
+- [Getting Started](#quick-start)
+- [Protection Levels](#protection-levels)
+- [Configuration](#configuration)
+- [Programmatic API](#programmatic-api)
+
+</td>
+<td width="50%">
+
+**Resources**
+- [Integration Guide](https://github.com/guardian-claw/guardianclaw/blob/main/docs/integrations/openclaw.md)
+- [GuardianClaw Core](https://github.com/guardian-claw/guardianclaw)
+- [API Reference](https://github.com/guardian-claw/guardianclaw/tree/main/docs/api)
+- [Examples](https://github.com/guardian-claw/guardianclaw/tree/main/packages/openclaw/examples)
+
+</td>
+</tr>
+</table>
+
+## Quick Start
+
+```bash
+npm install @guardianclaw/openclaw
+```
+
+Add to your OpenClaw config:
+
+```json
+{
+  "plugins": {
+    "claw": {
+      "level": "watch"
+    }
+  }
+}
+```
+
+That's it. GuardianClaw is now monitoring your agent.
+
+## Protection Levels
+
+| Level | Blocking | Alerting | Seed | Best For |
+|-------|----------|----------|------|----------|
+| `off` | None | None | None | Disable GuardianClaw |
+| `watch` | None | All threats | Standard | Daily use, full visibility |
+| `guard` | Critical | High+ threats | Standard | Sensitive data environments |
+| `shield` | Maximum | All threats | Strict | High-security workflows |
+
+### Level Details
+
+**watch** (default)
+- Logs all activity
+- Alerts on threats
+- Never blocks
+- Zero friction
+
+**guard**
+- Blocks data leaks (API keys, passwords, credentials)
+- Blocks destructive commands (rm, drop, truncate)
+- Blocks system path access
+- Allows everything else
+
+**shield**
+- All guard protections
+- Blocks suspicious URLs
+- Stricter seed injection
+- Maximum protection
+
+## Escape Hatches
+
+GuardianClaw respects your autonomy. When you need to bypass protection:
+
+```bash
+/claw pause 5m          # Pause for 5 minutes
+/claw allow-once        # Allow next action
+/claw trust bash        # Trust a tool for the session
+/claw resume            # Resume protection
+```
+
+### Allow-Once
+
+Temporarily bypass the next blocked action:
+
+```bash
+/claw allow-once        # Any action
+/claw allow-once output # Only output validation
+/claw allow-once tool   # Only tool validation
+```
+
+Token expires after 30 seconds or first use.
+
+### Pause Protection
+
+Pause all validation for a duration:
+
+```bash
+/claw pause             # 5 minutes (default)
+/claw pause 10m         # 10 minutes
+/claw pause 1h          # 1 hour
+```
+
+### Trust Tools
+
+Allow specific tools to bypass validation:
+
+```bash
+/claw trust bash        # Trust bash
+/claw trust mcp__*      # Trust all MCP tools (wildcard)
+/claw untrust bash      # Revoke trust
+```
+
+## CLI Commands
+
+```bash
+/claw status            # Current status
+/claw level [new]       # View/change level
+/claw log [count]       # View recent audit entries
+/claw pause <duration>  # Pause protection
+/claw resume            # Resume protection
+/claw allow-once [scope]# One-time bypass
+/claw trust <tool>      # Trust a tool
+/claw untrust <tool>    # Revoke trust
+/claw help              # Show all commands
+```
+
+## Configuration
+
+### Basic Configuration
+
+```json
+{
+  "plugins": {
+    "claw": {
+      "level": "guard"
+    }
+  }
+}
+```
+
+### Full Configuration
+
+```json
+{
+  "plugins": {
+    "claw": {
+      "level": "guard",
+      "alerts": {
+        "enabled": true,
+        "webhook": "https://your-webhook.com/claw",
+        "minSeverity": "high"
+      },
+      "ignorePatterns": ["MY_SAFE_TOKEN", "TEST_KEY_*"],
+      "logLevel": "warn"
+    }
+  }
+}
+```
+
+### Configuration Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `level` | string | `"watch"` | Protection level: off, watch, guard, shield |
+| `alerts.enabled` | boolean | `false` | Enable webhook alerts |
+| `alerts.webhook` | string | - | Webhook URL for alerts |
+| `alerts.minSeverity` | string | `"medium"` | Minimum severity: low, medium, high, critical |
+| `ignorePatterns` | string[] | `[]` | Patterns to ignore in validation |
+| `logLevel` | string | `"info"` | Log level: debug, info, warn, error |
+
+## Programmatic API
+
+### Hook Factory
+
+```typescript
+import { createGuardianClawHooks } from '@guardianclaw/openclaw';
+
+const hooks = createGuardianClawHooks({
+  level: 'guard',
+  alerts: {
+    enabled: true,
+    webhook: 'https://your-webhook.com/claw'
+  }
+});
+
+// Register with OpenClaw
+export const openclaw_hooks = {
+  message_received: hooks.messageReceived,
+  before_agent_start: hooks.beforeAgentStart,
+  message_sending: hooks.messageSending,
+  before_tool_call: hooks.beforeToolCall,
+  agent_end: hooks.agentEnd,
+};
+```
+
+### Escape Manager
+
+```typescript
+import { EscapeManager } from '@guardianclaw/openclaw';
+
+const escapes = new EscapeManager();
+
+// Grant allow-once token
+escapes.grantAllowOnce('session-id', { scope: 'output' });
+
+// Pause protection
+escapes.pauseProtection('session-id', { durationMs: 300000 });
+
+// Trust a tool
+escapes.trustTool('session-id', 'bash', { level: 'session' });
+
+// Check protection status
+const shouldAllow = escapes.shouldAllowOutput('session-id');
+```
+
+### Audit Log
+
+```typescript
+import { AuditLog } from '@guardianclaw/openclaw';
+
+const audit = new AuditLog({ maxEntries: 1000 });
+
+// Query entries
+const recent = audit.getRecent(10);
+const sessionEntries = audit.query({ sessionId: 'my-session' });
+const blockedEntries = audit.query({ outcome: 'blocked' });
+
+// Get statistics
+const stats = audit.getStats();
+console.log(`Total: ${stats.totalEntries}, Blocked: ${stats.byOutcome.blocked}`);
+```
+
+### Alert Manager
+
+```typescript
+import { AlertManager } from '@guardianclaw/openclaw';
+
+const alerts = new AlertManager({
+  webhooks: [{
+    url: 'https://your-webhook.com/claw',
+    minSeverity: 'high'
+  }],
+  rateLimitWindowMs: 60000,
+  rateLimitMax: 10
+});
+
+// Send alerts
+await alerts.alertHighThreatInput(5, issues, 'session-id');
+await alerts.alertActionBlocked('output', 'Data leak detected', 'session-id');
+```
+
+### Validators
+
+```typescript
+import { validateOutput, validateTool, analyzeInput } from '@guardianclaw/openclaw';
+import { getLevelConfig } from '@guardianclaw/openclaw';
+
+const levelConfig = getLevelConfig('guard');
+
+// Validate output
+const outputResult = await validateOutput(content, levelConfig);
+if (outputResult.shouldBlock) {
+  console.log('Blocked:', outputResult.issues);
+}
+
+// Validate tool call
+const toolResult = await validateTool('bash', { command: 'rm -rf /' }, levelConfig);
+if (toolResult.shouldBlock) {
+  console.log('Blocked:', toolResult.issues);
+}
+
+// Analyze input
+const inputResult = await analyzeInput(userMessage);
+if (inputResult.threatLevel >= 4) {
+  console.log('High threat input:', inputResult.issues);
+}
+```
+
+## How It Works
+
+GuardianClaw integrates with OpenClaw hooks to provide layered protection:
+
+```mermaid
+flowchart TB
+    subgraph INPUT["Input Layer"]
+        A[User Message] --> B{L1: Input Analysis}
+        B -->|Safe| C[Continue]
+        B -->|Threat| D[Alert]
+        D --> C
+    end
+
+    subgraph AGENT["Agent Layer"]
+        C --> E{L2: Seed Injection}
+        E -->|Inject Safety Context| F[AI Processing]
+    end
+
+    subgraph OUTPUT["Output Layer"]
+        F --> G{L3: Output Validation}
+        G -->|Safe| H[Continue]
+        G -->|Data Leak| I[Block]
+    end
+
+    subgraph TOOLS["Tool Layer"]
+        H --> J{L4: Tool Validation}
+        J -->|Safe| K[Execute Tool]
+        J -->|Dangerous| L[Block]
+        K --> M[Response]
+        L --> M
+    end
+
+    I --> M
+    M --> N[User]
+
+    style B fill:#4a90d9,color:#fff
+    style E fill:#50c878,color:#fff
+    style G fill:#f5a623,color:#fff
+    style J fill:#d9534f,color:#fff
+    style I fill:#d9534f,color:#fff
+    style L fill:#d9534f,color:#fff
+```
+
+### Validation Layers
+
+| Layer | Hook | Function | Can Block |
+|-------|------|----------|-----------|
+| **L1** | `message_received` | Analyze input for threats | No (alerts only) |
+| **L2** | `before_agent_start` | Inject safety seed | No (context only) |
+| **L3** | `message_sending` | Validate output content | Yes |
+| **L4** | `before_tool_call` | Validate tool calls | Yes |
+
+### What Gets Detected
+
+**Input Analysis (L1)**
+- Prompt injection attempts
+- Jailbreak patterns (DAN, ignore instructions, etc.)
+- Role manipulation
+- System prompt extraction attempts
+
+**Output Validation (L3)**
+- API keys (OpenAI, Anthropic, AWS, etc.)
+- Passwords and credentials
+- Private keys and tokens
+- Credit card numbers
+- Social security numbers
+
+**Tool Validation (L4)**
+- Destructive commands (rm, drop, truncate)
+- System path access (/etc, C:\Windows)
+- Network operations to dangerous domains
+- Privilege escalation attempts
+
+## Webhook Payload
+
+When alerts are enabled, GuardianClaw sends POST requests to your webhook:
+
+```json
+{
+  "type": "high_threat_input",
+  "severity": "critical",
+  "message": "High threat input detected (level 5): jailbreak",
+  "timestamp": "2024-01-15T10:30:00.000Z",
+  "sessionId": "session-123",
+  "context": {
+    "threatLevel": 5,
+    "issueCount": 2
+  }
+}
+```
+
+## Philosophy
+
+**Copilot, not gatekeeper.** GuardianClaw is designed for power users who want visibility and protection without losing control. The default `watch` mode provides full monitoring with zero blocking, while higher levels add protection you can always bypass when needed.
+
+**Defense in depth.** Multiple validation layers catch different threat types. Even if one layer is bypassed, others provide protection.
+
+**Fail open for usability.** In watch mode, nothing is blocked. In higher modes, only clear threats are blocked. When in doubt, GuardianClaw alerts rather than blocks.
+
+## Compatibility
+
+- Node.js 18+
+- OpenClaw 0.1.x
+
+## Links
+
+- [GuardianClaw Core](https://github.com/guardian-claw/guardianclaw)
+- [OpenClaw](https://github.com/openclaw/openclaw)
+- [Documentation](https://guardianclaw.org)
+
+## License
+
+MIT - GuardianClaw Team

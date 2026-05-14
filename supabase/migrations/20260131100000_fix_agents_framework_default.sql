@@ -24,7 +24,7 @@ COMMENT ON COLUMN agents.integration_config IS
 - openai_agents: {guardrail_model, require_all_gates}
 - google_adk: {validate_tools, fail_closed}
 - virtuals: {memory_integrity_check, blocked_functions}
-- moltbot: {protection_level, hooks_enabled}
+- openclaw: {protection_level, hooks_enabled}
 - voltagent: {owasp_checks, pii_guard}
 - elizaos: {memory_hmac, content_validation}
 - custom: any application-specific config';
@@ -41,7 +41,7 @@ DECLARE
     framework_key TEXT;
     valid_frameworks TEXT[] := ARRAY[
         'coinbase', 'solana_agent_kit', 'openai_agents',
-        'google_adk', 'virtuals', 'moltbot', 'voltagent',
+        'google_adk', 'virtuals', 'openclaw', 'voltagent',
         'elizaos', 'anthropic_sdk', 'mcp_server', 'custom'
     ];
 BEGIN

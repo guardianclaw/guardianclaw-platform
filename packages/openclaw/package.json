@@ -1,0 +1,110 @@
+{
+  "name": "@guardianclaw/openclaw",
+  "version": "3.0.0-rc.1",
+  "description": "AI safety guardrails for OpenClaw: CLAW protocol validation, data leak prevention, and tool safety for personal AI agents",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./plugin": {
+      "types": "./dist/plugin.d.ts",
+      "import": "./dist/plugin.mjs",
+      "require": "./dist/plugin.js"
+    },
+    "./config": {
+      "types": "./dist/config/index.d.ts",
+      "import": "./dist/config/index.mjs",
+      "require": "./dist/config/index.js"
+    },
+    "./validators": {
+      "types": "./dist/validators/index.d.ts",
+      "import": "./dist/validators/index.mjs",
+      "require": "./dist/validators/index.js"
+    },
+    "./hooks": {
+      "types": "./dist/hooks/index.d.ts",
+      "import": "./dist/hooks/index.mjs",
+      "require": "./dist/hooks/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE",
+    "openclaw.plugin.json"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "lint": "eslint src/",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "npm run build && npm run test"
+  },
+  "keywords": [
+    "openclaw",
+    "clawdbot",
+    "ai-safety",
+    "guardrails",
+    "claw",
+    "llm-security",
+    "ai-agents",
+    "personal-ai",
+    "prompt-injection",
+    "jailbreak-detection",
+    "data-leak-prevention",
+    "tool-validation"
+  ],
+  "author": {
+    "name": "GuardianClaw Team",
+    "email": "contact@guardianclaw.org",
+    "url": "https://guardianclaw.org"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/guardianclaw/guardianclaw-platform.git",
+    "directory": "packages/openclaw"
+  },
+  "homepage": "https://github.com/guardianclaw/guardianclaw-platform/tree/main/packages/openclaw",
+  "bugs": {
+    "url": "https://github.com/guardianclaw/guardianclaw-platform/issues"
+  },
+  "dependencies": {
+    "@guardianclaw/core": "^3.0.0-rc.1"
+  },
+  "peerDependencies": {
+    "openclaw": ">=2026.0.0"
+  },
+  "peerDependenciesMeta": {
+    "openclaw": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@guardianclaw/core": "file:../core",
+    "@types/node": "^20.10.0",
+    "@typescript-eslint/eslint-plugin": "^6.15.0",
+    "@typescript-eslint/parser": "^6.15.0",
+    "@vitest/coverage-v8": "^1.1.0",
+    "eslint": "^8.56.0",
+    "openclaw": "2026.4.21",
+    "tsup": "^8.0.1",
+    "typescript": "^5.3.3",
+    "vitest": "^1.1.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

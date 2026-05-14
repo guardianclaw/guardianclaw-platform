@@ -7,6 +7,8 @@
 
 Official GuardianClaw safety plugin for [ElizaOS](https://elizaos.ai) autonomous agents. Implements the CLAW (Credibility, Limits, Avoidance, Worth) protocol to validate agent actions and outputs.
 
+> Validated against `@elizaos/core@2.0.0-alpha.223` on 2026-04-24. The peer dependency is pinned to that exact alpha — upstream is still pre-stable and shape changes between alphas are common.
+
 ## Features
 
 - **CLAW Protocol**: Four-gate validation (Credibility, Limits, Avoidance, Worth)

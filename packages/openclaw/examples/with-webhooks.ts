@@ -1,0 +1,47 @@
+﻿/**
+ * Webhook Alerts Example
+ *
+ * Shows how to configure webhook alerts for security events.
+ */
+
+import { createGuardianClawHooks, AlertManager } from '@guardianclaw/openclaw';
+
+// Create hooks with alert configuration
+const hooks = createGuardianClawHooks({
+  level: 'guard',
+  alerts: {
+    enabled: true,
+    webhook: 'https://your-webhook.com/claw',
+    minSeverity: 'high',
+  },
+});
+
+// Or use AlertManager directly for more control
+const alertManager = new AlertManager({
+  webhooks: [
+    {
+      url: 'https://slack.webhook.com/claw',
+      minSeverity: 'high',
+      headers: {
+        'X-Custom-Header': 'value',
+      },
+    },
+    {
+      url: 'https://pagerduty.webhook.com/claw',
+      minSeverity: 'critical',
+    },
+  ],
+  rateLimitWindowMs: 60000,
+  rateLimitMax: 10,
+});
+
+// Send custom alerts
+async function alertOnCustomEvent(sessionId: string) {
+  await alertManager.alertActionBlocked(
+    'output',
+    'Custom security event detected',
+    sessionId
+  );
+}
+
+export { hooks, alertManager, alertOnCustomEvent };

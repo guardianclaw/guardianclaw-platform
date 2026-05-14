@@ -1,4 +1,4 @@
-import { Hono } from 'hono'
+﻿import { Hono } from 'hono'
 import { z } from 'zod'
 import { createClient } from '@supabase/supabase-js'
 import { authMiddleware } from '../middleware/auth'
@@ -67,7 +67,7 @@ const createAgentSchema = z.object({
       'virtuals_protocol',
       'elizaos',
       'voltagent',
-      'moltbot',
+      'openclaw',
       'custom',
     ])
     .default('openai_agents'),

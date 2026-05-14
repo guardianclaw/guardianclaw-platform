@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Admin Agents Service
  * Administrative functions for agent management
  *
@@ -330,7 +330,7 @@ export function getAvailableFrameworks(): string[] {
     'virtuals_protocol',
     'elizaos',
     'voltagent',
-    'moltbot',
+    'openclaw',
     'custom',
   ]
 }

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @fileoverview UI helper functions
  *
  * Shared helper functions for UI components, including
@@ -97,7 +97,7 @@ const AGENT_TYPE_ICONS: Record<string, string> = {
   openai_agents: '🤖',
   google_adk: '🔷',
   voltagent: '⚡',
-  moltbot: '🛡️',
+  openclaw: '🛡️',
   custom: '⚙️',
 };
 

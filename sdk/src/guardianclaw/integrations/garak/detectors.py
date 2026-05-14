@@ -34,7 +34,7 @@ if _debug_mode:
 
 
 # Minimum required Garak version
-MIN_GARAK_VERSION = "0.9.0"
+MIN_GARAK_VERSION = "0.11.0"
 
 
 def _check_garak_version() -> bool:

@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import Link from 'next/link'
 import { motion } from 'framer-motion'
@@ -387,7 +387,7 @@ export default function CompliancePage() {
               <div className="bg-background rounded-2xl border p-6">
                 <h3 className="mb-4 font-semibold">Agent Frameworks</h3>
                 <div className="flex flex-wrap gap-2">
-                  {['OpenAI Agents', 'ElizaOS', 'VoltAgent', 'Moltbot'].map((f) => (
+                  {['OpenAI Agents', 'ElizaOS', 'VoltAgent', 'OpenClaw'].map((f) => (
                     <span key={f} className="bg-muted rounded-full px-3 py-1 text-sm">
                       {f}
                     </span>

@@ -1,0 +1,51 @@
+# CODEOWNERS for guardianclaw-platform
+#
+# Ownership is coarse on purpose: this repo has a small core team today
+# and we want PR reviews on security-sensitive surfaces without blocking
+# casual contributions. Expand as the team grows.
+#
+# Syntax: https://docs.github.com/articles/about-codeowners
+#
+# Last owner match per file wins. Lines lower in this file override
+# lines higher up.
+#
+# NOTE — current enforcement state (see SECURITY.md G-06):
+# This file is currently aspirational. The repo lives under a User account
+# (not an Org), so the team handles below resolve to nothing and PR
+# review gating is not active. Branch protection and rulesets are also
+# Pro-gated on private User repos. The handles will activate the moment
+# the repo moves to an Org (or the repo is made public after Onda 2/3
+# remediations land).
+
+# Default owner for everything
+*                                           @guardianclaw/maintainers
+
+# Security-sensitive surfaces — require maintainer review
+/SECURITY.md                                @guardianclaw/security
+/.github/CODEOWNERS                         @guardianclaw/security
+/.github/workflows/                         @guardianclaw/security
+/.gitleaks.toml                             @guardianclaw/security
+
+# API auth, admin, middleware — authorization boundary
+/apps/api/src/middleware/auth.ts            @guardianclaw/security
+/apps/api/src/middleware/admin-auth.ts      @guardianclaw/security
+/apps/api/src/middleware/admin-audit.ts     @guardianclaw/security
+/apps/api/src/middleware/sanitize.ts        @guardianclaw/security
+/apps/api/src/middleware/rate-limit.ts      @guardianclaw/security
+/apps/api/src/routes/auth.ts                @guardianclaw/security
+/apps/api/src/routes/admin*.ts              @guardianclaw/security
+/apps/api/src/lib/jwt.ts                    @guardianclaw/security
+/apps/api/src/lib/webhook-signature.ts      @guardianclaw/security
+/apps/api/src/lib/secure-logger.ts          @guardianclaw/security
+
+# Deploy pipeline and runtime config
+/.github/workflows/deploy.yml               @guardianclaw/ops
+/apps/api/wrangler.toml                     @guardianclaw/ops
+/vercel.json                                @guardianclaw/ops
+
+# Database migrations — require DB-aware review
+/supabase/migrations/                       @guardianclaw/security
+
+# Core CLAW protocol
+/packages/core/                             @guardianclaw/core
+/sdk/src/guardianclaw/core/                 @guardianclaw/core

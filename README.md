@@ -1,4 +1,4 @@
-# GuardianClaw Platform
+﻿# GuardianClaw Platform
 
 > The Decision Firewall for AI Agents — Build, Deploy, and Protect
 
@@ -22,7 +22,7 @@ GuardianClaw Platform is a monorepo containing the web platform, API, and browse
 
 **Live URLs:**
 - Frontend: https://guardianclaw.org
-- API: https://claw-api-production.guardianclaw.workers.dev/health
+- API: https://api.guardianclaw.org
 
 **CI/CD:** GitHub Actions (Lint, TypeCheck, Test, Build, Deploy)
 
@@ -170,7 +170,7 @@ guardianclaw-platform/
 ├── packages/
 │   ├── core/                     # @guardianclaw/core
 │   ├── shared/                   # @guardianclaw/shared
-│   ├── moltbot/                  # @guardianclaw/moltbot
+│   ├── openclaw/                  # @guardianclaw/openclaw
 │   ├── voltagent/                # @guardianclaw/voltagent
 │   ├── elizaos/                  # @guardianclaw/elizaos-plugin
 │   ├── goat-plugin/              # @goat-sdk/plugin-claw
@@ -351,5 +351,5 @@ MIT
 
 ---
 
-**Last Updated:** 2026-04-01
+**Last Updated:** 2026-04-24
 **Version:** 0.1.0

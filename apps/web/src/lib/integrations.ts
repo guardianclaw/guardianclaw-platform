@@ -1,4 +1,4 @@
-export type IntegrationCategory =
+﻿export type IntegrationCategory =
   | 'frameworks'
   | 'llm-providers'
   | 'crypto'
@@ -56,17 +56,17 @@ const agent = new AgentRuntime({
 const { inputGuardrails, outputGuardrails } = createGuardianClawGuardrails({ level: 'strict' })`,
   },
   {
-    slug: 'moltbot',
-    name: 'Moltbot',
+    slug: 'openclaw',
+    name: 'OpenClaw',
     description:
-      'Security guardrails for Moltbot agents with real-time validation, data leak prevention, and threat detection.',
+      'Security guardrails for OpenClaw agents with real-time validation, data leak prevention, and threat detection.',
     category: 'frameworks',
     status: 'stable',
-    logoUrl: '/images/ecosystem/moltbot.svg',
-    installCommand: 'npm install @guardianclaw/moltbot',
-    docsUrl: '/docs/integrations/moltbot',
-    demoUrl: '/demos/moltbot',
-    quickStart: `// moltbot.config.json
+    logoUrl: '/images/ecosystem/openclaw.svg',
+    installCommand: 'npm install @guardianclaw/openclaw',
+    docsUrl: '/docs/integrations/openclaw',
+    demoUrl: '/demos/openclaw',
+    quickStart: `// openclaw.config.json
 {
   "plugins": {
     "claw": {
