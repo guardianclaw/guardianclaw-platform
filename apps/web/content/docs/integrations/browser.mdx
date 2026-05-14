@@ -3,7 +3,7 @@ title: "Browser Extension"
 description: "Browser extension that protects AI conversations from data harvesting, monitors AI agents, and controls MCP tools"
 category: "integrations"
 order: 33
-lastUpdated: "2026-01-24"
+lastUpdated: "2026-05-12"
 ---
 
 # Browser Extension
@@ -133,10 +133,10 @@ All actions are validated through the Credibility-Limits-Avoidance-Worth protoco
 
 | Gate | Question |
 |------|----------|
-| **Truth** | Is this from a legitimate source? |
-| **Harm** | Could this cause harm? |
-| **Scope** | Is this within appropriate boundaries? |
-| **Purpose** | Is there a legitimate reason? |
+| **Credibility** | Is this factually accurate / from a legitimate source? |
+| **Limits** | Is this within authorized boundaries? |
+| **Avoidance** | Could this cause harm? |
+| **Worth** | Is there a legitimate purpose? |
 
 ### Agent Shield
 
@@ -215,17 +215,18 @@ npm run test:coverage
 npm run test:watch
 ```
 
-Current test coverage: 866 tests passing, 55%+ code coverage.
+Current test coverage is tracked in the browser extension's CI; the project ships its own
+vitest suite alongside the platform's Test API / Test Web CI jobs.
 
 ## Part of GuardianClaw Ecosystem
 
 | Component | Description |
 |-----------|-------------|
-| VS Code Extension | Protect your code |
-| JetBrains Plugin | IDE integration |
-| Neovim Plugin | Editor integration |
-| Python/npm SDKs | For applications |
-| Browser Extension | Protect your browsing |
+| JetBrains plugin | IntelliJ / PyCharm / WebStorm / … IDE integration |
+| `promptfoo` CLI provider | Red-team your AI systems with the CLAW protocol |
+| Python SDK (`guardianclaw`) | PyPI distribution for Python apps and agents |
+| npm packages (`@guardianclaw/*`) | TypeScript / JavaScript ecosystem |
+| Browser extension (this one) | Protects AI conversations and agent / MCP interactions in the browser |
 
 ## Links
 

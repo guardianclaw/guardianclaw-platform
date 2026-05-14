@@ -2,7 +2,7 @@
  * GuardianClaw ElizaOS Plugin Types
  *
  * Type definitions matching ElizaOS core interfaces.
- * Based on @elizaos/core v1.x types.
+ * Based on @elizaos/core v2.x types.
  */
 
 // ElizaOS UUID type — plain string (matches @elizaos/core@2.x)

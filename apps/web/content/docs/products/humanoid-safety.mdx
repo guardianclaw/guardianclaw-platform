@@ -3,16 +3,21 @@ title: "Humanoid Safety"
 description: "ISO/TS 15066 compliant safety validation for humanoid robots"
 category: "products"
 order: 3
-lastUpdated: "2026-01-23"
+lastUpdated: "2026-05-12"
 ---
 
 # Humanoid Safety Protocol
 
-Safety validation module for humanoid robots implementing ISO/TS 15066 compliant contact force limits, balance monitoring, and CLAW validation.
+Safety validation module for humanoid robots implementing ISO/TS 15066-aligned contact force
+limits, balance monitoring, and CLAW validation.
 
 ## Overview
 
-The Humanoid Safety Protocol provides a comprehensive safety layer for humanoid robot operations, designed to work alongside ROS2 and simulation environments like NVIDIA Isaac Lab.
+The Humanoid Safety Protocol provides a safety layer for humanoid-robot operations as a Python
+SDK module (`guardianclaw.safety.humanoid`). It exposes biomechanical limits, balance
+monitoring, and CLAW validation against pre-defined robot constraints; integration with any
+specific simulation environment (ROS 2, Isaac Lab, MuJoCo, etc.) is the caller's
+responsibility.
 
 ### Key Features
 

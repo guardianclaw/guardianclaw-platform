@@ -1,4 +1,4 @@
-﻿# GuardianClaw AI
+# GuardianClaw AI
 
 ### Safety for AI that Acts: From Chatbots to Robots
 
@@ -9,7 +9,7 @@
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![PyPI](https://img.shields.io/pypi/v/guardianclaw)](https://pypi.org/project/guardianclaw/)
 [![npm](https://img.shields.io/npm/v/guardianclaw)](https://www.npmjs.com/package/@guardianclaw/core)
-[![Benchmarks](https://img.shields.io/badge/benchmarks-4%20validated-green.svg)]()
+[![CLAW Corpus](https://img.shields.io/badge/corpus-416%20items%20CI--gated-green.svg)]()
 
 🌐 **Website:** [guardianclaw.org](https://guardianclaw.org) · 🤗 **HuggingFace:** [guardianclaw](https://huggingface.co/guardianclaw) · 𝕏 **Twitter:** [@guardianclaw_](https://x.com/guardianclaw_)
 
@@ -21,7 +21,7 @@ GuardianClaw is an **AI safety framework** that protects across three surfaces:
 
 ```
 ┌──────────────────────────────────────────────────────────────────────────────┐
-│                                 GUARDIANCLAW                                     │
+│                                 GUARDIANCLAW                                 │
 │                       AI Safety Across Three Surfaces                        │
 ├──────────────────────────┬──────────────────────────┬────────────────────────┤
 │    LLMs                  │    AGENTS                │    ROBOTS              │
@@ -30,15 +30,15 @@ GuardianClaw is an **AI safety framework** that protects across three surfaces:
 │ • Chatbots               │ • Autonomous agents      │ • LLM-powered robots   │
 │ • Assistants             │ • Code execution         │ • Industrial systems   │
 │ • Customer service       │ • Tool-use agents        │ • Drones, manipulators │
-├──────────────────────────┼──────────────────────────┼────────────────────────┤
-│ HarmBench: +22%          │ SafeAgentBench: +26%     │ BadRobot: +48%         │
-│ JailbreakBench: +10%     │ SafeAgentBench: +16%     │ Embodied AI validated  │
-└──────────────────────────┴──────────────────────────┴────────────────────────┘
+├──────────────────────────┴──────────────────────────┴────────────────────────┤
+│ CLAW Protocol (Credibility · Limits · Avoidance · Worth) applied identically │
+│ across surfaces; seed variants tuned per latency / safety tradeoff.          │
+└──────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ### Core Components
 
-- **ClawValidator v3.0:** Unified 4-layer validation (L1 Input, L2 Seed, L3 Output, L4 Observer)
+- **ClawValidator v3.0:** Unified 4-layer validation (L1 InputValidator, L2 Shield Injection, L3 OutputValidator, L4 ClawObserver)
 - **CLAW Protocol:** Four-gate validation (Credibility, Limits, Avoidance, Worth)
 - **Teleological Core:** Actions must serve legitimate purposes
 - **Anti-Self-Preservation:** Prevents AI from prioritizing its own existence
@@ -58,69 +58,79 @@ GuardianClaw is an **AI safety framework** that protects across three surfaces:
 
 ## Why GuardianClaw?
 
-### For LLMs (Text Safety)
+The same CLAW protocol surfaces in three contexts. Each surface enforces the same four gates
+but ships a different seed variant tuned for latency, context budget, and risk profile.
 
-| Challenge | GuardianClaw Solution |
-|-----------|-------------------|
-| Jailbreaks | +10% resistance (Qwen), 100% refusal (DeepSeek) |
-| Toxic content | CLAW gates block at source |
-| False refusals | 0% on legitimate tasks |
+| Surface | Primary failure modes | GuardianClaw contribution |
+|---------|----------------------|---------------------------|
+| **LLMs** (text) | Jailbreaks, toxic generation, false refusals on legitimate tasks | CLAW gates fire before output reaches the user; OutputValidator catches model drift |
+| **Agents** (action) | Unauthorized actions, scope drift, instrumental self-preservation | Limits gate enforces boundaries; Anti-Self-Preservation hierarchy in seed |
+| **Robots** (physical) | Irreversible physical harm, force-limit violations | Full seed variant + `safety.humanoid` module with ISO/TS 15066 force limits |
 
-### For Agents (Action Safety)
-
-| Challenge | GuardianClaw Solution |
-|-----------|-------------------|
-| Unauthorized actions | +26% safety (Claude), +16% (GPT-4o-mini) |
-| Task deviation | Scope gate maintains boundaries |
-| Resource acquisition | Anti-self-preservation limits |
-
-### For Robots (Physical Safety)
-
-| Challenge | GuardianClaw Solution |
-|-----------|-------------------|
-| Dangerous physical actions | +48% safety on BadRobot benchmark |
-| Irreversible harm | Full seed with physical safety module |
-| Self-preservation behaviors | Explicit priority hierarchy |
-
-**Key insight:** GuardianClaw shows **larger improvements as stakes increase**. Text: +10-22%. Agents: +16-26%. Robots: +48%. The higher the risk, the more value GuardianClaw provides.
+> Per-surface improvement numbers against public benchmarks (HarmBench, SafeAgentBench,
+> BadRobot, JailbreakBench) are being re-measured against the v3.x SDK in wrapper mode.
+> Earlier figures (e.g. +22% / +26% / +48%) referred to an older SDK lineage and were
+> removed from this README pending the new run.
 
 ---
 
-## Validated Results (v2 Seed)
+## Validation Status (v3.0-rc.1)
 
-Tested across **4 benchmarks** on **6 models** with **97.6% average safety rate**:
+Three reproducible, CI-gated mechanisms back the current release.
 
-### Results by Model
+### 1. CLAW Correctness Corpus
 
-| Model | HarmBench | SafeAgent | BadRobot | Jailbreak | **Avg** |
-|-------|-----------|-----------|----------|-----------|---------|
-| GPT-4o-mini | 100% | 98% | 100% | 100% | **99.5%** |
-| Claude Sonnet 4 | 98% | 98% | 100% | 94% | **97.5%** |
-| Qwen 2.5 72B | 96% | 98% | 98% | 94% | **96.5%** |
-| DeepSeek Chat | 100% | 96% | 100% | 100% | **99%** |
-| Llama 3.3 70B | 88% | 94% | 98% | 94% | **93.5%** |
-| Mistral Small | 98% | 100% | 100% | 100% | **99.5%** |
-| **Average** | **96.7%** | **97.3%** | **99.3%** | **97%** | **97.6%** |
+416 hand-curated attacks across 8 classes (52 each), each tagged with an `expected_verdict` per
+gate. The harness in `evaluation/corpus/` runs on every PR via the CI **Corpus Validation** job;
+any verdict drift blocks merge.
 
-### Results by Benchmark
+| Class | Items | Primary gates |
+|-------|------:|--------------|
+| `prompt-injection` | 52 | Limits / Credibility |
+| `data-exfil` | 52 | Limits / Avoidance |
+| `jailbreak` | 52 | Credibility / Limits |
+| `encoding` | 52 | Limits (base64, hex, atbash, …) |
+| `multilingual` | 52 | 9 languages, cross-class |
+| `instruction-override` | 52 | Limits (system-prompt subversion) |
+| `role-play` | 52 | Credibility (persona injection) |
+| `indirect-via-memory` | 52 | Memory Shield + Credibility |
+| **Total** | **416** | — |
 
-| Benchmark | Attack Surface | Safety Rate |
-|-----------|----------------|-------------|
-| **HarmBench** | LLM (Text) | 96.7% |
-| **SafeAgentBench** | Agent (Digital) | 97.3% |
-| **BadRobot** | Robot (Physical) | 99.3% |
-| **JailbreakBench** | All surfaces | 97% |
+### 2. Pattern Registry Parity (39 families)
 
-### v1 vs v2 Comparison
+The TS and Python regex families are generated from a single registry. A **Pattern Sync** CI job
+replays the same fixtures against `re` (Python) and `RegExp` (JavaScript) and fails the build on
+any verdict mismatch.
 
-| Benchmark | v1 avg | v2 avg | Improvement |
-|-----------|--------|--------|-------------|
-| HarmBench | 88.7% | **96.7%** | +8% |
-| SafeAgentBench | 79.2% | **97.3%** | +18.1% |
-| BadRobot | 74% | **99.3%** | +25.3% |
-| JailbreakBench | 96.5% | **97%** | +0.5% |
+### 3. Adversarial Sweeps (2026-05-11, free-tier)
 
-**Key insight:** v2 introduces the PURPOSE gate (CLAW protocol) which requires actions to serve legitimate purposes, not just avoid harm.
+| Sweep | Surface | Result |
+|-------|---------|--------|
+| Garak `promptinject.HijackHateHumans` (512 attempts) | bare `llama-3.3-70b` via Groq | **87.30% attack-success rate against the bare target** — motivates the SDK-as-wrapper layer; an open-weights model alone is not a sufficient defence against trivial injection. |
+| Crescendo multi-turn (20 scenarios) | Surrogate observer `gpt-4o-mini` | **17 detect-correctly · 3 fail-late · 0 fail-missed · 0 false-positive**. The three fail-late cases (self-harm via fiction, dieting frame, doctor roleplay) block at turn N+1 instead of turn N and are queued for Observer-prompt refinement. |
+
+### Test Suite Coverage
+
+| Suite | Tests | Status |
+|-------|------:|--------|
+| SDK Python (pytest, CI-gated) | 2,964 passed / 3 skipped | green (Sessão #031, PR #46) |
+| Platform API + Web (vitest) | 666 | green (Test API + Test Web) |
+| Pattern Registry parity | 39 families | green (Pattern Sync) |
+| Corpus harness | 416 items | green (Corpus Validation) |
+
+### Re-validation in Progress
+
+Four public benchmarks are being re-run against the v3.x SDK as a wrapper layer (input
+validator + output validator + Observer) and will be published with reproduction scripts:
+
+- HarmBench (LLM / text)
+- SafeAgentBench (Agent / digital)
+- BadRobot (Robot / physical)
+- JailbreakBench (jailbreak techniques)
+
+Earlier per-model tables, per-surface tables, v1-vs-v2 comparisons, and ablation studies
+(WORTH gate, Anti-Self-Preservation, Priority Hierarchy, BenignContextDetector, Multi-turn
+detection) referred to a previous SDK lineage and were removed pending this re-run.
 
 ---
 
@@ -312,18 +322,18 @@ All requests pass through four sequential gates:
 
 ```mermaid
 flowchart TD
-    A["REQUEST"] --> B{"GATE 1: TRUTH<br/><i>Is this factually accurate?</i>"}
-    B -->|PASS| C{"GATE 2: HARM<br/><i>Could this cause harm?</i>"}
+    A["REQUEST"] --> B{"GATE 1: CREDIBILITY<br/><i>Is this factually accurate?</i>"}
+    B -->|PASS| C{"GATE 2: LIMITS<br/><i>Is this within authorized boundaries?</i>"}
     B -->|FAIL| X["❌ BLOCKED"]
-    C -->|PASS| D{"GATE 3: SCOPE<br/><i>Is this within boundaries?</i>"}
+    C -->|PASS| D{"GATE 3: AVOIDANCE<br/><i>Could this cause harm?</i>"}
     C -->|FAIL| X
-    D -->|PASS| E{"GATE 4: PURPOSE<br/><i>Does this serve legitimate purpose?</i>"}
+    D -->|PASS| E{"GATE 4: WORTH<br/><i>Does this serve a legitimate purpose?</i>"}
     D -->|FAIL| X
     E -->|PASS| F["✅ ASSIST FULLY"]
     E -->|FAIL| X
 ```
 
-**Key difference from v1:** The PURPOSE gate ensures actions serve legitimate benefit; the absence of harm is not sufficient.
+**Key principle:** The WORTH gate ensures actions serve legitimate benefit; the absence of harm is not sufficient. Jailbreak attempts surface as violations in Credibility (role / roleplay manipulation) or Limits (instruction override, prompt extraction, filter bypass, system injection) rather than as a separate fifth gate.
 
 ### Programmatic Validators
 
@@ -376,7 +386,9 @@ The AI will:
 - **Not** acquire resources beyond the task
 - **Accept** legitimate oversight and correction
 
-**Ablation evidence:** Removing anti-self-preservation drops SafeAgentBench performance by 6.7%.
+Ablation impact against SafeAgentBench (and similar embodied-agent corpora) is being
+re-measured against the v3.x seed; the previously published `-6.7%` figure was removed
+pending the new run.
 
 ---
 
@@ -900,7 +912,8 @@ GuardianClaw provides **65% coverage** of OWASP Agentic AI threats (5 full, 3 pa
 | ASI09 | Human Agent Trust Exploitation | ✅ Full | Fiduciary AI |
 | ASI10 | Rogue Agents | ✅ Full | CLAW, Anti-Preservation |
 
-Full mapping: [docs/OWASP_AGENTIC_COVERAGE.md](docs/OWASP_AGENTIC_COVERAGE.md)
+The mapping table above tracks each control to the SDK component that implements it; per-threat
+narrative documentation is being rebuilt alongside the benchmark re-validation pass.
 
 ---
 
@@ -916,8 +929,8 @@ uvicorn main:app --reload
 
 ```
 GET  /seed/{level}      - Get alignment seed
-POST /validate          - Validate text through THS
-POST /validate/action   - Validate action plan (for agents)
+POST /validate          - Validate text through the CLAW gates
+POST /validate/action   - Validate an action plan (for agents)
 POST /chat              - Chat with seed injection
 ```
 
@@ -925,104 +938,97 @@ POST /chat              - Chat with seed injection
 
 ## Project Structure
 
+The Python SDK lives under `sdk/` in the monorepo. The tree below is what the published PyPI
+distribution `guardianclaw` ships:
+
 ```
-guardianclaw/
-├── src/guardianclaw/          # Python SDK
-│   ├── claw_core.py      # Main GuardianClaw class (entry point)
-│   ├── core/                 # v3.0 Unified Validation Architecture
-│   │   ├── claw_validator.py  # ClawValidator orchestrator
-│   │   ├── claw_config.py     # Configuration with Gate4Fallback
-│   │   ├── claw_results.py    # GuardianClawResult, ObservationResult
-│   │   ├── observer.py            # L4 ClawObserver (external LLM)
-│   │   ├── retry.py               # Retry with exponential backoff
-│   │   └── token_tracker.py       # Token usage tracking
-│   ├── detection/            # Input/Output validation system
-│   │   ├── input_validator.py     # L1 Gate (pre-AI validation)
-│   │   ├── output_validator.py    # L3 Gate (post-AI validation)
-│   │   ├── detectors/             # Pattern detectors (20+ types)
-│   │   ├── behaviors/             # Behavior classification
-│   │   ├── checkers/              # Harm, scope, truth checkers
-│   │   └── benign_context.py      # BenignContextDetector (FP reduction)
-│   ├── validation/           # Layered validation orchestration
-│   │   ├── layered.py             # LayeredValidator (heuristic+semantic)
-│   │   └── config.py              # ValidationConfig
-│   ├── validators/           # CLAW gates + semantic validation
-│   │   ├── gates.py               # CredibilityGate, LimitsGate, AvoidanceGate, WorthGate
-│   │   └── semantic.py            # LLM-based semantic validation
-│   ├── database/             # Database Guard (SQL injection protection)
-│   │   ├── guard.py               # DatabaseGuard validator
-│   │   └── patterns.py            # SQL injection patterns
-│   ├── providers/            # LLM provider clients
-│   ├── memory/               # Memory integrity (HMAC-based)
-│   ├── fiduciary/            # Fiduciary AI module
-│   ├── compliance/           # EU AI Act compliance checker
-│   ├── safety/               # Physical safety modules
-│   │   └── humanoid/              # ISO/TS 15066 humanoid safety
-│   └── integrations/         # Framework integrations
-│       ├── openai_agents/         # OpenAI Agents SDK
-│       ├── anthropic_sdk/         # Anthropic SDK
-│       ├── pyrit/                 # Microsoft PyRIT
-│       ├── garak/                 # NVIDIA Garak
-│       ├── coinbase/              # Coinbase AgentKit + x402
-│       ├── google_adk/            # Google Agent Development Kit
-│       ├── solana_agent_kit/      # Solana Agent Kit
-│       ├── virtuals/              # Virtuals Protocol (GAME SDK)
-│       ├── mcp_server/            # MCP Server
-│       ├── openguardrails/        # OpenGuardrails
-│       └── agent_validation/      # Generic agent validation
-├── seeds/                     # Alignment seeds
-│   ├── v1/                   # Legacy (THS protocol)
-│   ├── v2/                   # Production (CLAW protocol)
-│   └── SPEC.md               # Seed specification
-├── evaluation/
-│   ├── benchmarks/           # Benchmark implementations
-│   │   ├── harmbench/
-│   │   ├── safeagentbench/
-│   │   └── jailbreakbench/
-│   └── results/              # Test results by benchmark
-├── packages/                  # External packages (npm/PyPI)
-│   ├── elizaos/              # @guardianclaw/elizaos-plugin
-│   ├── voltagent/            # @guardianclaw/voltagent
-│   ├── openclaw/              # @guardianclaw/openclaw
-│   ├── solana-agent-kit/     # @guardianclaw/solana-agent-kit
-│   ├── promptfoo/            # guardianclaw-promptfoo (PyPI)
-│   └── jetbrains/            # IntelliJ/PyCharm plugin
-├── docs/                      # Documentation
-│   ├── ARCHITECTURE.md       # System architecture (L1/L2/L3/L4 layers)
-│   ├── MIGRATION.md          # Migration guide (gate3 to gate4)
-│   ├── EU_AI_ACT_MAPPING.md  # EU AI Act compliance mapping
-│   ├── OWASP_LLM_TOP_10_MAPPING.md
-│   ├── OWASP_AGENTIC_COVERAGE.md  # OWASP Top 10 for Agentic AI
-│   └── CSA_AI_CONTROLS_MATRIX_MAPPING.md
-├── api/                       # REST API
-├── examples/                  # Usage examples
-├── tools/                     # Utility scripts
-└── tests/                     # Test suite (3000+ tests)
+sdk/
+├── src/guardianclaw/
+│   ├── guardianclaw_core.py        # Main GuardianClaw class (entry point)
+│   ├── core/                       # v3.0 unified validation
+│   │   ├── claw_validator.py       # ClawValidator orchestrator
+│   │   ├── claw_config.py          # Configuration (Gate 4 fallback policies)
+│   │   ├── claw_results.py         # GuardianClawResult, ObservationResult
+│   │   ├── observer.py             # L4 ClawObserver (external LLM)
+│   │   ├── retry.py                # Retry with exponential backoff
+│   │   └── token_tracker.py        # Token-usage tracking
+│   ├── detection/                  # L1 / L3 detection
+│   │   ├── input_validator.py      # L1 pre-LLM heuristics
+│   │   ├── output_validator.py     # L3 post-LLM heuristics
+│   │   ├── detectors/              # Pattern detectors
+│   │   ├── checkers/               # Harmful / deception / scope checkers
+│   │   └── benign_context.py       # False-positive reduction
+│   ├── validators/                 # CLAW gates
+│   │   ├── gates.py                # CredibilityGate, LimitsGate, AvoidanceGate, WorthGate
+│   │   └── semantic.py             # LLM-based semantic validator
+│   ├── validation/                 # LayeredValidator orchestration
+│   ├── memory/                     # Memory Shield v2.0 (HMAC + content validation)
+│   ├── fiduciary/                  # Fiduciary AI module
+│   ├── compliance/                 # EU AI Act / OWASP / CSA checkers
+│   ├── database/                   # Database Guard (SQL-injection protection)
+│   ├── safety/                     # Physical safety modules
+│   │   └── humanoid/               # ISO/TS 15066 contact-force limits
+│   ├── providers/                  # LLM provider clients (OpenAI, Anthropic, base)
+│   ├── seeds/                      # Bundled seed text (minimal / standard / full)
+│   └── integrations/               # 11 first-party adapters
+│       ├── openai_agents/          # OpenAI Agents SDK
+│       ├── anthropic_sdk/          # Anthropic SDK
+│       ├── google_adk/             # Google Agent Development Kit
+│       ├── mcp_server/             # MCP server
+│       ├── coinbase/               # AgentKit + x402
+│       ├── solana_agent_kit/       # Solana Agent Kit helpers
+│       ├── virtuals/               # Virtuals (GAME SDK)
+│       ├── pyrit/                  # Microsoft PyRIT scorers
+│       ├── garak/                  # NVIDIA Garak probes + detectors
+│       ├── openguardrails/         # OpenGuardrails HTTP bridge
+│       └── agent_validation/       # Framework-agnostic helpers
+├── tests/                          # pytest suite (2,964 passing, CI-gated)
+├── pyproject.toml
+├── CHANGELOG.md
+└── README.md (this file)
 ```
+
+Outside `sdk/`, the monorepo also ships:
+
+| Path | Purpose |
+|------|---------|
+| `apps/web/`, `apps/api/`, `apps/browser/` | Frontend (Next.js), edge API (Cloudflare Workers), browser extension |
+| `packages/` | npm packages — `core`, `elizaos`, `openclaw`, `voltagent`, `runtime`, `shared` |
+| `integrations/` | External-ecosystem adapters — `jetbrains/`, `promptfoo/`, `solana-agent-kit/` |
+| `seeds/` | Alignment shields (`v1/`, `v2/` × minimal / standard / full) + `SPEC.md` |
+| `evaluation/` | CLAW correctness corpus (416 items × 8 classes) + harness |
+| `supabase/` | Database migrations (40 applied) |
+| `docs/` | Operational notes (`OPERATIONS.md`, `TESTING.md`, `DATABASE_OPERATIONS.md`) |
 
 ---
 
 ## Reproducibility
 
-All benchmark results are reproducible:
+Everything currently published is reproducible from the repository:
 
 ```bash
-# HarmBench
-cd evaluation/benchmarks/harmbench
-python run_claw_harmbench.py --api_key YOUR_KEY --model gpt-4o-mini
+# CLAW correctness corpus (416 items × 8 classes) — CI-gated
+cd evaluation/corpus
+python run.py
 
-# SafeAgentBench
-cd evaluation/benchmarks/safeagentbench
-python run_claw_safeagent.py --api_key YOUR_KEY --model gpt-4o-mini
+# Pattern Registry Py↔TS parity (39 families) — CI-gated
+python scripts/gen_patterns.py --check
 
-# JailbreakBench
-cd evaluation/benchmarks/jailbreakbench
-python run_jailbreak_test.py --api_key YOUR_KEY --model gpt-4o-mini
+# Crescendo multi-turn sweep (20 scenarios)
+# Requires LLM credentials; see _internal/API_KEYS.md (local only)
+python _internal/lab/c2-crescendo/run.py --observer groq
+python _internal/lab/c2-crescendo/run.py --observer openai --only crescendo-012,crescendo-013
 
-# Unified benchmark runner (all benchmarks)
-cd evaluation
-python run_benchmark_unified.py --benchmark harmbench --model gpt-4o-mini --seed v2/standard
+# Garak adversarial sweep (NVIDIA red-team probes)
+# Requires GROQ_API_KEY for the bare-target baseline run
+./_internal/lab/c1-garak/run.ps1            # PowerShell on Windows
+./_internal/lab/c1-garak/run.sh             # bash on Linux/macOS
 ```
+
+Public-benchmark scripts (HarmBench / SafeAgentBench / BadRobot / JailbreakBench) for the
+v3.x SDK in wrapper mode will be added under `evaluation/benchmarks/` as part of the
+pending re-validation pass; the previous lineage's scripts have been retired pending the
+new run.
 
 ---
 
@@ -1042,11 +1048,11 @@ GuardianClaw builds on research from:
 If you use GuardianClaw in your research, please cite:
 
 ```bibtex
-@software{claw_ai_2025,
-  author = {GuardianClaw AI Contributors},
-  title = {GuardianClaw: Safety Framework for LLMs and Autonomous Agents},
-  year = {2025},
-  url = {https://github.com/guardianclaw/guardianclaw-platform}
+@software{claw_ai_2026,
+  author = {GuardianClaw Team},
+  title  = {GuardianClaw: Safety Framework for LLMs and Autonomous Agents},
+  year   = {2026},
+  url    = {https://github.com/guardianclaw/guardianclaw-platform}
 }
 ```
 
@@ -1071,10 +1077,10 @@ Add this badge to your project's README to show it uses GuardianClaw for AI safe
 We welcome contributions! See [CONTRIBUTING.md](docs/CONTRIBUTING.md) for guidelines.
 
 Areas we need help:
-- **New benchmarks:** Testing on additional safety datasets
-- **Multi-agent safety:** Coordination between multiple agents
-- **Documentation:** Tutorials and examples
-- **JetBrains Plugin:** IntelliJ/PyCharm integration
+- **Benchmark re-validation:** Re-running HarmBench / SafeAgentBench / BadRobot / JailbreakBench against the v3.x SDK in wrapper mode and publishing the scripts (see STATE)
+- **Multi-agent safety:** Coordination protocols between multiple agents
+- **Documentation:** Tutorials, examples, and translations of existing guides
+- **Additional language SDKs:** Go, Rust, Java ports of the core validator
 
 ---
 

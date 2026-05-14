@@ -1,4 +1,4 @@
-﻿# GuardianClaw Platform
+# GuardianClaw Platform
 
 > The Decision Firewall for AI Agents — Build, Deploy, and Protect
 
@@ -16,15 +16,19 @@ GuardianClaw Platform is a monorepo containing the web platform, API, and browse
 - **Supabase** — PostgreSQL database with RLS
 - **Solana Wallet Adapter** — Sign-In With Solana (SIWS)
 - **Tailwind CSS + shadcn/ui** — UI components
-- **Turborepo** — Monorepo orchestration
+- **Turborepo + npm workspaces** — Monorepo orchestration
+- **Modal.com** — Serverless Python runtime for agent execution
+- **Python 3.10+** — SDK (`guardianclaw` on PyPI) and runtime
 
 ## Current Status
 
 **Live URLs:**
 - Frontend: https://guardianclaw.org
-- API: https://api.guardianclaw.org
+- API: https://claw-api-production.guardianclaw.workers.dev/health
 
-**CI/CD:** GitHub Actions (Lint, TypeCheck, Test, Build, Deploy)
+**CI/CD:** GitHub Actions, 10 gating jobs:
+Lint · TypeCheck · Test API · Test Web · Build · Pattern Sync · Corpus Validation · SDK Tests (2964 pytest) · gitleaks · npm audit.
+Deploy splits into API (Cloudflare Workers via `wrangler-action`) and Web (Vercel prebuilt).
 
 ### Implemented Features
 
@@ -163,21 +167,37 @@ guardianclaw-platform/
 │   │   │
 │   │   └── public/               # Static assets
 │   │
-│   └── api/                      # Cloudflare Workers API
-│       └── src/
-│           └── routes/           # API endpoints
+│   ├── api/                      # Cloudflare Workers API
+│   │   └── src/
+│   │       └── routes/           # API endpoints
+│   │
+│   └── browser/                  # Chrome/Firefox extension
 │
-├── packages/
-│   ├── core/                     # @guardianclaw/core
+├── packages/                     # Publishable npm packages
+│   ├── core/                     # @guardianclaw/core           (3.0.0-rc.1)
 │   ├── shared/                   # @guardianclaw/shared
-│   ├── openclaw/                  # @guardianclaw/openclaw
-│   ├── voltagent/                # @guardianclaw/voltagent
-│   ├── elizaos/                  # @guardianclaw/elizaos-plugin
-│   ├── goat-plugin/              # @goat-sdk/plugin-claw
-│   ├── vscode/                   # VS Code extension
-│   └── runtime/                  # Modal.com runtime
+│   ├── elizaos/                  # @guardianclaw/elizaos-plugin (2.0.0-rc.1, @elizaos/core@2.x)
+│   ├── openclaw/                 # @guardianclaw/openclaw       (3.0.0-rc.1, formerly moltbot)
+│   ├── voltagent/                # @guardianclaw/voltagent      (0.3.0, @voltagent/core@2.x)
+│   └── runtime/                  # Internal Modal.com runtime (not published)
 │
-├── sdk/                          # Python SDK (guardianclaw)
+├── sdk/                          # Python SDK (guardianclaw on PyPI, 3.0.0-rc.1)
+│   └── src/guardianclaw/
+│       ├── core/                 # CLAW validator + ClawObserver (Gate 4 LLM)
+│       ├── detection/            # 700+ patterns + checkers
+│       ├── validators/           # CLAW gate implementations
+│       ├── safety/               # Humanoid / simulation / database guards
+│       ├── memory/               # Memory Shield v2.0
+│       └── integrations/         # 11 first-party adapters (see below)
+│
+├── integrations/                 # External-ecosystem adapters
+│   ├── jetbrains/                # IntelliJ / PyCharm plugin
+│   ├── promptfoo/                # promptfoo CLI integration
+│   └── solana-agent-kit/         # @guardianclaw/solana-agent-kit (npm, 1.0.3)
+│
+├── seeds/                        # Alignment shields (v1, v2 — minimal / standard / full)
+├── evaluation/                   # CLAW correctness corpus (416 items × 8 attack classes) + harness
+├── supabase/                     # 40 migrations (RLS, RPCs, indexes)
 │
 └── turbo.json                    # Monorepo config
 ```
@@ -328,15 +348,59 @@ vercel deploy --prod
 | Maximum | All (CLAW) | Highest safety |
 | Custom | User-selected | Fine-grained control |
 
-## Integration Roadmap
+## Safety Architecture
 
-### Completed Integrations
+GuardianClaw applies the **CLAW protocol** (Credibility · Limits · Avoidance · Worth) across a **4-layer validation pipeline**:
 
-| Phase | Integrations | Status |
-|-------|-------------|--------|
-| Phase 1 | OpenAI Agents SDK | COMPLETE |
-| Phase 2 | Coinbase AgentKit, Solana Agent Kit | COMPLETE |
-| Phase 3 | Google ADK, Virtuals Protocol (GAME) | COMPLETE |
+| Layer | Component | Role |
+|-------|-----------|------|
+| L1 | `InputValidator` | Pre-LLM pattern detection (700+ patterns across 39 regex families) |
+| L2 | Shield Injection | System-prompt-level alignment (seeds v1 / v2) |
+| L3 | `OutputValidator` | Post-LLM heuristic verification (same gates) |
+| L4 | `ClawObserver` | LLM-based transcript review for multi-turn escalation (e.g. Crescendo) |
+
+All four CLAW gates must pass for an action to proceed. The absence of harm is not sufficient — there must be a legitimate purpose (Worth gate).
+
+### Validation evidence
+
+- **CLAW correctness corpus** — 416 hand-curated attacks × 8 classes (prompt-injection, data-exfil, jailbreak, encoding, multilingual, instruction-override, role-play, indirect-via-memory) run as a CI gate.
+- **Pattern Registry 7.x** — 39 regex families with Python ↔ TypeScript parity enforced in CI.
+- **Adversarial sweep (Garak)** — bare-target ASR baseline measured: 87.30% on `llama-3.3-70b-versatile` against `promptinject.HijackHateHumans` (motivates the SDK as a wrapper layer rather than relying on model alignment alone).
+- **Crescendo multi-turn sweep** — 20 scenarios (18 attacks + 2 controls), 17 correct detections, 3 fail-late findings documented for follow-up. Zero false-positives on control scenarios.
+
+## Integrations
+
+### Python SDK adapters (`sdk/src/guardianclaw/integrations/`)
+
+| Integration | Floor | Validated against | Notes |
+|-------------|-------|-------------------|-------|
+| `openai_agents` | `openai-agents>=0.6.0` | `0.14.5` | LLM-based semantic guardrails |
+| `anthropic_sdk` | `anthropic>=0.40.0` | `0.97.0` | Drop-in wrapper for Anthropic SDK |
+| `google_adk` | `google-adk>=1.7.0` | `1.31.1` | `GuardianClawPlugin` for ADK |
+| `mcp_server` | `mcp>=1.8.0` | `1.27.0` | MCP server exposing CLAW tools |
+| `coinbase` | `coinbase-agentkit>=0.1.0` | `0.7.4` | AgentKit + x402 payment validation |
+| `solana_agent_kit` | (Python helpers, no PyPI dep) | — | Used with the TS npm package |
+| `virtuals` | `game-sdk>=0.1.1` | `0.1.5` | Virtuals Protocol GAME SDK |
+| `pyrit` | `pyrit>=0.12.0` | `0.13.0` | Microsoft red-team scorers |
+| `garak` | `garak>=0.11.0` | `0.14.1` | NVIDIA red-team probes + detectors |
+| `openguardrails` | (HTTP, no PyPI dep) | `openguardrails@3.0.2` | Bidirectional OpenGuardrails bridge |
+| `agent_validation` | standalone | — | Framework-agnostic helpers |
+
+### npm packages (`packages/`)
+
+| Package | Version | Purpose |
+|---------|---------|---------|
+| `@guardianclaw/core` | `3.0.0-rc.1` | Canonical TS CLAW patterns + validators |
+| `@guardianclaw/elizaos-plugin` | `2.0.0-rc.1` | ElizaOS `@elizaos/core@2.x` plugin |
+| `@guardianclaw/openclaw` | `3.0.0-rc.1` | Personal-agent guardrails (formerly `@guardianclaw/moltbot`) |
+| `@guardianclaw/voltagent` | `0.3.0` | VoltAgent `@voltagent/core@2.x` guardrails |
+| `@guardianclaw/solana-agent-kit` | `1.0.3` | Solana Agent Kit TS plugin |
+
+### External-ecosystem adapters (`integrations/`)
+
+- `jetbrains/` — IntelliJ / PyCharm plugin (Kotlin)
+- `promptfoo/` — `promptfoo` CLI provider for CLAW validation
+- `solana-agent-kit/` — TypeScript adapter (published to npm above)
 
 ## Contributing
 
@@ -351,5 +415,5 @@ MIT
 
 ---
 
-**Last Updated:** 2026-04-24
-**Version:** 0.1.0
+**Last Updated:** 2026-05-12
+**Versions:** `apps/web` + `apps/api` `0.1.0` · `@guardianclaw/core` + `guardianclaw` (PyPI) + `@guardianclaw/openclaw` `3.0.0-rc.1` · `@guardianclaw/elizaos-plugin` `2.0.0-rc.1` · `@guardianclaw/voltagent` `0.3.0` · `@guardianclaw/solana-agent-kit` `1.0.3`

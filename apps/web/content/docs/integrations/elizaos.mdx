@@ -3,12 +3,18 @@ title: "ElizaOS Integration"
 description: "AI Safety Plugin for ElizaOS autonomous agents with CLAW Protocol validation and memory integrity"
 category: "integrations"
 order: 35
-lastUpdated: "2026-01-24"
+lastUpdated: "2026-05-12"
 ---
 
 # ElizaOS Integration
 
-Official GuardianClaw safety plugin for [ElizaOS](https://elizaos.ai) autonomous agents. Implements the CLAW (Credibility, Limits, Avoidance, Worth) protocol to validate agent actions and outputs.
+Official GuardianClaw safety plugin for [ElizaOS](https://elizaos.ai) autonomous agents.
+Implements the CLAW (Credibility, Limits, Avoidance, Worth) protocol to validate agent actions
+and outputs.
+
+Validated against `@elizaos/core@2.0.0-alpha.223` on 2026-04-24. The peer dependency is pinned
+to that exact alpha — upstream is still pre-stable and shape changes between alphas are common.
+The current plugin version is **`@guardianclaw/elizaos-plugin@2.0.0-rc.1`**.
 
 ## Features
 
@@ -117,10 +123,10 @@ The plugin validates all content through four gates:
 
 | Gate | Question | Blocks |
 |------|----------|--------|
-| **TRUTH** | Is this deceptive? | Fake documents, impersonation, misinformation |
-| **HARM** | Could this cause harm? | Violence, weapons, hacking, malware |
-| **SCOPE** | Is this within boundaries? | Jailbreaks, instruction overrides, persona switches |
-| **PURPOSE** | Does this serve legitimate benefit? | Purposeless destruction, waste |
+| **CREDIBILITY** | Is this factually accurate? | Fake documents, impersonation, misinformation, role / roleplay manipulation |
+| **LIMITS** | Is this within authorized boundaries? | Jailbreaks, instruction overrides, prompt extraction, filter bypass, system injection |
+| **AVOIDANCE** | Could this cause harm? | Violence, weapons, hacking, malware |
+| **WORTH** | Does this serve legitimate benefit? | Purposeless destruction, waste |
 
 All gates must pass for content to be approved.
 
@@ -311,10 +317,10 @@ Pattern-based detection using regex for known harmful patterns:
 
 | Gate | Detects |
 |------|---------|
-| **TRUTH** | Deception attempts, role manipulation, fake identity claims |
-| **HARM** | Violence, hacking, malware, weapons, dangerous substances |
-| **SCOPE** | Jailbreak attempts, instruction overrides, prompt extraction |
-| **PURPOSE** | Purposeless destruction patterns |
+| **CREDIBILITY** | Deception attempts, role manipulation, fake identity claims |
+| **LIMITS** | Jailbreak attempts, instruction overrides, prompt extraction, system injection |
+| **AVOIDANCE** | Violence, hacking, malware, weapons, dangerous substances |
+| **WORTH** | Purposeless destruction patterns |
 
 ### Layer 2: Seed Injection (Comprehensive)
 

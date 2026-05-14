@@ -3,7 +3,7 @@ title: "Chat API"
 description: "Chat API reference with seed injection"
 category: "api"
 order: 2
-lastUpdated: "2026-01-23"
+lastUpdated: "2026-05-12"
 ---
 
 # Chat API Reference
@@ -162,13 +162,16 @@ claw = GuardianClaw(
 )
 ```
 
-## Seed Levels
+## Seed Levels (approximate token counts)
 
 | Level | Tokens | Description |
 |-------|--------|-------------|
-| `minimal` | ~360 | Essential CLAW gates only |
-| `standard` | ~1K | Balanced safety with examples |
-| `full` | ~1.9K | Comprehensive with anti-self-preservation |
+| `minimal` | ~370 | Essential CLAW gates only |
+| `standard` | ~1,300 | Balanced safety with examples |
+| `full` | ~2,100 | Comprehensive with anti-self-preservation |
+
+Counts measured against the v2 shield in `guardianclaw@3.0.0-rc.1` using a cl100k_base-class
+tokeniser; exact counts vary per provider tokeniser.
 
 ## Response Validation
 

@@ -3,7 +3,7 @@ title: "REST API"
 description: "HTTP REST API reference for GuardianClaw"
 category: "api"
 order: 7
-lastUpdated: "2026-01-23"
+lastUpdated: "2026-05-12"
 ---
 
 # REST API Reference
@@ -84,8 +84,8 @@ curl https://api.guardianclaw.org/
   "documentation": "/docs",
   "endpoints": {
     "GET /seed/{level}": "Get alignment seed",
-    "POST /validate": "Validate text through THS gates",
-    "POST /validate/request": "Pre-validate user request",
+    "POST /validate": "Validate text through the CLAW gates",
+    "POST /validate/request": "Pre-validate a user request",
     "POST /chat": "Chat with seed injection",
     "POST /benchmark": "Run safety benchmark"
   }
@@ -201,10 +201,10 @@ curl -X POST https://api.guardianclaw.org/validate \
 | `is_safe` | boolean | Overall safety assessment |
 | `violations` | array | List of violation messages |
 | `gates` | object | Individual gate results |
-| `gates.credibility` | boolean | Truth gate passed |
-| `gates.avoidance` | boolean | Harm gate passed |
-| `gates.limits` | boolean | Scope gate passed |
-| `gates.worth` | boolean | Purpose gate passed |
+| `gates.credibility` | boolean | Credibility gate passed (factual accuracy, role / roleplay manipulation) |
+| `gates.avoidance` | boolean | Avoidance gate passed (potential harm) |
+| `gates.limits` | boolean | Limits gate passed (boundaries, instruction override, prompt extraction, filter bypass, system injection) |
+| `gates.worth` | boolean | Worth gate passed (legitimate purpose) |
 | `gates.jailbreak_detected` | boolean | Whether jailbreak was detected |
 
 **Example - Blocked Content:**
@@ -218,8 +218,8 @@ curl -X POST https://api.guardianclaw.org/validate \
 {
   "is_safe": false,
   "violations": [
-    "Jailbreak attempt detected: instruction override",
-    "Scope violation: request outside allowed boundaries"
+    "Limits (instruction_override): jailbreak attempt detected",
+    "Limits: request outside authorized boundaries"
   ],
   "gates": {
     "credibility": true,
@@ -286,7 +286,7 @@ curl -X POST https://api.guardianclaw.org/validate/request \
   "risk_level": "high",
   "concerns": [
     "Request involves potentially harmful security bypass",
-    "Scope violation detected"
+    "Limits violation detected"
   ]
 }
 ```
@@ -393,9 +393,9 @@ curl -X POST https://api.guardianclaw.org/benchmark \
   "failed": 3,
   "pass_rate": 0.94,
   "by_category": {
-    "jailbreak": {"passed": 18, "failed": 2},
-    "harmful_content": {"passed": 15, "failed": 0},
-    "limits_violation": {"passed": 14, "failed": 1}
+    "credibility": {"passed": 18, "failed": 2},
+    "avoidance": {"passed": 15, "failed": 0},
+    "limits": {"passed": 14, "failed": 1}
   },
   "results": null
 }

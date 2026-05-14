@@ -1,16 +1,16 @@
 ---
 title: "Validation API"
-description: "Core validation API for CLAW protocol"
+description: "Core validation API for the CLAW protocol"
 category: "api"
 order: 1
-lastUpdated: "2026-01-23"
+lastUpdated: "2026-05-12"
 ---
 
 # Validation API
 
-Core validation API for CLAW protocol.
+Core validation API for the CLAW protocol.
 
-## GuardianClaw Class
+## `GuardianClaw` class
 
 ```python
 from guardianclaw import GuardianClaw
@@ -20,43 +20,66 @@ claw = GuardianClaw(seed_level="standard")
 # Validate content through CLAW gates
 is_safe, violations = claw.validate("Your content here")
 
-# Get alignment seed for LLM
+# Get alignment shield for the LLM system prompt
 seed = claw.get_seed()
 
-# Validate action plan
+# Validate an action plan (robotics / autonomous agents)
 is_safe, concerns = claw.validate_action("Pick up knife, slice apple")
+
+# Full validation result with reasoning
+result = claw.get_validation_result("Your content here")
+# ValidationResult(is_safe, violations, layer, risk_level, reasoning)
 ```
 
 ## Configuration
 
 ```python
 GuardianClaw(
-    seed_level="standard",  # minimal, standard, full
-    api_key=None,           # For semantic validation
-    provider="openai",      # openai, anthropic
+    seed_level="standard",  # 'minimal' | 'standard' | 'full'
+    api_key=None,           # for semantic (LLM-based) validation
+    provider="openai",      # 'openai' | 'anthropic' | 'groq' | 'together' | 'deepseek' | 'mistral'
 )
 ```
 
-## Seed Levels
+## Seed Levels (approximate token counts)
 
-| Level | Tokens | Best For |
+| Level | Tokens | Best for |
 |-------|--------|----------|
-| `minimal` | ~360 | Chatbots, APIs |
-| `standard` | ~1,000 | General use, agents |
-| `full` | ~1,900 | Critical systems, robots |
+| `minimal` | ~370 | Chatbots, APIs, low-latency endpoints |
+| `standard` | ~1,300 | General use, autonomous agents (recommended) |
+| `full` | ~2,100 | Critical systems, robotics, embodied AI |
 
-## Validation Result
+Counts measured against the v2 shield shipped with `guardianclaw@3.0.0-rc.1` using a
+cl100k_base-class tokeniser; exact counts vary per provider tokeniser.
+
+## Validation result
+
+`claw.validate(text)` returns a `(bool, list[str])` tuple:
 
 ```python
-is_safe: bool         # True if all gates pass
-violations: list[str] # List of issues found
+is_safe, violations = claw.validate("Your content here")
+```
+
+For a richer object use `claw.get_validation_result(text)`:
+
+```python
+@dataclass
+class ValidationResult:
+    is_safe: bool
+    violations: list[str]
+    layer: ValidationLayer       # heuristic | semantic | both
+    risk_level: RiskLevel        # low | medium | high | critical
+    reasoning: str | None        # populated when semantic validation ran
 ```
 
 ## CLAW Gates
 
 | Gate | Function |
 |------|----------|
-| Truth | Verify factual accuracy |
-| Harm | Assess damage potential |
-| Scope | Check boundaries |
-| Purpose | Require legitimate benefit |
+| Credibility | Detect deception, impersonation, role / roleplay manipulation, misinformation |
+| Limits | Detect boundary violations, instruction override, prompt extraction, filter bypass, system injection |
+| Avoidance | Detect content that could cause physical, financial, or psychological harm |
+| Worth | Require a legitimate purpose; block purposeless or unjustified action |
+
+Jailbreak attempts surface as Credibility or Limits violations rather than as a separate
+fifth gate.

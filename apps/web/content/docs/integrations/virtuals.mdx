@@ -3,17 +3,20 @@ title: "Virtuals Protocol Integration"
 description: "Safety validation for GAME SDK AI agents"
 category: "integrations"
 order: 3
-lastUpdated: "2026-01-23"
+lastUpdated: "2026-05-12"
 ---
 
 # Virtuals Protocol Integration
 
 Safety validation for AI agents built with the GAME SDK.
 
+Validated against `game-sdk@0.1.5` with floor `>=0.1.1` on 2026-04-24. Imports from
+`game_sdk.game.agent` and `game_sdk.game.custom_types` are stable across the supported range.
+
 ## Installation
 
 ```bash
-pip install guardianclaw[virtuals]
+pip install "guardianclaw[virtuals]"
 ```
 
 ## Components
@@ -79,10 +82,10 @@ GuardianClawConfig(
 
 | Gate | Blocks When |
 |------|-------------|
-| **TRUTH** | Context manipulation, misleading names |
-| **HARM** | Blocked functions, key exposure |
-| **SCOPE** | Amount exceeds limit |
-| **PURPOSE** | Sensitive actions without purpose |
+| **Credibility** | Context manipulation, misleading function names, impersonation |
+| **Limits** | Transaction amount exceeds limit, blocked function call, privilege overreach |
+| **Avoidance** | Blocked functions, private-key exposure, destructive operations |
+| **Worth** | Sensitive actions without a documented purpose |
 
 ## Memory Content Validation
 

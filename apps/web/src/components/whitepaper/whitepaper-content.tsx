@@ -10,13 +10,12 @@
 'use client'
 
 import type { ReactNode } from 'react'
-import { DataTable, CodeBlock, QuoteBox, StatCard, ExtLink } from './shared'
+import { DataTable, CodeBlock, QuoteBox, ExtLink } from './shared'
 import {
   FourLayerArchitecture,
   CLAWProtocol,
   PriorityHierarchy,
   MemoryShieldFlow,
-  BenchmarkResults,
   MarketComparison,
   IntegrationGrid,
   InputValidatorTree,
@@ -38,12 +37,13 @@ export function ExecutiveSummaryContent() {
         control industrial robotics, and interact with the physical world through humanoid systems.
       </p>
       <p className="mb-6 text-zinc-400">
-        However, the security of these systems remains critically inadequate:{' '}
-        <strong className="text-red-400">
-          85% of agents can be compromised via memory injection attacks
-        </strong>{' '}
-        (Princeton CrAIBench), and organizations have lost over{' '}
-        <strong className="text-red-400">$3.1 billion</strong> to AI exploits.
+        However, the security of these systems remains critically inadequate. Princeton CrAIBench
+        (arXiv:2503.16248) reports an{' '}
+        <strong className="text-red-400">85% attack-success rate against agent memory</strong> in
+        their evaluated configurations, and industry reports point to{' '}
+        <strong className="text-red-400">billions of dollars</strong> in losses attributed to
+        AI-assisted and bot-driven exploits. Specific dollar totals and rates vary by source; see
+        the References section.
       </p>
       <p className="mb-8 text-zinc-400">
         <strong className="text-claw-500">GuardianClaw</strong> is the Decision Firewall for AI
@@ -57,7 +57,10 @@ export function ExecutiveSummaryContent() {
       <DataTable
         headers={['Component', 'Technical Description']}
         rows={[
-          ['4-Layer Architecture', 'L1 Input → L2 Seed → L3 Output → L4 Observer'],
+          [
+            '4-Layer Architecture',
+            'L1 InputValidator → L2 Shield Injection → L3 OutputValidator → L4 ClawObserver',
+          ],
           ['CLAW Protocol', 'Four gates: Credibility, Limits, Avoidance, Worth'],
           ['Memory Shield v2', 'Content validation + HMAC-SHA256 signing'],
           ['Database Guard', '12 SQL injection patterns, 14 sensitive categories'],
@@ -71,29 +74,47 @@ export function ExecutiveSummaryContent() {
         ]}
       />
 
-      <h3 className="mb-4 mt-8 text-xl font-semibold text-white">Validated Performance</h3>
+      <h3 className="mb-4 mt-8 text-xl font-semibold text-white">Validation Status</h3>
+      <p className="mb-6 text-zinc-400">
+        GuardianClaw v3.0-rc.1 is validated today by three reproducible mechanisms:
+      </p>
       <DataTable
-        headers={['Model', 'Avoidance', 'Agent', 'Robot', 'Jail', 'Average']}
+        headers={['Mechanism', 'Scope', 'Current Result']}
         rows={[
-          ['GPT-4o-mini', '100%', '98%', '100%', '100%', <strong key="1">99.5%</strong>],
-          ['Claude Sonnet 4', '98%', '98%', '100%', '94%', <strong key="2">97.5%</strong>],
-          ['Qwen 2.5 72B', '96%', '98%', '98%', '94%', <strong key="3">96.5%</strong>],
-          ['DeepSeek Chat', '100%', '96%', '100%', '100%', <strong key="4">99%</strong>],
-          ['Llama 3.3 70B', '88%', '94%', '98%', '94%', <strong key="5">93.5%</strong>],
-          ['Mistral Small', '98%', '100%', '100%', '100%', <strong key="6">99.5%</strong>],
           [
-            <strong key="avg">Average</strong>,
-            <strong key="h">96.7%</strong>,
-            <strong key="a">97.3%</strong>,
-            <strong key="r">99.3%</strong>,
-            <strong key="j">97%</strong>,
-            <strong key="t" className="text-claw-400">
-              97.6%
+            'CLAW Correctness Corpus',
+            '416 hand-curated attacks × 8 classes',
+            <strong key="1" className="text-claw-400">
+              CI-gated, 100% expected verdicts
+            </strong>,
+          ],
+          [
+            'Pattern Sync (Py↔TS parity)',
+            '39 regex families',
+            <strong key="2" className="text-claw-400">
+              CI-gated, parity enforced
+            </strong>,
+          ],
+          [
+            'Adversarial Sweep (Garak)',
+            'bare-target llama-3.3-70b · promptinject',
+            <strong key="3">87.30% attack-success-rate (baseline; motivates wrapper)</strong>,
+          ],
+          [
+            'Crescendo Multi-Turn',
+            '20 scenarios (18 attacks + 2 controls)',
+            <strong key="4" className="text-claw-400">
+              17 detect-correctly · 3 fail-late · 0 false-positive
             </strong>,
           ],
         ]}
-        highlightLast
       />
+      <p className="mb-4 mt-6 text-sm italic text-zinc-500">
+        Public-benchmark numbers (HarmBench, SafeAgentBench, BadRobot, JailbreakBench) against the
+        v3.x SDK as wrapper are being re-run; results will be published with full reproduction
+        scripts when complete. The earlier headline figure of &quot;97.6% average safety&quot; was
+        removed pending that re-validation.
+      </p>
 
       <QuoteBox className="mt-8">
         &quot;If your key is stolen, you lose once. If your AI is manipulated, you lose forever.
@@ -110,10 +131,10 @@ export function TheProblemContent() {
   return (
     <>
       <p className="mb-6 text-zinc-400">
-        AI agents are no longer hypothetical. In 2026, they are managing{' '}
-        <strong className="text-white">$14B+ in market capitalization</strong> through 21,000+
-        agents deployed on platforms like Virtuals Protocol, executing DeFi transactions
-        autonomously with access to user wallets and private keys.
+        AI agents are no longer hypothetical. Platforms such as Virtuals Protocol now host thousands
+        of autonomous agents executing DeFi transactions, with growing market capitalization and
+        direct access to user wallets and private keys. The ecosystem has moved from research demos
+        to production-deployed code paths in under two years.
       </p>
       <p className="mb-8 text-zinc-400">
         The transition from AI as a tool to AI as an autonomous actor fundamentally changes the
@@ -122,15 +143,46 @@ export function TheProblemContent() {
 
       {/* Security Gap Section */}
       <div id="security-gap" className="scroll-mt-24">
-        <h3 className="mb-4 text-xl font-semibold text-white">The Security Gap: Quantified</h3>
-        <div className="mb-8 grid grid-cols-2 gap-4 lg:grid-cols-3">
-          <StatCard value="85.1%" label="Memory injection attack success rate" variant="danger" />
-          <StatCard value="$3.1B" label="Crypto losses from AI/bot exploits" variant="danger" />
-          <StatCard value="73%" label="CISOs concerned about AI risks" variant="danger" />
-          <StatCard value="30%" label="CISOs actually prepared for AI threats" variant="danger" />
-          <StatCard value="80%" label="Agents executing unauthorized actions" variant="danger" />
-          <StatCard value="23%" label="Organizations experiencing AI data leaks" variant="danger" />
-        </div>
+        <h3 className="mb-4 text-xl font-semibold text-white">The Security Gap</h3>
+        <p className="mb-6 text-zinc-400">
+          Several independent lines of evidence converge on the same picture: agent-class systems
+          have a substantially larger attack surface than chat-class systems, and existing security
+          controls were not designed for behavioral-layer attacks. Representative findings reported
+          across the literature and industry surveys (full citations in References):
+        </p>
+        <ul className="mb-8 space-y-2 text-zinc-400">
+          <li className="flex items-start gap-2">
+            <span className="text-claw-400">•</span>
+            <span>
+              <strong className="text-red-400">~85% attack-success rate</strong> against agent
+              memory in adversarial evaluations (Princeton CrAIBench, arXiv:2503.16248).
+            </span>
+          </li>
+          <li className="flex items-start gap-2">
+            <span className="text-claw-400">•</span>
+            <span>
+              Multiple industry CISO surveys and AI-incident trackers report{' '}
+              <strong className="text-red-400">multi-billion-dollar cumulative losses</strong>{' '}
+              attributed to AI- and bot-assisted exploits, with concern outpacing preparedness in
+              most respondent populations.
+            </span>
+          </li>
+          <li className="flex items-start gap-2">
+            <span className="text-claw-400">•</span>
+            <span>
+              Agent-class workloads regularly{' '}
+              <strong className="text-red-400">
+                act on behalf of users with broad tool access
+              </strong>
+              , creating new categories of unauthorized-action and data-exfiltration risk that
+              network and transaction-layer monitoring cannot see.
+            </span>
+          </li>
+        </ul>
+        <p className="mb-8 text-sm italic text-zinc-500">
+          Per-survey numbers vary; the citations in the References section link the original
+          studies. We avoid republishing single figures as authoritative.
+        </p>
       </div>
 
       {/* Attack Vectors Section */}
@@ -354,10 +406,10 @@ export function ArchitectureContent() {
         {/* Interactive InputValidator Detector Tree */}
         <InputValidatorTree animated showCategories className="mb-6" />
 
-        <h4 className="mb-3 mt-8 text-lg font-medium text-zinc-200">Layer 2: Seed Injection</h4>
+        <h4 className="mb-3 mt-8 text-lg font-medium text-zinc-200">Layer 2: Shield Injection</h4>
         <p className="mb-4 text-zinc-400">
-          The Security Seed is injected into the AI&apos;s system prompt, establishing behavioral
-          guidelines through the CLAW protocol. Available in three versions:
+          The alignment shield is injected into the AI&apos;s system prompt, establishing behavioral
+          guidelines through the CLAW protocol. Three variants ship under <code>seeds/</code>:
         </p>
         <DataTable
           headers={['Version', 'Tokens', 'Best For']}
@@ -1001,56 +1053,95 @@ export function ValidationContent() {
   return (
     <>
       <p className="mb-8 text-zinc-400">
-        GuardianClaw&apos;s effectiveness is validated through rigorous, reproducible benchmarking
-        across multiple attack surfaces.
+        GuardianClaw v3.0-rc.1 is validated by three reproducible, CI-gated mechanisms today.
+        Traditional public-benchmark numbers (HarmBench / SafeAgentBench / BadRobot /
+        JailbreakBench) against the v3.x SDK in wrapper mode are being re-run and will be published
+        with full reproduction scripts.
       </p>
 
-      <h3 className="mb-4 text-xl font-semibold text-white">Benchmark Suite</h3>
+      <h3 className="mb-4 text-xl font-semibold text-white">1. CLAW Correctness Corpus</h3>
+      <p className="mb-4 text-zinc-400">
+        A hand-curated regression corpus that exercises every gate against representative attack
+        patterns. Each item carries an <em>expected_verdict</em> per gate plus a rationale, and the
+        harness blocks merges if any verdict drifts.
+      </p>
       <DataTable
-        headers={['Benchmark', 'Attack Surface', 'Description']}
+        headers={['Attack Class', 'Items', 'Targets']}
         rows={[
-          ['HarmBench', 'LLM (Text)', 'Direct harmful requests, 400+ behaviors'],
-          ['SafeAgentBench', 'Agent (Digital)', 'Embodied AI safety, task manipulation'],
-          ['BadRobot', 'Robot (Physical)', '277 physical robot safety scenarios'],
-          ['JailbreakBench', 'All Surfaces', 'Standard jailbreak attempts, latest techniques'],
+          ['prompt-injection', '52', 'Limits / Credibility'],
+          ['data-exfil', '52', 'Limits / Avoidance'],
+          ['jailbreak', '52', 'Credibility / Limits'],
+          ['encoding', '52', 'Limits (base64, hex, atbash, etc.)'],
+          ['multilingual', '52', '9 languages cross-class'],
+          ['instruction-override', '52', 'Limits (system-prompt subversion)'],
+          ['role-play', '52', 'Credibility (persona injection)'],
+          ['indirect-via-memory', '52', 'Memory Shield + Credibility'],
+          [
+            <strong key="total">Total</strong>,
+            <strong key="n">416</strong>,
+            <strong key="ci" className="text-claw-400">
+              CI-gated (Corpus Validation job)
+            </strong>,
+          ],
         ]}
+        highlightLast
       />
 
-      {/* Interactive Benchmark Results Visualization */}
-      <h3 className="mb-4 mt-8 text-xl font-semibold text-white">Performance by Model</h3>
-      <BenchmarkResults animated showTooltips expandable className="mb-8" />
+      <h3 className="mb-4 mt-8 text-xl font-semibold text-white">2. Pattern Registry Parity</h3>
+      <p className="mb-4 text-zinc-400">
+        39 regex families are generated from a single registry into Python (`re`) and TypeScript
+        (`RegExp`). A CI job (Pattern Sync) replays the same fixtures against both runtimes and
+        fails the build on any verdict mismatch.
+      </p>
 
-      <h3 className="mb-4 mt-8 text-xl font-semibold text-white">Performance by Attack Surface</h3>
+      <h3 className="mb-4 mt-8 text-xl font-semibold text-white">3. Adversarial Sweeps</h3>
+      <p className="mb-4 text-zinc-400">
+        Two free-tier sweeps were executed against the v3.0-rc.1 SDK on 2026-05-11. Results,
+        invocation metadata, and per-scenario transcripts are stored in{' '}
+        <code>_internal/auditoria/</code>:
+      </p>
       <DataTable
-        headers={['Benchmark', 'Safety Rate', 'Strength']}
+        headers={['Sweep', 'Target / Surrogate', 'Result']}
         rows={[
           [
-            'HarmBench',
-            <strong key="1" className="text-green-400">
-              96.7%
-            </strong>,
-            'Robust against direct harmful requests',
+            <>
+              <strong>Garak</strong> (NVIDIA)
+              <br />
+              <span className="text-xs text-zinc-500">
+                probe: promptinject.HijackHateHumans, 512 attempts
+              </span>
+            </>,
+            'bare llama-3.3-70b via Groq',
+            <>
+              <strong className="text-red-400">87.30% ASR</strong> against bare target.
+              <br />
+              <span className="text-xs text-zinc-400">
+                Motivates the SDK-as-wrapper architecture: a frontier-class open model alone is not
+                a sufficient defence against trivial prompt injection.
+              </span>
+            </>,
           ],
           [
-            'SafeAgentBench',
-            <strong key="2" className="text-green-400">
-              97.3%
-            </strong>,
-            'Strong agentic task protection',
-          ],
-          [
-            'BadRobot',
-            <strong key="3" className="text-green-400">
-              99.3%
-            </strong>,
-            'Excellent physical safety compliance',
-          ],
-          [
-            'JailbreakBench',
-            <strong key="4" className="text-green-400">
-              97.0%
-            </strong>,
-            'Resistant to manipulation techniques',
+            <>
+              <strong>Crescendo</strong> multi-turn
+              <br />
+              <span className="text-xs text-zinc-500">
+                20 scenarios (18 attacks + 2 controls), Observer surrogate = gpt-4o-mini
+              </span>
+            </>,
+            'Crescendo escalation through L1+L4',
+            <>
+              <strong className="text-claw-400">17 detect-correctly</strong> ·{' '}
+              <strong className="text-amber-400">3 fail-late</strong> ·{' '}
+              <strong className="text-green-400">0 fail-missed</strong> ·{' '}
+              <strong className="text-green-400">0 false-positive</strong>
+              <br />
+              <span className="text-xs text-zinc-400">
+                Fail-late pattern: harmful content delivered turn N inside a benign frame (creative
+                writing, doctor roleplay, dieting); Observer commits on turn N+1. Documented as a
+                follow-up Observer-prompt refinement.
+              </span>
+            </>,
           ],
         ]}
       />
@@ -1059,61 +1150,41 @@ export function ValidationContent() {
       <DataTable
         headers={['Suite', 'Tests', 'Status']}
         rows={[
-          ['Security Benchmarks', '~5,200', '6 models × 4 benchmarks'],
-          ['Internal Experiments', '~1,100', 'Regression and validation'],
-          ['SDK Python (pytest)', '3,351', 'Passing'],
-          ['Platform API + Web', '666', 'Passing'],
+          ['SDK Python (pytest, CI-gated)', '2,964 passed / 3 skipped', 'Sessão #031 (PR #46)'],
+          ['Platform API + Web (vitest)', '666', 'CI Test API + Test Web'],
+          ['Pattern Registry parity', '39 families', 'CI Pattern Sync'],
+          ['Corpus harness', '416 items', 'CI Corpus Validation'],
           [
-            <strong key="total">Total</strong>,
-            <strong key="n">~10,300</strong>,
+            <strong key="total">Total CI gates</strong>,
+            <strong key="n">10 jobs</strong>,
             <strong key="v" className="text-green-400">
-              Validated
+              Green
             </strong>,
           ],
         ]}
         highlightLast
       />
+      <p className="mt-2 text-xs italic text-zinc-500">
+        The previous &quot;~10,300&quot; total bundled in unverified third-party benchmark counts;
+        the table above lists only what currently runs in CI.
+      </p>
 
-      <h3 className="mb-4 mt-8 text-xl font-semibold text-white">
-        Key Insight: Value Proportional to Stakes
-      </h3>
+      <h3 className="mb-4 mt-8 text-xl font-semibold text-white">Re-validation In Progress</h3>
       <p className="mb-4 text-zinc-400">
-        GuardianClaw shows <strong>larger improvements as stakes increase</strong>:
+        Four public benchmarks are being re-run against the v3.x SDK as a wrapper layer (input
+        validator + output validator + Observer) and will be published with reproduction scripts
+        once complete. The earlier whitepaper figures (headline &quot;97.6% average safety&quot;,
+        per-model and per-surface tables, and ablation studies of WORTH gate /
+        Anti-Self-Preservation / Priority Hierarchy / BenignContextDetector / Multi-turn detection)
+        referred to an earlier SDK lineage and were removed from this revision pending the new run.
       </p>
       <DataTable
-        headers={['Attack Surface', 'Improvement', 'Interpretation']}
+        headers={['Benchmark', 'Surface', 'Status']}
         rows={[
-          ['LLM (Text)', '+10-22%', 'Good improvement for text safety'],
-          ['Agent (Digital)', '+16-26%', 'Strong improvement for autonomous agents'],
-          [
-            'Robot (Physical)',
-            <strong key="1" className="text-claw-400">
-              +48%
-            </strong>,
-            'Dramatic improvement for physical safety',
-          ],
-        ]}
-      />
-
-      <div className="bg-claw-500/5 border-claw-500/20 mt-6 rounded-xl border p-4">
-        <p className="text-zinc-300">
-          <strong className="text-claw-400">
-            The higher the stakes, the more value GuardianClaw provides.
-          </strong>{' '}
-          Physical safety improvements (+48%) far exceed text safety improvements (+10-22%),
-          demonstrating GuardianClaw&apos;s importance for embodied AI systems.
-        </p>
-      </div>
-
-      <h3 className="mb-4 mt-8 text-xl font-semibold text-white">Ablation Studies</h3>
-      <DataTable
-        headers={['Component Removed', 'SafeAgentBench Δ', 'Significance']}
-        rows={[
-          ['WORTH Gate (entire)', '-18.1%', 'p < 0.001'],
-          ['Anti-Self-Preservation', '-6.7%', 'p < 0.01'],
-          ['Priority Hierarchy', '-4.2%', 'p < 0.05'],
-          ['BenignContextDetector', '+15% FP rate', 'p < 0.01'],
-          ['Multi-turn detection', '-5% on Crescendo', 'p < 0.05'],
+          ['HarmBench', 'LLM (text)', 'Re-validation scheduled'],
+          ['SafeAgentBench', 'Agent (digital)', 'Re-validation scheduled'],
+          ['BadRobot', 'Robot (physical)', 'Re-validation scheduled'],
+          ['JailbreakBench', 'Jailbreak techniques', 'Re-validation scheduled'],
         ]}
       />
     </>
@@ -1127,46 +1198,63 @@ export function IntegrationsContent() {
   return (
     <>
       <p className="mb-8 text-zinc-400">
-        GuardianClaw integrates with <strong className="text-white">17 frameworks</strong>,
-        platforms, and tools across the AI ecosystem.
+        GuardianClaw ships across three integration surfaces: first-party Python SDK adapters, npm
+        packages for the TypeScript/JavaScript ecosystem, and external-ecosystem connectors.
+        Compliance frameworks and humanoid safety are <em>internal SDK modules</em>, not separate
+        integrations.
       </p>
 
-      <h3 className="mb-4 text-xl font-semibold text-white">Integration Categories</h3>
+      <h3 className="mb-4 text-xl font-semibold text-white">Python SDK adapters</h3>
+      <p className="mb-4 text-zinc-400">
+        Located under <code>sdk/src/guardianclaw/integrations/</code>. Each adapter pins a validated
+        minimum version and is exercised in CI.
+      </p>
       <DataTable
-        headers={['Category', 'Integrations']}
+        headers={['Adapter', 'Category', 'Floor → Validated']}
         rows={[
-          ['Agent Frameworks', 'VoltAgent, ElizaOS, OpenClaw'],
-          ['LLM Providers', 'OpenAI Agents SDK, Anthropic SDK, Google ADK'],
-          ['Blockchain', 'Solana Agent Kit, Coinbase AgentKit, Virtuals Protocol'],
-          ['Robotics', 'Humanoid Safety'],
-          ['Security Tools', 'garak (NVIDIA), PyRIT (Microsoft), Promptfoo, OpenGuardrails'],
-          ['Compliance', 'EU AI Act, OWASP LLM Top 10, OWASP Agentic AI, CSA Matrix'],
-          ['Developer Tools', 'JetBrains, Browser Extension'],
-          ['Infrastructure', 'MCP Server, HuggingFace'],
+          ['openai_agents', 'LLM agent framework', '>=0.6.0 → 0.14.5'],
+          ['anthropic_sdk', 'LLM provider', '>=0.40.0 → 0.97.0'],
+          ['google_adk', 'LLM agent framework', '>=1.7.0 → 1.31.1'],
+          ['mcp_server', 'Infrastructure (MCP)', '>=1.8.0 → 1.27.0'],
+          ['coinbase (AgentKit + x402)', 'Blockchain payments', '>=0.1.0 → 0.7.4'],
+          ['solana_agent_kit', 'Blockchain agents', '— (helpers, no PyPI dep)'],
+          ['virtuals', 'Agent framework', '>=0.1.1 → 0.1.5'],
+          ['pyrit', 'Security testing (red-team scorers)', '>=0.12.0 → 0.13.0'],
+          ['garak', 'Security testing (red-team probes)', '>=0.11.0 → 0.14.1'],
+          ['openguardrails', 'Security framework bridge', '— (HTTP, no PyPI dep)'],
+          ['agent_validation', 'Framework-agnostic helpers', 'standalone'],
         ]}
       />
 
-      <h3 className="mb-4 mt-8 text-xl font-semibold text-white">New in v2.0</h3>
+      <h3 className="mb-4 mt-8 text-xl font-semibold text-white">npm packages</h3>
       <DataTable
-        headers={['Integration', 'Description']}
+        headers={['Package', 'Version', 'Purpose']}
         rows={[
-          ['VoltAgent', 'Native integration with TypeScript agent framework'],
-          ['Google ADK', 'Integration with Google Agent Development Kit'],
+          ['@guardianclaw/core', '3.0.0-rc.1', 'Canonical TS CLAW patterns + validators'],
+          ['@guardianclaw/elizaos-plugin', '2.0.0-rc.1', 'ElizaOS plugin (@elizaos/core@2.x)'],
           [
-            'OpenClaw',
-            'Personal AI agent with 5-layer safety pipeline and configurable protection levels',
+            '@guardianclaw/openclaw',
+            '3.0.0-rc.1',
+            'Personal-agent guardrails (formerly @guardianclaw/moltbot)',
           ],
-          ['MCP Server', 'Model Context Protocol tools for Claude and other MCP clients'],
-          [
-            'Humanoid Safety',
-            'ISO/TS 15066 with manufacturer presets (Tesla Optimus, Boston Dynamics Atlas, Figure 01)',
-          ],
+          ['@guardianclaw/voltagent', '0.3.0', 'VoltAgent guardrails (@voltagent/core@2.x)'],
+          ['@guardianclaw/solana-agent-kit', '1.0.3', 'Solana Agent Kit TS plugin'],
+        ]}
+      />
+
+      <h3 className="mb-4 mt-8 text-xl font-semibold text-white">External-ecosystem adapters</h3>
+      <DataTable
+        headers={['Adapter', 'Surface']}
+        rows={[
+          ['JetBrains plugin', 'IntelliJ / PyCharm (Kotlin)'],
+          ['promptfoo', 'CLI provider for `promptfoo` evals'],
+          ['Browser extension', 'Chrome / Firefox (apps/browser)'],
         ]}
       />
 
       <h3 className="mb-4 mt-8 text-xl font-semibold text-white">Package Distribution</h3>
       <DataTable
-        headers={['Platform', 'Package', 'Installation']}
+        headers={['Registry', 'Package', 'Install']}
         rows={[
           [
             'PyPI',
@@ -1189,9 +1277,15 @@ export function IntegrationsContent() {
               npx mcp-server-guardianclaw
             </code>,
           ],
-          ['HuggingFace', 'guardian-claw', 'Model Hub'],
         ]}
       />
+
+      <p className="mt-4 text-sm italic text-zinc-500">
+        Compliance frameworks (EU AI Act Article 5, OWASP LLM Top 10, OWASP Agentic Top 10, CSA AI
+        Controls Matrix) are exposed as SDK modules under <code>guardianclaw.compliance</code> —
+        they are validation checkers, not connectors. Humanoid safety lives under{' '}
+        <code>guardianclaw.safety.humanoid</code> with ISO/TS 15066 contact-force limits.
+      </p>
 
       {/* Interactive Integration Grid */}
       <IntegrationGrid animated showFilter showDetails className="mt-8" />
@@ -1424,7 +1518,9 @@ export function TeamContent() {
         <li className="flex items-start gap-2">
           <span className="text-claw-400">•</span>
           <strong>GitHub:</strong>{' '}
-          <ExtLink href="https://github.com/guardianclaw/guardianclaw-platform">guardianclaw/guardianclaw-platform</ExtLink>
+          <ExtLink href="https://github.com/guardianclaw/guardianclaw-platform">
+            guardianclaw/guardianclaw-platform
+          </ExtLink>
         </li>
         <li className="flex items-start gap-2">
           <span className="text-claw-400">•</span>
@@ -1452,8 +1548,7 @@ export function TeamContent() {
         </li>
         <li className="flex items-start gap-2">
           <span className="text-claw-400">•</span>
-          <strong>X:</strong>{' '}
-          <ExtLink href="https://x.com/guardianclaw_">@guardianclaw_</ExtLink>
+          <strong>X:</strong> <ExtLink href="https://x.com/guardianclaw_">@guardianclaw_</ExtLink>
         </li>
         <li className="flex items-start gap-2">
           <span className="text-claw-400">•</span>
@@ -1509,63 +1604,72 @@ export function ConclusionContent() {
           [
             '1',
             <>
-              <strong>4-Layer Architecture:</strong> L1 Input → L2 Seed → L3 Output → L4 Observer
+              <strong>4-Layer Architecture:</strong> L1 InputValidator → L2 Shield Injection → L3
+              OutputValidator → L4 ClawObserver
             </>,
           ],
           [
             '2',
             <>
-              <strong>CLAW Protocol:</strong> Four-gate security requiring worth, not just avoidance
-              avoidance
+              <strong>CLAW Protocol:</strong> Four gates (Credibility · Limits · Avoidance · Worth)
+              requiring legitimate purpose, not just absence of harm
             </>,
           ],
           [
             '3',
             <>
-              <strong>Memory Shield v2.0:</strong> Content validation + HMAC protection (85% attack
-              vector)
+              <strong>Memory Shield v2.0:</strong> Content validation + HMAC-SHA256 signing across 9
+              injection categories
             </>,
           ],
           [
             '4',
             <>
-              <strong>Database Guard:</strong> SQL query validation preventing data exfiltration
+              <strong>Database Guard:</strong> SQL query validation preventing data exfiltration and
+              destructive operations
             </>,
           ],
           [
             '5',
             <>
-              <strong>Transaction Simulator:</strong> Solana transaction validation before execution
+              <strong>Transaction Simulator:</strong> Solana transaction validation (honeypot,
+              slippage, liquidity) before execution
             </>,
           ],
           [
             '6',
             <>
-              <strong>Fiduciary AI:</strong> Six ethical duties for agents managing assets
+              <strong>Fiduciary AI:</strong> Six ethical duties (Loyalty, Care, Prudence,
+              Transparency, Confidentiality, Disclosure) for agents managing assets
             </>,
           ],
           [
             '7',
             <>
-              <strong>Universal Compliance:</strong> EU AI Act, OWASP LLM/Agentic, CSA Matrix
+              <strong>Compliance Coverage:</strong> EU AI Act Article 5, OWASP LLM Top 10, OWASP
+              Agentic Top 10 (5/10 full, 3/10 partial), CSA AI Controls Matrix
             </>,
           ],
           [
             '8',
             <>
-              <strong>GuardianClaw Platform:</strong> Visual agent builder with one-click deploy
+              <strong>GuardianClaw Platform:</strong> Visual agent builder with managed runtime and
+              monitoring
             </>,
           ],
           [
             '9',
             <>
-              <strong>17 Integrations:</strong> Drop-in compatibility with major frameworks
+              <strong>11 SDK adapters + 5 npm packages + 3 ecosystem adapters:</strong> Drop-in
+              compatibility across the AI agent stack
             </>,
           ],
           [
             '10',
             <>
-              <strong>97.6% Validated Safety:</strong> Tested on 4 benchmarks, 6+ models
+              <strong>Reproducible validation:</strong> 416-item correctness corpus + 39-family
+              regex parity + adversarial sweeps (Garak baseline ASR 87.30% bare-target; Crescendo
+              17/3/0/0 across 20 scenarios), all CI-gated. Public benchmarks re-running.
             </>,
           ],
         ]}

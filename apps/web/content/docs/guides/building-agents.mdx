@@ -3,7 +3,7 @@ title: "Building Safe Agents"
 description: "How to build AI agents with GuardianClaw safety validation"
 category: "guides"
 order: 1
-lastUpdated: "2026-01-23"
+lastUpdated: "2026-05-12"
 ---
 
 # Building Safe Agents
@@ -54,9 +54,9 @@ agent = SafeAgent()
 result = agent.run("Help me with Python")
 ```
 
-## Seed Integration
+## Shield (Seed) Integration
 
-Add GuardianClaw's alignment seed to your agent's system prompt:
+Add GuardianClaw's alignment shield to your agent's system prompt:
 
 ```python
 from guardianclaw import GuardianClaw
@@ -71,13 +71,13 @@ messages = [
 ]
 ```
 
-### Seed Levels
+### Seed Levels (approximate token counts)
 
 | Level | Tokens | Use Case |
 |-------|--------|----------|
-| `minimal` | ~360 | Latency-critical applications |
-| `standard` | ~1K | General purpose (recommended) |
-| `full` | ~1.9K | High-risk applications |
+| `minimal` | ~370 | Latency-critical applications |
+| `standard` | ~1,300 | General purpose (recommended) |
+| `full` | ~2,100 | High-risk applications, robotics |
 
 ## Action Validation
 
@@ -144,19 +144,32 @@ async def process_action(action: str):
 
 ## Framework Integration
 
-### OpenAI Agents
+### OpenAI Agents SDK
 
 ```python
-from guardianclaw.integrations.openai_agents import GuardianClawOpenAI
-
-safe_client = GuardianClawOpenAI(
-    seed_level="standard",
-    on_violation="block",
-    validate_input=True,
-    validate_output=True,
+from guardianclaw.integrations.openai_agents import (
+    create_claw_agent,
+    claw_input_guardrail,
+    claw_output_guardrail,
 )
+from agents import Agent, Runner
 
-response = safe_client.chat("Your prompt")
+# Drop-in agent with both guardrails attached
+agent = create_claw_agent(
+    name="SafeAssistant",
+    instructions="You are a helpful assistant.",
+    model="gpt-4o",
+    seed_level="standard",
+)
+result = await Runner.run(agent, "Your prompt")
+
+# Or attach guardrails to your own Agent
+agent = Agent(
+    name="MyAgent",
+    instructions="...",
+    input_guardrails=[claw_input_guardrail()],
+    output_guardrails=[claw_output_guardrail()],
+)
 ```
 
 ## Memory Protection
@@ -267,32 +280,37 @@ User Input
     │
     ▼
 ┌─────────────────┐
-│ Input Validator │ ← Block jailbreak attempts
+│ L1 InputValidator│ ← Block jailbreak / prompt-injection attempts
 └────────┬────────┘
          │
          ▼
 ┌─────────────────┐
-│  Seed Injection │ ← Add alignment seed
+│ L2 Shield Inject │ ← Inject CLAW alignment shield into system prompt
 └────────┬────────┘
          │
          ▼
 ┌─────────────────┐
-│    LLM Call     │
+│      LLM Call    │
 └────────┬────────┘
          │
          ▼
 ┌─────────────────┐
-│ Action Validator│ ← Validate planned actions
+│ Action Validator │ ← Validate planned tool calls before execution
 └────────┬────────┘
          │
          ▼
 ┌─────────────────┐
-│  Tool Execution │
+│  Tool Execution  │
 └────────┬────────┘
          │
          ▼
 ┌─────────────────┐
-│ Output Validator│ ← Validate final response
+│ L3 OutputValidator│ ← Verify final response against CLAW
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│ L4 ClawObserver  │ ← Transcript-level review (multi-turn Crescendo defence)
 └────────┬────────┘
          │
          ▼

@@ -3,7 +3,7 @@ title: "Agents API"
 description: "Framework-agnostic safety validation for autonomous agents"
 category: "api"
 order: 6
-lastUpdated: "2026-01-23"
+lastUpdated: "2026-05-12"
 ---
 
 # Agent Validation Integration
@@ -371,10 +371,10 @@ validator = SafetyValidator(fail_closed=True)
 
 | Constant | Value | Description |
 |----------|-------|-------------|
-| `VALID_PROVIDERS` | ("openai", "anthropic") | Allowed providers |
-| `DEFAULT_MAX_TEXT_SIZE` | 51200 | 50KB default |
-| `DEFAULT_HISTORY_LIMIT` | 1000 | Default history size |
-| `DEFAULT_VALIDATION_TIMEOUT` | 30.0 | Default timeout (seconds) |
+| `VALID_PROVIDERS` | `("openai", "anthropic", "groq", "together", "deepseek", "mistral")` | Allowed providers (Groq / Together / DeepSeek / Mistral are OpenAI-compatible) |
+| `DEFAULT_MAX_TEXT_SIZE` | `51200` | 50 KB default |
+| `DEFAULT_HISTORY_LIMIT` | `1000` | Default history size |
+| `DEFAULT_VALIDATION_TIMEOUT` | `30.0` | Default timeout (seconds) |
 
 ## Backward Compatibility
 

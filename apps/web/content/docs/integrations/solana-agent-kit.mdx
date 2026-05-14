@@ -3,7 +3,7 @@ title: "Solana Agent Kit Integration"
 description: "Safety validation for Solana blockchain agents"
 category: "integrations"
 order: 1
-lastUpdated: "2026-01-23"
+lastUpdated: "2026-05-12"
 ---
 
 # Solana Agent Kit Integration
@@ -16,7 +16,17 @@ Safety validation for Solana blockchain agents.
 pip install guardianclaw
 ```
 
-**Note:** This integration provides validation functions that work **alongside** Solana Agent Kit, not as a plugin.
+There is no Python upstream package to pin for Solana Agent Kit itself — the adapter exposes
+standalone validation helpers that users call before executing transactions with the
+TypeScript / npm `solana-agent-kit` package or any other Solana client.
+
+For the TypeScript plugin (`@guardianclaw/solana-agent-kit`), see the npm distribution:
+
+```bash
+npm install @guardianclaw/solana-agent-kit  # 1.0.3
+```
+
+Validated against `solana-agent-kit@2.0.10` and `@solana/web3.js@1.98.4` on 2026-04-24.
 
 ## Components
 

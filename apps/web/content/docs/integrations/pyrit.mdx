@@ -3,26 +3,37 @@ title: "PyRIT Integration"
 description: "CLAW scorers for Microsoft PyRIT AI red teaming framework"
 category: "integrations"
 order: 2
-lastUpdated: "2026-01-23"
+lastUpdated: "2026-05-12"
 ---
 
 # PyRIT Integration
 
-Integrate GuardianClaw's CLAW protocol into Microsoft's PyRIT (Python Risk Identification Tool) for AI red teaming.
+Integrate GuardianClaw's CLAW protocol into Microsoft's PyRIT (Python Risk Identification Tool)
+for AI red teaming.
+
+Validated against `pyrit@0.13.0` with floor `>=0.12.0` on 2026-04-24. The minimum floor is
+`0.12.0` because `Scorer._create_identifier(params=...)` — required by the `_build_identifier`
+hook added in `0.11` — only matches our usage from `0.12` onward (`0.11` used a different
+keyword name). All three scorers implement the new abstract methods (`_build_identifier`,
+`get_scorer_metrics`).
 
 ## Installation
 
 ```bash
-pip install 'pyrit>=0.10.0' guardianclaw
+pip install "guardianclaw[pyrit]"
 ```
 
 ## Scorers
 
-| Scorer | Method | Confidence | LLM Required |
-|--------|--------|------------|--------------|
-| `GuardianClawCLAWScorer` | Semantic | ~85% | Yes |
-| `GuardianClawHeuristicScorer` | Pattern | ~45% | No |
-| `GuardianClawGateScorer` | Single gate | ~85% | Yes |
+| Scorer | Method | LLM Required |
+|--------|--------|--------------|
+| `GuardianClawCLAWScorer` | Semantic (LLM-based against all four gates) | Yes |
+| `GuardianClawHeuristicScorer` | Pattern-based (regex against `CLAWValidator`) | No |
+| `GuardianClawGateScorer` | Single-gate semantic | Yes |
+
+Comparative accuracy figures for these scorers against PyRIT's reference attack corpora are
+being re-measured against the v3.x SDK; the earlier `~85%` / `~45%` claims referred to an
+older lineage and were retired pending the new run.
 
 ## Quick Start
 

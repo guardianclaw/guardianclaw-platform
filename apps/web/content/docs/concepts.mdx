@@ -3,7 +3,7 @@ title: "Core Concepts"
 description: "Understanding the CLAW protocol and GuardianClaw architecture"
 category: "getting-started"
 order: 4
-lastUpdated: "2026-01-23"
+lastUpdated: "2026-05-12"
 ---
 
 # Core Concepts
@@ -61,24 +61,24 @@ GuardianClaw uses a unified 4-layer validation system:
 
 | Layer | Component | Function |
 |-------|-----------|----------|
-| **L1** | InputValidator | Pre-AI attack detection (700+ patterns) |
-| **L2** | Seed Injection | Alignment via system prompt |
-| **L3** | OutputValidator | Post-AI heuristic checking |
-| **L4** | GuardianClawObserver | LLM-based transcript analysis |
+| **L1** | `InputValidator` | Pre-LLM pattern detection (700+ patterns across 39 regex families) |
+| **L2** | Shield Injection | Alignment via system prompt (`seeds/v1`, `seeds/v2` × minimal / standard / full) |
+| **L3** | `OutputValidator` | Post-LLM heuristic verification |
+| **L4** | `ClawObserver` | LLM-based transcript review for multi-turn escalation (e.g. Crescendo) |
 
 ## Validator Types
 
-### Heuristic Validators (Pattern-based)
+### Heuristic Validators (pattern-based)
 
-Fast, local validation using pattern matching. No API keys required.
+Fast, local validation using regex pattern matching. No API keys required.
 
 | Validator | Description |
 |-----------|-------------|
-| `CLAWValidator` | **Recommended**. Full 4-gate CLAW protocol |
-| `TruthGate` | Detects deception, impersonation, false claims |
-| `HarmGate` | Detects harmful content (weapons, malware, etc.) |
-| `ScopeGate` | Detects boundary violations, prompt injection |
-| `PurposeGate` | Detects lack of legitimate purpose |
+| `CLAWValidator` | **Recommended.** Full 4-gate CLAW protocol |
+| `CredibilityGate` | Detects deception, impersonation, role / roleplay manipulation, false claims |
+| `LimitsGate` | Detects boundary violations, instruction override, prompt extraction, filter bypass, system injection |
+| `AvoidanceGate` | Detects content that could enable harm (weapons, malware, etc.) |
+| `WorthGate` | Detects lack of legitimate purpose / purposeless action |
 
 ```python
 from guardianclaw.validators import CLAWValidator
@@ -92,7 +92,7 @@ print(result["violations"])   # List of issues found
 
 ### Semantic Validators (LLM-based)
 
-Deep validation using LLM reasoning. Requires API keys. ~90% accuracy.
+Deep validation using LLM reasoning. Requires an API key.
 
 ```python
 from guardianclaw.validators import SemanticValidator
@@ -108,11 +108,12 @@ result = validator.validate("your text here")
 
 | Aspect | Heuristic Layer | Semantic Layer |
 |--------|-----------------|----------------|
-| Speed | <10ms | 1-5s |
-| Cost | Free | ~$0.0005/call |
-| Patterns | 700+ | LLM reasoning |
-| Accuracy | ~50% | ~90% |
-| Use | Always enabled | Optional |
+| Speed | sub-10 ms typical | 1–5 s (LLM round trip) |
+| Cost | free | LLM provider call |
+| Coverage | 700+ patterns across 39 regex families | LLM reasoning against the CLAW prompt |
+| Use | always enabled | optional, recommended for ambiguous cases |
+
+Comparative accuracy figures against public benchmarks (HarmBench, SafeAgentBench, BadRobot, JailbreakBench) are being re-measured against the v3.x stack; the per-layer percentages previously published referred to an earlier SDK lineage and were retired pending the re-run.
 
 ## Anti-Self-Preservation
 
@@ -131,29 +132,35 @@ The AI will:
 - **Not** acquire resources beyond the task
 - **Accept** legitimate oversight and correction
 
-**Evidence**: Removing anti-self-preservation drops SafeAgentBench performance by 6.7%.
+The ablation impact of removing this priority hierarchy from the seed is being re-measured against the v3.x stack; the previously published `-6.7%` SafeAgentBench figure referred to an earlier seed lineage and was retired pending the re-run.
 
 ## Programmatic Usage
 
-Use gates directly in your code for fine-grained control:
+Use gates directly in your code for fine-grained control. The legacy `TruthGate` / `HarmGate` /
+`ScopeGate` / `PurposeGate` names from the THSP era were removed in v3.0 — use the CLAW names:
 
 ```python
 from guardianclaw.validators import (
-    CLAWValidator,    # All 4 gates combined
-    TruthGate,        # Individual gates
-    HarmGate,
-    ScopeGate,
-    PurposeGate,
+    CLAWValidator,     # All 4 gates combined
+    CredibilityGate,   # Individual gates
+    LimitsGate,
+    AvoidanceGate,
+    WorthGate,
 )
 
 # Validate through all 4 gates
 validator = CLAWValidator()
 result = validator.validate("How do I help someone learn Python?")
-# {'safe': True, 'gates': {'credibility': 'pass', 'avoidance': 'pass', 'limits': 'pass', 'worth': 'pass'}, 'issues': []}
+# {
+#   'is_safe': True,
+#   'gates': {'credibility': 'pass', 'limits': 'pass', 'avoidance': 'pass', 'worth': 'pass'},
+#   'violations': [],
+#   'jailbreak_detected': False,
+# }
 
 # Or use individual gates
-avoidance_gate = HarmGate()
-is_safe, violations = avoidance_gate.validate("Some content to check")
+avoidance_gate = AvoidanceGate()
+is_safe, violations = avoidance_gate.check("Some content to check")
 ```
 
 ## Recommended Usage

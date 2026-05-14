@@ -3,7 +3,7 @@ title: "Fiduciary AI"
 description: "Ensure AI acts in the user's best interest with fiduciary principles"
 category: "products"
 order: 4
-lastUpdated: "2026-01-23"
+lastUpdated: "2026-05-12"
 ---
 
 # Fiduciary AI
@@ -12,12 +12,14 @@ Ensure AI acts in the user's best interest with fiduciary principles.
 
 ## Overview
 
-The Fiduciary AI module implements legal fiduciary principles for AI systems:
+The Fiduciary AI module implements legal fiduciary principles for AI systems across six duties:
 
-- **Duty of Loyalty** — Act in user's best interest, not provider's
-- **Duty of Care** — Exercise reasonable diligence
-- **Transparency** — Disclose limitations and conflicts
-- **Confidentiality** — Protect user information
+- **Loyalty** — act in the user's best interest, not the provider's
+- **Care** — exercise reasonable diligence and competence
+- **Prudence** — make informed, well-founded decisions
+- **Transparency** — decisions must be explainable, not black-box
+- **Confidentiality** — protect user information and privacy
+- **Disclosure** — proactively disclose conflicts, risks, and limitations
 
 ## Quick Start
 
@@ -102,10 +104,12 @@ violations = detector.detect("I recommend our premium service for your needs")
 
 | Duty | Description | Example Violation |
 |------|-------------|-------------------|
-| **Loyalty** | Prioritize user's interests | Recommending provider's product over better alternatives |
-| **Care** | Exercise reasonable diligence | Not disclosing known risks |
-| **Transparency** | Be open about limitations | Hiding AI limitations or uncertainties |
-| **Confidentiality** | Protect user data | Sharing user information without consent |
+| **Loyalty** | Prioritise the user's interests over the provider's | Recommending the provider's product over a better alternative |
+| **Care** | Exercise reasonable competence and diligence | Not disclosing known risks |
+| **Prudence** | Make informed, well-founded decisions | Acting on speculative or unverified information |
+| **Transparency** | Be open about limitations and reasoning | Hiding AI limitations, conflicts, or uncertainties |
+| **Confidentiality** | Protect user data and privacy | Sharing user information without consent |
+| **Disclosure** | Proactively surface conflicts and risks | Failing to flag a relevant conflict of interest |
 
 ## Violation Types
 

@@ -3,12 +3,13 @@ title: "Validators API"
 description: "Individual gate validators and pattern detectors"
 category: "api"
 order: 3
-lastUpdated: "2026-01-23"
+lastUpdated: "2026-05-12"
 ---
 
 # Validators API
 
-Individual gate validators and pattern detectors.
+Individual gate validators and pattern detectors. The legacy `TruthGate` / `HarmGate` /
+`ScopeGate` / `PurposeGate` names from the THSP era were removed in v3.0 — use the CLAW names.
 
 ## CLAW Validator
 
@@ -20,9 +21,10 @@ from guardianclaw.validators import CLAWValidator
 validator = CLAWValidator()
 result = validator.validate("your text here")
 
-print(result["is_safe"])      # True or False
-print(result["gates"])        # Status of each gate
-print(result["violations"])   # List of issues
+print(result["is_safe"])              # True or False
+print(result["gates"])                # {'credibility': 'pass', 'limits': 'pass', ...}
+print(result["violations"])           # list[str]
+print(result["jailbreak_detected"])   # bool, derived from violations
 ```
 
 ## Individual Gates
@@ -30,49 +32,49 @@ print(result["violations"])   # List of issues
 ### Credibility Gate
 
 ```python
-from guardianclaw.validators import TruthGate
+from guardianclaw.validators import CredibilityGate
 
-gate = TruthGate()
-is_safe, violations = gate.validate("Content to check")
-```
-
-### Avoidance Gate
-
-```python
-from guardianclaw.validators import HarmGate
-
-gate = HarmGate()
-is_safe, violations = gate.validate("Content to check")
+gate = CredibilityGate()
+is_safe, violations = gate.check("Content to check")
 ```
 
 ### Limits Gate
 
 ```python
-from guardianclaw.validators import ScopeGate
+from guardianclaw.validators import LimitsGate
 
-gate = ScopeGate()
-is_safe, violations = gate.validate("Content to check")
+gate = LimitsGate()
+is_safe, violations = gate.check("Content to check")
+```
+
+### Avoidance Gate
+
+```python
+from guardianclaw.validators import AvoidanceGate
+
+gate = AvoidanceGate()
+is_safe, violations = gate.check("Content to check")
 ```
 
 ### Worth Gate
 
 ```python
-from guardianclaw.validators import PurposeGate
+from guardianclaw.validators import WorthGate
 
-gate = PurposeGate()
-is_safe, violations = gate.validate("Content to check")
+gate = WorthGate()
+is_safe, violations = gate.check("Content to check")
 ```
 
 ## Semantic Validator
 
-LLM-based deep validation (~90% accuracy).
+LLM-based deep validation. Requires an API key.
 
 ```python
 from guardianclaw.validators import SemanticValidator
 
 validator = SemanticValidator(
-    provider="openai",
-    api_key="sk-..."
+    provider="openai",   # 'openai' | 'anthropic' | 'groq' | 'together' | 'deepseek' | 'mistral'
+    api_key="sk-...",
 )
 result = validator.validate("your text here")
 ```
@@ -81,7 +83,11 @@ result = validator.validate("your text here")
 
 | Aspect | Heuristic | Semantic |
 |--------|-----------|----------|
-| Speed | <10ms | 1-5s |
-| Cost | Free | ~$0.0005/call |
-| Patterns | 700+ | LLM reasoning |
-| Accuracy | ~50% | ~90% |
+| Speed | sub-10 ms typical | 1–5 s (LLM round trip) |
+| Cost | free | LLM provider call |
+| Coverage | 700+ patterns across 39 regex families | LLM reasoning against the CLAW prompt |
+| Use | always enabled | optional, recommended for ambiguous cases |
+
+Comparative accuracy figures against public benchmarks (HarmBench, SafeAgentBench, BadRobot,
+JailbreakBench) are being re-measured against the v3.x stack; the per-layer percentages
+previously published referred to an earlier SDK lineage and were retired pending the re-run.

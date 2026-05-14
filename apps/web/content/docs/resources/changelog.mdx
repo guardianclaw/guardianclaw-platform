@@ -3,86 +3,78 @@ title: "Changelog"
 description: "Release history and version changes"
 category: "resources"
 order: 2
-lastUpdated: "2026-01-23"
+lastUpdated: "2026-05-12"
 ---
 
 # Changelog
 
-Release history and version changes.
+High-level release history. The canonical changelogs live in the monorepo:
 
-## v2.26.0 (Latest)
+- Python SDK: [`sdk/CHANGELOG.md`](https://github.com/guardianclaw/guardianclaw-platform/blob/main/sdk/CHANGELOG.md)
+- npm core: [`packages/core/CHANGELOG.md`](https://github.com/guardianclaw/guardianclaw-platform/blob/main/packages/core/CHANGELOG.md)
+- npm OpenClaw: [`packages/openclaw/CHANGELOG.md`](https://github.com/guardianclaw/guardianclaw-platform/blob/main/packages/openclaw/CHANGELOG.md)
+- npm ElizaOS plugin: [`packages/elizaos/CHANGELOG.md`](https://github.com/guardianclaw/guardianclaw-platform/blob/main/packages/elizaos/CHANGELOG.md)
+- npm VoltAgent: [`packages/voltagent/CHANGELOG.md`](https://github.com/guardianclaw/guardianclaw-platform/blob/main/packages/voltagent/CHANGELOG.md)
+- Solana Agent Kit (TS): [`integrations/solana-agent-kit/typescript/CHANGELOG.md`](https://github.com/guardianclaw/guardianclaw-platform/blob/main/integrations/solana-agent-kit/typescript/CHANGELOG.md)
+- Repo-wide migration guide: [`MIGRATION.md`](https://github.com/guardianclaw/guardianclaw-platform/blob/main/MIGRATION.md)
 
-### Features
-- Memory Shield v2.0 with content validation
-- Trust scores for memory sources
-- Injection category detection
-- SafeMemoryStore convenience wrapper
+## v3 release line
 
-### Integrations
-- Google ADK (Agent Development Kit)
-- Agno multi-agent framework
-- VoltAgent guardrails package
+### Unreleased — Integration floors revalidated (2026-04-24 onwards)
 
-### Improvements
-- 700+ detection patterns (up from 580+)
-- Improved CLAW semantic prompts
-- Better async support across integrations
+- `mcp` extra: `>=0.1.0 → >=1.8.0` (`mcp.client.streamable_http` requires `mcp@1.8`)
+- `google-adk` extra: `>=0.1.0 → >=1.7.0` (`google.adk.plugins.base_plugin` requires `1.7`)
+- `anthropic` extra: `>=0.18.0 → >=0.40.0`
+- `pyrit` extra: `>=0.10.0 → >=0.12.0` (scorers now implement `_build_identifier` and
+  `get_scorer_metrics`)
+- `garak` extra: `>=0.9.0 → >=0.11.0` (probes read `garak.probes.Tier` at import time)
+- Other extras (`virtuals`, `coinbase-agentkit`, `openai-agents`, `x402`) unchanged but
+  revalidated against latest releases. Per-extra test counts in `sdk/CHANGELOG.md`.
 
-## v2.25.0
+### v3.0.0-rc.1 — 2026-04-22
 
-### Features
-- Fiduciary AI module
-- Custom rule support
-- User context for fiduciary validation
+- **CLAW gate names are now canonical.** The THSP legacy names (`TruthGate` / `HarmGate` /
+  `ScopeGate` / `PurposeGate`) were removed in favour of `CredibilityGate` / `LimitsGate` /
+  `AvoidanceGate` / `WorthGate`. See [`MIGRATION.md`](https://github.com/guardianclaw/guardianclaw-platform/blob/main/MIGRATION.md) for the rename map.
+- **Jailbreak is not a fifth gate.** Jailbreak attempts surface as violations in Credibility
+  (role / roleplay manipulation) or Limits (instruction override, prompt extraction, filter
+  bypass, system injection); `CLAWResult.jailbreak` was removed.
+- **`TokenTracker` exported at `guardianclaw.core`.** First-class import; submodule path
+  preserved.
+- **Coverage gate raised to 80%**, scoped to `guardianclaw.core`. Observer at 99%, token
+  tracker at 100%.
+- **Sub-entry build for `@guardianclaw/core`**: `./patterns` and `./memory-patterns` resolve
+  the same way; only the individual exports inside changed per the rename table.
+- **17 discontinued integrations** removed in earlier sessions (dspy, langchain, crewai,
+  autogpt, agno, letta, llamaindex, ros2, isaac_lab, …). LangChain is retained as an internal
+  dependency of `packages/runtime`.
 
-### Integrations
-- Letta (MemGPT) integration
-- OpenGuardrails bidirectional integration
+### v3.0 npm packages
 
-## v2.24.0
+- `@guardianclaw/core@3.0.0-rc.1` — canonical TS CLAW patterns + validators
+- `@guardianclaw/openclaw@3.0.0-rc.1` — personal-agent guardrails, previously published as
+  `@guardianclaw/moltbot`; public API (`./plugin`, `./config`, `./validators`,
+  `createGuardianClawHooks`, hook names, protection levels) unchanged across the rename
+- `@guardianclaw/elizaos-plugin@2.0.0-rc.1` — aligned with `@elizaos/core@2.0.0-alpha.223`
+  (peer pinned exactly because upstream is pre-stable)
+- `@guardianclaw/voltagent@0.3.0` — aligned with `@voltagent/core@>=2.0.0`
+- `@guardianclaw/solana-agent-kit@1.0.3` — validated against `solana-agent-kit@2.0.10` and
+  `@solana/web3.js@1.98.4`
 
-### Features
-- Transaction Simulator
-- Jupiter API integration
-- GoPlus token security checks
+### Validation infrastructure (CI-gated)
 
-### Integrations
-- Coinbase AgentKit
-- x402 payment validation
+- **CLAW correctness corpus**: 416 hand-curated attacks × 8 classes
+  (`prompt-injection`, `data-exfil`, `jailbreak`, `encoding`, `multilingual`,
+  `instruction-override`, `role-play`, `indirect-via-memory`); harness in `evaluation/corpus/`
+  runs as the **Corpus Validation** CI job.
+- **Pattern Registry 7.x**: 39 regex families generated to Python (`re`) and TypeScript
+  (`RegExp`) from a single registry; **Pattern Sync** CI job enforces verdict parity.
+- **SDK pytest in CI**: 2,964 passed / 3 skipped on every PR.
+- **Adversarial sweeps** (2026-05-11, free-tier): Garak bare-target ASR 87.30% on
+  `llama-3.3-70b`; Crescendo 17 detect-correctly / 3 fail-late / 0 false-positive over
+  20 scenarios.
 
-## v2.23.0
+## Earlier versions
 
-### Features
-- Humanoid Safety Protocol
-- ISO/TS 15066 compliance
-- Robot presets (Tesla Optimus, Atlas, Figure 02)
-
-### Integrations
-- ROS2 safety middleware
-- Isaac Lab gymnasium wrapper
-
-## v2.22.0
-
-### Features
-- Database Guard for SQL validation
-- Query pattern detection
-- Sensitive data blocking
-
-### Integrations
-- DSPy integration
-- LlamaIndex integration
-
-## v2.21.0
-
-### Features
-- CLAW Protocol v2 (Worth Gate)
-- Anti-self-preservation principle
-- Semantic validation improvements
-
-### Integrations
-- CrewAI integration
-- AutoGPT Block SDK
-
-## Earlier Versions
-
-See [GitHub Releases](https://github.com/guardianclaw/guardianclaw-platform/releases) for complete history.
+See [GitHub Releases](https://github.com/guardianclaw/guardianclaw-platform/releases) and the
+linked CHANGELOG files above for full per-package history.

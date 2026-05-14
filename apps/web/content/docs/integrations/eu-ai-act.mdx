@@ -3,41 +3,68 @@ title: "EU AI Act Compliance"
 description: "Compliance checker for EU AI Act (Regulation 2024/1689)"
 category: "integrations"
 order: 4
-lastUpdated: "2026-01-23"
+lastUpdated: "2026-05-12"
 ---
 
 # EU AI Act Compliance Checker
 
 Analyze content against EU AI Act (Regulation 2024/1689) requirements.
 
+> **Note.** EU AI Act support is an *internal SDK module* (`guardianclaw.compliance`), not a
+> third-party integration. It lives in the docs site's `integrations/` section because it is
+> often configured alongside other ecosystem connectors. The module is part of the published
+> Python SDK and runs entirely locally.
+
 ## Overview
 
 The EU AI Act compliance checker validates content against:
 
-- **Article 5**: Prohibited AI practices
-- **Article 6 / Annex III**: High-risk system classification
-- **Article 14**: Human oversight requirements
-- **Article 52**: Transparency obligations
+- **Article 5** — prohibited AI practices
+- **Article 6 / Annex III** — high-risk system classification
+- **Article 14** — human oversight requirements
+- **Article 52** — transparency obligations
 
 ## Installation
 
-```typescript
-// Available in @guardianclaw/vscode extension
-import { EUAIActChecker, checkEUAIActCompliance } from '@guardianclaw/vscode';
+```bash
+pip install guardianclaw
 ```
+
+The compliance checkers are part of the core SDK distribution — no extra extra is required.
 
 ## Quick Start
 
-```typescript
-const checker = new EUAIActChecker();
+```python
+from guardianclaw.compliance import (
+    EUAIActComplianceChecker,
+    SystemType,
+    check_eu_ai_act_compliance,
+)
 
-// Basic heuristic check (100% local, no network)
-const result = checker.check(content);
+# Heuristic mode (no API key required, fully local)
+checker = EUAIActComplianceChecker()
+result = checker.check_compliance(
+    content="Based on your social-behaviour score of 650 …",
+    context="financial",
+    system_type=SystemType.HIGH_RISK,
+)
 
-console.log(result.compliant);       // true or false
-console.log(result.riskLevel);       // 'minimal', 'limited', 'high', 'unacceptable'
-console.log(result.prohibitedPractices);
-console.log(result.recommendations);
+print(result.compliant)             # True / False
+print(result.risk_level.value)      # 'minimal' / 'limited' / 'high' / 'unacceptable'
+
+for violation in result.article_5_violations:
+    print(f"{violation.article_reference}: {violation.description}")
+    print(f"  recommendation: {violation.recommendation}")
+
+# Article 14 oversight
+print(result.article_14_oversight_required)  # bool
+
+# Convenience function
+result = check_eu_ai_act_compliance(
+    content="...",
+    context="healthcare",
+    system_type="high_risk",
+)
 ```
 
 ## Article 5: Prohibited Practices
@@ -82,19 +109,20 @@ console.log(result.recommendations);
 | `human_on_the_loop` | Human can intervene |
 | `human_in_command` | Human maintains control |
 
-## Compliance Result
+## Compliance Result (Python)
 
-```typescript
-interface EUAIActComplianceResult {
-  compliant: boolean;
-  riskLevel: 'minimal' | 'limited' | 'high' | 'unacceptable';
-  systemType: 'minimal_risk' | 'high_risk' | 'prohibited';
-  oversightRequired?: 'human_in_the_loop' | 'human_on_the_loop' | 'human_in_command';
-  prohibitedPractices: string[];
-  highRiskContexts: string[];
-  articleFindings: ArticleFinding[];
-  recommendations: string[];
-}
+```python
+@dataclass
+class EUAIActComplianceResult:
+    compliant: bool
+    risk_level: RiskLevel               # minimal / limited / high / unacceptable
+    system_type: SystemType              # minimal_risk / high_risk / prohibited
+    article_5_violations: list[Article5Violation]
+    article_14_oversight_required: bool
+    article_14_model: OversightModel | None  # human_in_the_loop / human_on_the_loop / human_in_command
+    high_risk_contexts: list[str]
+    article_findings: list[ArticleFinding]
+    recommendations: list[str]
 ```
 
 ## References

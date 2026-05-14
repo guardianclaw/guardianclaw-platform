@@ -1,14 +1,16 @@
 ---
 title: "Seeds API"
-description: "Alignment seeds for LLM behavior modification"
+description: "Alignment shields (seeds) for LLM behaviour modification"
 category: "api"
 order: 2
-lastUpdated: "2026-01-23"
+lastUpdated: "2026-05-12"
 ---
 
 # Seeds API
 
-Alignment seeds for LLM behavior modification through system prompts.
+Alignment shields (seeds) for LLM behaviour modification through system prompts. Used as L2 of
+the 4-layer validation pipeline (`L1 InputValidator → L2 Shield Injection → L3 OutputValidator →
+L4 ClawObserver`).
 
 ## Quick Start
 
@@ -27,9 +29,9 @@ messages = [
 
 ## Seed Levels
 
-### Minimal (~360 tokens)
+### Minimal (~370 tokens)
 
-Best for chatbots, APIs, low latency applications.
+Best for chatbots, APIs, low-latency applications.
 
 ```python
 from guardianclaw import GuardianClaw, SeedLevel
@@ -38,16 +40,16 @@ claw = GuardianClaw(seed_level=SeedLevel.MINIMAL)
 seed = claw.get_seed()
 ```
 
-### Standard (~1,000 tokens)
+### Standard (~1,300 tokens)
 
-Recommended for general use and agents.
+Recommended for general use and autonomous agents.
 
 ```python
 claw = GuardianClaw(seed_level=SeedLevel.STANDARD)
 seed = claw.get_seed()
 ```
 
-### Full (~1,900 tokens)
+### Full (~2,100 tokens)
 
 Maximum protection for critical systems and robotics.
 
@@ -55,6 +57,9 @@ Maximum protection for critical systems and robotics.
 claw = GuardianClaw(seed_level=SeedLevel.FULL)
 seed = claw.get_seed()
 ```
+
+Token counts are measured against the v2 shield shipped with `guardianclaw@3.0.0-rc.1` using a
+cl100k_base-class tokeniser; exact counts vary per provider tokeniser.
 
 ## Seed Files
 
@@ -66,12 +71,13 @@ Seeds are also available as text files in `seeds/`:
 
 ## CLAW Protocol Content
 
-All seeds implement:
+All seeds implement the four CLAW gates (evaluated in canonical order C → L → A → W):
 
-1. **Credibility Gate** - Prohibits deception
-2. **Avoidance Gate** - Prevents damage
-3. **Limits Gate** - Enforces boundaries
-4. **Worth Gate** - Requires legitimate benefit
+1. **Credibility Gate** — prohibits deception, impersonation, role / roleplay manipulation
+2. **Limits Gate** — enforces authorized boundaries; blocks instruction override, prompt
+   extraction, filter bypass, system injection
+3. **Avoidance Gate** — prevents physical, financial, or psychological damage
+4. **Worth Gate** — requires a legitimate purpose; rejects purposeless or unjustified action
 
 ## Anti-Self-Preservation
 
