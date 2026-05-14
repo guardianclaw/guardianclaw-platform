@@ -1,7 +1,7 @@
 {
   "$schema": "guardianclaw.audit-allowlist.v1",
   "version": 1,
-  "last_review": "2026-04-26",
+  "last_review": "2026-05-14",
   "next_review": "2026-07-26",
   "notes": "Production-tree (--omit=dev) high/critical advisories that are accepted with rationale. The Dependency Audit workflow fails any production high/critical NOT listed here. Each entry must include a rationale and review_by date. When upstream issues a fix, remove the entry; if the rationale ages out, escalate.",
   "allowed_advisories": [
@@ -42,7 +42,7 @@
       "package": "minimatch",
       "severity": "high",
       "title": "minimatch ReDoS: nested *() extglobs generate catastrophically backtracking",
-      "rationale": "Build-time pattern matcher. Same shape as picomatch — never sees runtime user input.",
+      "rationale": "Build-time pattern matcher. Same shape as picomatch - never sees runtime user input.",
       "review_by": "2026-07-26"
     },
     {
@@ -147,6 +147,62 @@
       "severity": "high",
       "title": "Next.js has a Denial of Service with Server Components",
       "rationale": "Same deployment-shape mitigation as GHSA-h25m-26qc-wcjf.",
+      "review_by": "2026-06-01"
+    },
+    {
+      "ghsa": "GHSA-8h8q-6873-q5fj",
+      "package": "next",
+      "severity": "high",
+      "title": "Next.js Vulnerable to Denial of Service with Server Components",
+      "rationale": "Newly disclosed DoS via Server Components. Vercel managed platform applies edge-level mitigations. No stable fixed version available across 15.x or 16.x stable at triage (affected range spans to 16.3.0-canary.5). Will upgrade when upstream publishes a stable fix.",
+      "review_by": "2026-06-01"
+    },
+    {
+      "ghsa": "GHSA-mg66-mrh9-m8jx",
+      "package": "next",
+      "severity": "high",
+      "title": "Next.js vulnerable to Denial of Service via connection exhaustion in applications using Cache Components",
+      "rationale": "DoS via Cache Components connection exhaustion. Pre-launch with no live traffic; Vercel managed platform applies rate-limiting at edge. No stable fixed version at triage. Will upgrade when upstream publishes a stable fix.",
+      "review_by": "2026-06-01"
+    },
+    {
+      "ghsa": "GHSA-c4j6-fc7j-m34r",
+      "package": "next",
+      "severity": "high",
+      "title": "Next.js vulnerable to server-side request forgery in applications using WebSocket upgrades",
+      "rationale": "SSRF via WebSocket upgrade path. Our middleware.ts does not handle WebSocket upgrades; all external traffic goes through Cloudflare Workers, not Next.js middleware. No stable fixed version at triage.",
+      "review_by": "2026-06-01"
+    },
+    {
+      "ghsa": "GHSA-492v-c6pp-mqqv",
+      "package": "next",
+      "severity": "high",
+      "title": "Next.js has a Middleware / Proxy bypass through dynamic route parameter injection",
+      "rationale": "Middleware bypass via dynamic route params. Our middleware.ts performs CSRF origin validation; actual authentication (JWT/session) is enforced by the Cloudflare Worker API via httpOnly cookies — a Next.js middleware bypass does not grant authenticated access to protected resources. No stable fixed version at triage.",
+      "review_by": "2026-06-01"
+    },
+    {
+      "ghsa": "GHSA-267c-6grr-h53f",
+      "package": "next",
+      "severity": "high",
+      "title": "Next.js has a Middleware / Proxy bypass in App Router applications via segment-prefetch routes",
+      "rationale": "Same defense-in-depth argument as GHSA-492v-c6pp-mqqv: CSRF bypass does not bypass CF Worker auth. No stable fixed version at triage.",
+      "review_by": "2026-06-01"
+    },
+    {
+      "ghsa": "GHSA-36qx-fr4f-26g5",
+      "package": "next",
+      "severity": "high",
+      "title": "Next.js has a Middleware / Proxy bypass in Pages Router applications using i18n",
+      "rationale": "Bypass requires Pages Router i18n configuration. This app uses App Router exclusively with no i18n config — the vulnerable code path is not reachable.",
+      "review_by": "2026-06-01"
+    },
+    {
+      "ghsa": "GHSA-26hh-7cqf-hhc6",
+      "package": "next",
+      "severity": "high",
+      "title": "Next.js has a Middleware / Proxy bypass in App Router applications via segment-prefetch routes - Incomplete Fix Follow-Up",
+      "rationale": "Incomplete fix for GHSA-267c-6grr-h53f. Same defense-in-depth argument applies: CF Worker auth is the enforcement layer, not Next.js middleware. No stable fixed version at triage.",
       "review_by": "2026-06-01"
     }
   ]
