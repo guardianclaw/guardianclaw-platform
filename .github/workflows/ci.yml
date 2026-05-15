@@ -35,6 +35,12 @@ jobs:
       - name: Lint Web
         run: npm run lint --workspace=@guardianclaw/web
 
+      - name: Lint Core
+        run: npm run lint --workspace=@guardianclaw/core
+
+      - name: Lint Shared
+        run: npm run lint --workspace=@guardianclaw/shared
+
   test-api:
     name: Test API
     runs-on: ubuntu-latest
