@@ -62,6 +62,10 @@ preview_id = "31614b65988843fcb419e1a42c57255c"
 # Secrets (set via: wrangler secret put <NAME>)
 # - SUPABASE_URL
 # - SUPABASE_SERVICE_KEY
+# - SUPABASE_ANON_KEY (PostgREST anon role; required by getUserClient)
+# - SUPABASE_JWT_SECRET (HS256 shared secret used to mint per-request JWTs
+#   in getUserClient; must match the secret configured in the Supabase
+#   project's JWT settings)
 # - JWT_SECRET (legacy HS256, for backwards compatibility)
 # - JWT_ES256_PRIVATE_KEY (ES256 private key in JWK format - generate with: npx tsx scripts/generate-es256-keys.ts)
 # - JWT_ES256_PUBLIC_KEY (ES256 public key in JWK format - optional, derived from private)
