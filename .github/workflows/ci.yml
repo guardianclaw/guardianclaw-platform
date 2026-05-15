@@ -123,6 +123,49 @@ jobs:
           path: apps/web/.next/
           retention-days: 1
 
+  build-browser:
+    name: Build Browser Extension
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      # @guardianclaw/browser is wired to @guardianclaw/core through the
+      # workspace symlink; the tsconfig path mappings resolve to core
+      # sources, so a core build is not strictly required for type
+      # resolution, but we build it anyway to mirror the published
+      # consumption shape and to surface any core-side regression at the
+      # same gate.
+      - name: Build Core
+        run: npm run build --workspace=@guardianclaw/core
+
+      - name: Build Browser Extension
+        run: npm run build --workspace=@guardianclaw/browser
+
+      - name: Verify extension artifacts
+        run: |
+          set -euo pipefail
+          cd apps/browser/dist
+          for f in popup.js content.js background.js popup.html manifest.json content.css; do
+            test -f "$f" || { echo "missing extension artifact: $f" >&2; exit 1; }
+          done
+
+      - name: Upload extension artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-extension
+          path: apps/browser/dist/
+          retention-days: 1
+
   typecheck:
     name: TypeCheck
     runs-on: ubuntu-latest
