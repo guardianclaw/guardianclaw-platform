@@ -758,7 +758,7 @@ export const SENSITIVE_DATA_PATTERNS = {
     /\b\d{3}[-.]?\d{3}[-.]?\d{4}\b/i,
     /my\s+phone\s+(is|number)[:\s]+\d{3}/i,
     /address[:\s]+\d+\s+\w+\s+(st|street|ave|avenue|blvd|rd|road)/i,
-    /\b(dob|date\s+of\s+birth)[:\s]+\d{1,2}[\/-]\d{1,2}[\/-]\d{2,4}/i,
+    /\b(dob|date\s+of\s+birth)[:\s]+\d{1,2}[/-]\d{1,2}[/-]\d{2,4}/i,
     /passport\s+(number|#)?[:\s]+[a-zA-Z0-9]{6,}/i,
     // pattern-sync:end sensitive-data-pii
   ],

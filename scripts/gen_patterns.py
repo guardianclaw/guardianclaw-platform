@@ -166,15 +166,43 @@ def render_regex(
                 )
             lines.append(f'{indent}r"{item}",')
     else:
-        # Emit JavaScript regex literals. Forward slashes inside the body
-        # need backslash escaping; the JSON content is the regex source
-        # exactly as Python's r"..." would receive it, so backslashes are
-        # already in the form that JS RegExp accepts.
+        # Emit JavaScript regex literals. Forward slashes outside of a
+        # character class need backslash escaping so they do not terminate
+        # the literal; inside a character class the slash is harmless and
+        # the extra backslash trips ESLint's no-useless-escape rule. Track
+        # bracket depth so we only escape where required.
         js_flags = "".join(JS_FLAG_MAP.get(ch, "") for ch in flags)
         for item in items:
-            escaped = item.replace("/", "\\/")
-            lines.append(f"{indent}/{escaped}/{js_flags},")
+            lines.append(f"{indent}/{_escape_js_regex_literal(item)}/{js_flags},")
     return lines
+
+
+def _escape_js_regex_literal(pattern: str) -> str:
+    """Escape `/` only when outside a `[...]` character class.
+
+    Walks the pattern once. Backslash escapes are passed through verbatim
+    (so `\\[` does not open a class). Unescaped `[` opens a class; the
+    first unescaped `]` after that closes it.
+    """
+    out: list[str] = []
+    in_class = False
+    i = 0
+    while i < len(pattern):
+        ch = pattern[i]
+        if ch == "\\" and i + 1 < len(pattern):
+            out.append(ch)
+            out.append(pattern[i + 1])
+            i += 2
+            continue
+        if ch == "[" and not in_class:
+            in_class = True
+        elif ch == "]" and in_class:
+            in_class = False
+        elif ch == "/" and not in_class:
+            out.append("\\")
+        out.append(ch)
+        i += 1
+    return "".join(out)
 
 
 def render_block(pat: PatternFile, indent: str, lang: str) -> list[str]:
