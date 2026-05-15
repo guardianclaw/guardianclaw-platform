@@ -227,9 +227,24 @@ These are tracked issues identified by the 2026-04-23 external audit and open in
 
 ### G-01 — `service_role` as Dominant Authorization Boundary
 
-**Resolved 2026-05-07 (Onda 3 Frentes B.1 + B.2 + B.4).** Every user-bucket runtime path now authenticates under an anon-key client whose minted JWT carries the wallet as a custom claim. JWT-claim RLS policies on the user-scoped tables (`llm_keys`, `agents`, `agent_events`, `conversations`, `memories`, `character`, `alerts`, `tool_credentials`, `webhooks`, `credits_*`, `execution_logs`, `deployments`, `api_keys`, `governance_*`, `profiles`, `subscriptions`, `social_deliveries`) reject cross-tenant access at the database. Cross-tenant or atomic write paths run through SECURITY DEFINER RPCs (`purge_user_data`, `record_payment`, `approve_social_delivery`) that verify the JWT wallet claim before bypassing RLS for the privileged operation.
+**Resolved 2026-05-07 (Onda 3 Frentes B.1 + B.2 + B.4); structural SSE residual closed 2026-05-15 (PR #53).** Every user-bucket runtime path now authenticates under an anon-key client whose minted JWT carries the wallet as a custom claim. JWT-claim RLS policies on the user-scoped tables (`llm_keys`, `agents`, `agent_events`, `conversations`, `memories`, `character`, `alerts`, `tool_credentials`, `webhooks`, `credits_*`, `execution_logs`, `deployments`, `api_keys`, `governance_*`, `profiles`, `subscriptions`, `social_deliveries`) reject cross-tenant access at the database. Cross-tenant or atomic write paths run through SECURITY DEFINER RPCs (`purge_user_data`, `record_payment`, `approve_social_delivery`) that verify the JWT wallet claim before bypassing RLS for the privileged operation.
 
-The remaining `getServiceClient` callers in `apps/api/src/` are documented exempt: auth bootstrap before the JWT exists, the API-key authenticated invoke endpoint, the system health probe, all admin routes and middleware, the scheduled CRON worker, and the helper module itself. Each is reviewed at PR time against the same exempt list to prevent regression. See G-05 for the closure timeline.
+The remaining `getServiceClient` callers split into two categories. Both are reviewed at PR time against the same lists to prevent regression. See G-05 for the closure timeline.
+
+**Institutional exempt (paths without a user JWT by construction):**
+- `routes/auth.ts` — pre-JWT bootstrap
+- `routes/invoke.ts` — API-key authenticated, not wallet-scoped
+- `routes/health.ts` — system probe
+- `routes/admin*.ts` + `middleware/admin-{auth,audit}.ts` — privileged admin surface
+- `scheduled.ts` — CRON worker
+- `lib/supabase-client.ts` — the factory module itself
+
+**Design exempt within user-bucket files (specific lines, each documented in code):**
+- `routes/social-deliveries.ts:111` — runs `executeSocialDelivery` after the `approve_social_delivery` RPC has already enforced ownership under the JWT. The downstream pipeline touches platform-specific RPCs that are not on JWT policies, so the service client is reserved for the post-authorization execution path only.
+- `routes/webhooks.ts:522` — `POST /:webhookId/trigger` is a public endpoint authenticated by HMAC signature, not by a user JWT. No wallet context exists in the request; service-role is the correct boundary for this surface.
+- `routes/webhooks.ts:821` — `GET /:webhookId/health` is the same public surface as the trigger and uses the same justification.
+
+**JWT-lifetime mismatch on SSE — closed 2026-05-15.** The `/agents/:agentId/executions/stream` handler in `routes/execution-logs.ts` was the last structural residual: a 5-minute SSE window outran the 60-second minted-JWT lifetime, so it stayed on service-role with a handler-side wallet predicate. PR #53 introduced `getRefreshableUserClient` in `lib/supabase-client.ts`, a closure-based wrapper that transparently re-mints the underlying client within `JWT_REFRESH_BUFFER_MS` (10s) of expiry. The SSE handler now runs under JWT-claims RLS for the full window.
 
 Entry retained for traceability and will be removed at the next SECURITY.md revision.
 
