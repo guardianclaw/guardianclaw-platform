@@ -10,7 +10,7 @@ import { streamSSE } from 'hono/streaming'
 import { z } from 'zod'
 import { authMiddleware } from '../middleware/auth'
 import { walletRateLimitMiddleware } from '../middleware/rate-limit'
-import { getServiceClient, getUserClient } from '../lib/supabase-client'
+import { getRefreshableUserClient, getUserClient } from '../lib/supabase-client'
 
 type Bindings = {
   SUPABASE_URL: string
@@ -267,19 +267,20 @@ executionLogsRoutes.get('/:agentId/executions/stream', async (c) => {
     return c.json({ error: 'Invalid agent ID format' }, 400)
   }
 
-  // SSE handler stays on service-role for now: the minted JWT used by
-  // getUserClient is intentionally short-lived (60s) and would expire long
-  // before the 5-minute SSE window. The handler-side wallet predicate
-  // below remains the user-scope barrier for this surface; revisit when
-  // we add JWT refresh inside the streaming loop.
-  const supabase = getServiceClient(c.env)
+  // The minted JWT lives ~60s; the SSE window is 5 minutes. A plain
+  // getUserClient would expire mid-stream. getRefreshableUserClient hides
+  // the re-mint inside the loop so the handler reads as ordinary code while
+  // RLS stays as the user-scope barrier (mig 20260427100000 for agents,
+  // 20260427140000 for execution_logs).
+  const userClient = await getRefreshableUserClient(c.env, wallet)
+  const ownershipClient = await userClient.get()
 
-  // Verify agent ownership before starting stream
-  const { data: agent, error: agentError } = await supabase
+  // Verify agent ownership before starting stream — RLS rejects rows owned
+  // by other wallets, so .single() returning null is the deny path.
+  const { data: agent, error: agentError } = await ownershipClient
     .from('agents')
     .select('id')
     .eq('id', agentId)
-    .eq('wallet_address', wallet)
     .single()
 
   if (agentError || !agent) {
@@ -294,8 +295,9 @@ executionLogsRoutes.get('/:agentId/executions/stream', async (c) => {
 
   if (lastEventId) {
     isReconnecting = true
+    const reconnectClient = await userClient.get()
     // Last-Event-ID is a log UUID — look up its created_at
-    const { data: lastLog } = await supabase
+    const { data: lastLog } = await reconnectClient
       .from('execution_logs')
       .select('created_at')
       .eq('id', lastEventId)
@@ -325,6 +327,10 @@ executionLogsRoutes.get('/:agentId/executions/stream', async (c) => {
     // Polling loop
     while (Date.now() - startTime < maxDuration) {
       try {
+        // Refresh the user client before the JWT expires. Cheap when the
+        // current one is still valid; mints a new HS256 JWT otherwise.
+        const supabase = await userClient.get()
+
         // On first poll after reconnect, use .gte to catch boundary logs
         // Normal polling uses .gt to avoid re-sending the same log
         let query = supabase
