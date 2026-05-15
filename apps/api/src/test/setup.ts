@@ -11,6 +11,8 @@ beforeAll(() => {
   process.env.ENVIRONMENT = 'test'
   process.env.SUPABASE_URL = 'https://test.supabase.co'
   process.env.SUPABASE_SERVICE_KEY = 'test-service-key'
+  process.env.SUPABASE_ANON_KEY = 'test-anon-key'
+  process.env.SUPABASE_JWT_SECRET = 'test-supabase-jwt-secret-min-32-chars!'
   process.env.JWT_SECRET = 'test-jwt-secret-with-minimum-32-chars!'
 })
 
