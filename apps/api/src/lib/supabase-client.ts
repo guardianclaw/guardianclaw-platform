@@ -36,6 +36,15 @@ export interface UserEnv {
   SUPABASE_JWT_SECRET: string
 }
 
+// Minted JWT lifetime. Short enough that a leaked token is useless after a
+// minute; long enough that a normal request mints once and never re-mints.
+// Streaming handlers (>60s lifetime) must use getRefreshableUserClient.
+const JWT_LIFETIME_SECONDS = 60
+const JWT_LIFETIME_MS = JWT_LIFETIME_SECONDS * 1000
+
+// Re-mint before the JWT expires, leaving a buffer for in-flight requests.
+const JWT_REFRESH_BUFFER_MS = 10_000
+
 /**
  * Service-role client. RLS is bypassed.
  *
@@ -75,7 +84,7 @@ async function mintSupabaseUserJwt(wallet: string, secret: string): Promise<stri
     .setProtectedHeader({ alg: 'HS256', typ: 'JWT' })
     .setIssuedAt()
     .setSubject(wallet)
-    .setExpirationTime('60s')
+    .setExpirationTime(`${JWT_LIFETIME_SECONDS}s`)
     .sign(secretKey)
 }
 
@@ -111,4 +120,36 @@ export async function getUserClient(env: UserEnv, wallet: string): Promise<Supab
       },
     },
   })
+}
+
+/**
+ * Wrapper around a user-scoped client whose minted JWT can outlive a normal
+ * request. Long-running handlers (SSE streams, anything that holds a client
+ * past JWT_LIFETIME_SECONDS) should call `get()` before each query: the
+ * factory transparently re-mints the JWT and rebuilds the underlying client
+ * once the original is within JWT_REFRESH_BUFFER_MS of expiry.
+ *
+ * Short, one-shot handlers should keep using `getUserClient` directly — the
+ * extra indirection is wasted there.
+ */
+export interface RefreshableUserClient {
+  get(): Promise<SupabaseClient>
+}
+
+export async function getRefreshableUserClient(
+  env: UserEnv,
+  wallet: string
+): Promise<RefreshableUserClient> {
+  let client = await getUserClient(env, wallet)
+  let mintedAt = Date.now()
+
+  return {
+    async get() {
+      if (Date.now() - mintedAt >= JWT_LIFETIME_MS - JWT_REFRESH_BUFFER_MS) {
+        client = await getUserClient(env, wallet)
+        mintedAt = Date.now()
+      }
+      return client
+    },
+  }
 }
