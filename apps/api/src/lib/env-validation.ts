@@ -9,19 +9,20 @@ interface EnvValidationResult {
   warnings: string[]
 }
 
-const REQUIRED_VARS = ['SUPABASE_URL', 'SUPABASE_SERVICE_KEY', 'JWT_SECRET'] as const
-
-const OPTIONAL_CRITICAL_VARS = [
-  'TREASURY_WALLET',
-  'SOLANA_RPC_URL',
-  'MODAL_RUNTIME_URL',
-  // Required for getUserClient (Frente B.1). Not yet in REQUIRED_VARS while
-  // the migration to anon-key + JWT claims is partial — service_role paths
-  // still work without these. Promote to REQUIRED_VARS once every
-  // user-scoped route flips off service_role.
+// SUPABASE_ANON_KEY + SUPABASE_JWT_SECRET feed getUserClient (anon key + per-request
+// HS256 JWTs that drive JWT-claims RLS). Frente B.1/B.2/B.4 closed in 2026-04 — every
+// user-scoped route now goes through getUserClient, so booting without these vars
+// would surface as silent 500s on every authenticated request. Fail fast at the
+// boundary instead.
+const REQUIRED_VARS = [
+  'SUPABASE_URL',
+  'SUPABASE_SERVICE_KEY',
   'SUPABASE_ANON_KEY',
   'SUPABASE_JWT_SECRET',
+  'JWT_SECRET',
 ] as const
+
+const OPTIONAL_CRITICAL_VARS = ['TREASURY_WALLET', 'SOLANA_RPC_URL', 'MODAL_RUNTIME_URL'] as const
 
 let validated = false
 let cachedResult: EnvValidationResult | null = null
