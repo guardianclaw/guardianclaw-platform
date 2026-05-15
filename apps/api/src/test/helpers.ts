@@ -148,6 +148,8 @@ export interface MockEnv {
   ENVIRONMENT: string
   SUPABASE_URL: string
   SUPABASE_SERVICE_KEY: string
+  SUPABASE_ANON_KEY: string
+  SUPABASE_JWT_SECRET: string
   JWT_SECRET: string
   MODAL_RUNTIME_URL?: string
   MODAL_HEALTH_URL?: string
@@ -165,6 +167,8 @@ export function createMockEnv(overrides: Partial<MockEnv> = {}): MockEnv {
     ENVIRONMENT: 'test',
     SUPABASE_URL: 'https://test.supabase.co',
     SUPABASE_SERVICE_KEY: 'test-service-key',
+    SUPABASE_ANON_KEY: 'test-anon-key',
+    SUPABASE_JWT_SECRET: 'test-supabase-jwt-secret-min-32-chars!',
     JWT_SECRET: TEST_JWT_SECRET,
     MODAL_RUNTIME_URL: 'https://test-modal.run/execute',
     ...overrides,
