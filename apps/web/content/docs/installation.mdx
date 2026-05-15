@@ -3,7 +3,7 @@ title: "Installation"
 description: "Install GuardianClaw in your project"
 category: "getting-started"
 order: 2
-lastUpdated: "2026-01-23"
+lastUpdated: "2026-05-12"
 ---
 
 # Installation
@@ -16,47 +16,58 @@ Install GuardianClaw using your preferred package manager.
 pip install guardianclaw
 ```
 
-**Current version**: 2.26.0
+**Current version:** `3.0.0-rc.1`
 
-### Optional Dependencies
+### Optional dependencies
 
-Install with specific integrations:
+Install with specific integrations. Floors below were last revalidated 2026-04-24; see
+`sdk/CHANGELOG.md` `[Unreleased] · Integration floors revalidated` for methodology and
+per-extra test counts.
 
 ```bash
-# LLM Providers
-pip install guardianclaw[openai]         # OpenAI
-pip install guardianclaw[openai-agents]  # OpenAI Agents SDK
-pip install guardianclaw[anthropic]      # Anthropic SDK
-pip install guardianclaw[google-adk]     # Google Agent Development Kit
+# LLM providers / agent frameworks
+pip install "guardianclaw[openai]"             # OpenAI Python SDK
+pip install "guardianclaw[openai-agents]"      # OpenAI Agents SDK         (>=0.6.0,  validated 0.14.5)
+pip install "guardianclaw[anthropic]"          # Anthropic SDK             (>=0.40.0, validated 0.97.0)
+pip install "guardianclaw[google-adk]"         # Google ADK                (>=1.7.0,  validated 1.31.1)
+pip install "guardianclaw[mcp]"                # MCP Python SDK            (>=1.8.0,  validated 1.27.0)
 
-# Blockchain & DeFi
-pip install guardianclaw[virtuals]       # Virtuals Protocol (GAME SDK)
-pip install guardianclaw[coinbase]       # Coinbase AgentKit + x402
+# Blockchain / DeFi
+pip install "guardianclaw[virtuals]"           # Virtuals (GAME SDK)       (>=0.1.1,  validated 0.1.5)
+pip install "guardianclaw[coinbase]"           # Coinbase AgentKit + x402  (httpx, pydantic)
+pip install "guardianclaw[coinbase-agentkit]"  # Coinbase AgentKit         (>=0.1.0,  validated 0.7.4)
+pip install "guardianclaw[x402]"               # x402 only (httpx + pydantic)
 
-# Security Testing
-pip install guardianclaw[garak]          # NVIDIA Garak scanner
-pip install guardianclaw[pyrit]          # Microsoft PyRIT red teaming
+# Security testing
+pip install "guardianclaw[garak]"              # NVIDIA Garak scanner      (>=0.11.0, validated 0.14.1)
+pip install "guardianclaw[pyrit]"              # Microsoft PyRIT           (>=0.12.0, validated 0.13.0)
 
-# All integrations
-pip install guardianclaw[all]
+# Everything
+pip install "guardianclaw[all]"
 ```
 
 ## JavaScript / TypeScript
 
 ```bash
-npm install @guardianclaw/core
+npm install @guardianclaw/core               # 3.0.0-rc.1
 ```
 
-### Additional Packages
+### Additional packages
 
 ```bash
-# VoltAgent integration
-npm install @guardianclaw/voltagent
+# Personal-agent guardrails (formerly @guardianclaw/moltbot)
+npm install @guardianclaw/openclaw           # 3.0.0-rc.1
 
-# ElizaOS plugin
-npm install @guardianclaw/elizaos-plugin
+# ElizaOS plugin (peer @elizaos/core@2.x)
+npm install @guardianclaw/elizaos-plugin     # 2.0.0-rc.1
 
-# MCP Server (for Claude Desktop)
+# VoltAgent guardrails (peer @voltagent/core@2.x)
+npm install @guardianclaw/voltagent          # 0.3.0
+
+# Solana Agent Kit plugin
+npm install @guardianclaw/solana-agent-kit   # 1.0.3
+
+# MCP Server (for Claude Desktop and other MCP clients)
 npx mcp-server-guardianclaw
 ```
 
@@ -66,7 +77,7 @@ npx mcp-server-guardianclaw
 |----------|-------------|
 | Python | 3.10+ |
 | Node.js | 18+ |
-| Dependencies | `typing_extensions>=4.0.0`, `tenacity>=8.2.0` |
+| Hard Python dependency | `typing_extensions>=4.0.0` (every other dependency is opt-in via an extra) |
 
 ## Verification
 

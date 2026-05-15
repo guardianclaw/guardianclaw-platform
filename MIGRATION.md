@@ -182,3 +182,40 @@ per the table above.
 See the top-level `CHANGELOG.md` files in `packages/core/` and `sdk/` for the
 full change list, and the auditoria entries under `_internal/auditoria/` for
 the justification trail (not public).
+
+---
+
+## v1.x → v3.0: `@guardianclaw/moltbot` → `@guardianclaw/openclaw`
+
+`@guardianclaw/moltbot` has been renamed and version-bumped to
+`@guardianclaw/openclaw@3.0.0-rc.1`. The public API (`./plugin`, `./config`,
+`./validators` subpath exports, `createGuardianClawHooks`, protection levels,
+hook names) is unchanged. Only the package name, the demo route, the docs
+slug, and the in-product display label changed.
+
+### What to update
+
+| Before | After |
+|--------|-------|
+| `npm install @guardianclaw/moltbot` | `npm install @guardianclaw/openclaw` |
+| `import { ... } from '@guardianclaw/moltbot'` | `import { ... } from '@guardianclaw/openclaw'` |
+| `moltbot.config.json` | `openclaw.config.json` |
+| `export const moltbot_hooks = { ... }` | `export const openclaw_hooks = { ... }` |
+| `/docs/integrations/moltbot` | `/docs/integrations/openclaw` |
+| `/demos/moltbot` | `/demos/openclaw` |
+
+### Why
+
+OpenClaw is the same product Moltbot was — defense-in-depth personal-agent
+guardrails (input analysis, seed injection, output validation, tool-call
+guarding, session monitoring). The original "Moltbot" name had ecosystem
+collisions and was rebranded for clarity. No code paths changed.
+
+### Database note
+
+Migration `20260512000000_rename_moltbot_to_openclaw.sql` handles the data
+side: renames `agents.framework='moltbot'` rows to `'openclaw'`, renames
+`'moltbot'` keys inside `integration_config` JSONB, and recreates the
+`validate_integration_config` trigger with `'openclaw'` replacing `'moltbot'`
+in the whitelist. The original `20260131100000_fix_agents_framework_default`
+migration is preserved unchanged for audit.

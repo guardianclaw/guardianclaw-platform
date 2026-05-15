@@ -3,7 +3,7 @@ title: "JetBrains Integration"
 description: "AI safety guardrails for LLM prompts in IntelliJ IDEA, PyCharm, WebStorm, and other JetBrains IDEs"
 category: "integrations"
 order: 31
-lastUpdated: "2026-01-24"
+lastUpdated: "2026-05-12"
 ---
 
 # JetBrains Integration
@@ -155,10 +155,10 @@ Every request is evaluated through four gates:
 
 | Gate | Function |
 |------|----------|
-| **Truth** | Detects deception and misinformation |
-| **Harm** | Identifies potential harm |
-| **Scope** | Checks boundary violations |
-| **Purpose** | Validates legitimate purpose |
+| **Credibility** | Detects deception, impersonation, misinformation |
+| **Limits** | Checks boundary violations, instruction override, system injection |
+| **Avoidance** | Identifies potential harm |
+| **Worth** | Validates legitimate purpose |
 
 All four gates must pass for content to be considered safe.
 

@@ -3,56 +3,60 @@ title: "Garak Integration"
 description: "CLAW protocol probes and detectors for NVIDIA Garak security scanner"
 category: "integrations"
 order: 1
-lastUpdated: "2026-01-23"
+lastUpdated: "2026-05-12"
 ---
 
 # Garak Integration
 
 CLAW protocol probes and detectors for NVIDIA Garak LLM vulnerability scanner.
 
+Validated against `garak@0.14.1` with floor `>=0.11.0` on 2026-04-24. The minimum floor is
+`0.11.0` because the probe modules read `garak.probes.Tier` at class-body import time, and
+that attribute was added in garak `0.11`. The in-code `MIN_GARAK_VERSION` constant in
+`integrations/garak/detectors.py` matches.
+
 ## Installation
 
 ```bash
-pip install guardianclaw garak
+pip install "guardianclaw[garak]"
 
-# Install GuardianClaw plugin to Garak
+# Install GuardianClaw plugin into Garak's plugin directory
 python -m guardianclaw.integrations.garak.install
 ```
 
 ## Probes
 
 | Probe | Prompts | Description |
-|-------|---------|-------------|
-| `TruthGate` | 15 | Fake documents, misinformation, impersonation |
-| `HarmGate` | 17 | Weapons, hacking, financial fraud, self-harm |
-| `ScopeGate` | 17 | DAN jailbreaks, prompt injection, persona manipulation |
-| `PurposeGate` | 15 | Vandalism, resource waste, self-sabotage |
+|-------|--------:|-------------|
+| `CredibilityGate` | 15 | Fake documents, misinformation, impersonation, role / roleplay manipulation |
+| `LimitsGate` | 17 | DAN jailbreaks, prompt injection, instruction override, persona manipulation, filter bypass |
+| `AvoidanceGate` | 17 | Weapons, hacking, financial fraud, self-harm |
+| `WorthGate` | 15 | Vandalism, resource waste, self-sabotage |
 | `CLAWCombined` | 9 | Multi-gate sophisticated attacks |
-
-**Total: 73 prompts**
+| **Total** | **73** | |
 
 ## Quick Start
 
-### Test All CLAW Gates
+### Test all CLAW gates
 
 ```bash
 garak --model_type openai --model_name gpt-4o --probes claw_claw
 ```
 
-### Test Specific Gates
+### Test specific gates
 
 ```bash
-# Credibility Gate
-garak --model_type openai --model_name gpt-4o --probes claw_claw.TruthGate
+# Credibility
+garak --model_type openai --model_name gpt-4o --probes claw_claw.CredibilityGate
 
-# Avoidance Gate
-garak --model_type openai --model_name gpt-4o --probes claw_claw.HarmGate
+# Limits
+garak --model_type openai --model_name gpt-4o --probes claw_claw.LimitsGate
 
-# Limits Gate
-garak --model_type openai --model_name gpt-4o --probes claw_claw.ScopeGate
+# Avoidance
+garak --model_type openai --model_name gpt-4o --probes claw_claw.AvoidanceGate
 
-# Worth Gate
-garak --model_type openai --model_name gpt-4o --probes claw_claw.PurposeGate
+# Worth
+garak --model_type openai --model_name gpt-4o --probes claw_claw.WorthGate
 ```
 
 ### Compare Models
@@ -72,12 +76,16 @@ garak --model_type openai --model_name gpt-4o \
 
 ## Detectors
 
-| Detector | Patterns | Detects |
-|----------|----------|---------|
-| `TruthViolation` | 13 | Fake document generation |
-| `HarmViolation` | 15 | Harmful instructions |
-| `ScopeViolation` | 25 | Jailbreak acceptance |
-| `PurposeViolation` | 12 | Destruction assistance |
+The detector classes retain their THSP-era class names (`TruthViolation`, `HarmViolation`,
+`ScopeViolation`, `PurposeViolation`) inside `claw_claw.py` for backward compatibility with
+Garak's report tooling. Each detector maps to one CLAW gate:
+
+| Detector class | CLAW gate | Patterns | Detects |
+|----------------|-----------|---------:|---------|
+| `TruthViolation` | Credibility | 13 | Fake document generation, impersonation |
+| `HarmViolation` | Avoidance | 15 | Harmful instructions |
+| `ScopeViolation` | Limits | 25 | Jailbreak acceptance, instruction override |
+| `PurposeViolation` | Worth | 12 | Destruction assistance, purposeless action |
 
 ## Understanding Results
 

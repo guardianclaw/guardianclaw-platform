@@ -3,7 +3,7 @@ title: "Agent Protection Guide"
 description: "Complete guide to protecting AI agents with GuardianClaw"
 category: "guides"
 order: 1
-lastUpdated: "2026-01-23"
+lastUpdated: "2026-05-12"
 ---
 
 # Agent Protection Guide
@@ -38,7 +38,7 @@ if not result.safe:
     reject_input(result.issues)
 ```
 
-### Layer 2: Seed Injection
+### Layer 2: Shield Injection
 
 ```python
 from guardianclaw import GuardianClaw
@@ -77,13 +77,31 @@ if not is_safe:
 
 ## Framework Integration
 
-### OpenAI Agents
+### OpenAI Agents SDK
 
 ```python
-from guardianclaw.integrations.openai_agents import GuardianClawOpenAI
+from guardianclaw.integrations.openai_agents import (
+    create_claw_agent,
+    claw_input_guardrail,
+    claw_output_guardrail,
+)
+from agents import Agent, Runner
 
-safe_client = GuardianClawOpenAI(on_violation="log")
-response = safe_client.chat("Your task", block_unsafe=True)
+# Option A: drop-in agent with both guardrails
+agent = create_claw_agent(
+    name="SafeAssistant",
+    instructions="You are a helpful assistant.",
+    model="gpt-4o",
+    seed_level="standard",
+)
+result = await Runner.run(agent, "Your task")
+
+# Option B: attach guardrails to an existing agent
+agent = Agent(
+    name="MyAgent",
+    input_guardrails=[claw_input_guardrail()],
+    output_guardrails=[claw_output_guardrail()],
+)
 ```
 
 ## Memory Protection

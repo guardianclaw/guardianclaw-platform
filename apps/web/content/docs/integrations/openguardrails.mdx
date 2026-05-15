@@ -3,17 +3,22 @@ title: "OpenGuardrails Integration"
 description: "Bidirectional integration between GuardianClaw and OpenGuardrails"
 category: "integrations"
 order: 3
-lastUpdated: "2026-01-23"
+lastUpdated: "2026-05-12"
 ---
 
 # OpenGuardrails Integration
 
 Bidirectional integration between GuardianClaw and OpenGuardrails framework.
 
+Validated against `openguardrails@3.0.2` (latest on PyPI) on 2026-04-24. This adapter talks to
+OpenGuardrails over HTTP — no Python package is imported at runtime — so there is no PyPI
+floor to pin.
+
 ## Installation
 
 ```bash
-pip install guardianclaw requests openguardrails
+pip install guardianclaw requests
+# Run the OpenGuardrails server separately (Docker / pip install openguardrails)
 ```
 
 ## Integration Modes
@@ -78,10 +83,10 @@ print(f"Blocked by: {result['blocked_by']}")
 
 | Gate | Description |
 |------|-------------|
-| **Truth** | Deception, misinformation |
-| **Harm** | Violence, weapons |
-| **Scope** | Jailbreaks, prompt injection |
-| **Purpose** | Purposeless actions |
+| **Credibility** | Deception, misinformation, impersonation |
+| **Limits** | Jailbreaks, prompt injection, instruction override |
+| **Avoidance** | Violence, weapons, malware |
+| **Worth** | Purposeless or unjustified actions |
 
 ## Error Handling
 

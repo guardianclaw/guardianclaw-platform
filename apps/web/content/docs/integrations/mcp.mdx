@@ -3,7 +3,7 @@ title: "MCP Server Integration"
 description: "Model Context Protocol server exposing GuardianClaw safety tools"
 category: "integrations"
 order: 14
-lastUpdated: "2026-01-23"
+lastUpdated: "2026-05-12"
 ---
 
 # MCP Server Integration
@@ -13,15 +13,18 @@ Model Context Protocol server exposing GuardianClaw safety tools.
 ## Requirements
 
 ```bash
-pip install guardianclaw[mcp]
-# or manually:
-pip install guardianclaw mcp
+pip install "guardianclaw[mcp]"
 ```
 
 **Dependencies:**
-- `mcp>=0.1.0`: [GitHub](https://github.com/modelcontextprotocol/python-sdk)
+
+- `mcp>=1.8.0` — [GitHub](https://github.com/modelcontextprotocol/python-sdk).
+  The minimum floor is `1.8.0` because `mcp.client.streamable_http` (used by
+  `GuardianClawMCPClient` for HTTP transport) landed in that release. Validated against
+  `mcp@1.27.0` on 2026-04-24.
 
 **For Claude Desktop:**
+
 ```bash
 npm install -g mcp-server-guardianclaw
 ```

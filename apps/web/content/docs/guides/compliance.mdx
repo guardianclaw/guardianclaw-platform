@@ -3,7 +3,7 @@ title: "Compliance"
 description: "Meeting regulatory requirements with GuardianClaw"
 category: "guides"
 order: 4
-lastUpdated: "2026-01-23"
+lastUpdated: "2026-05-12"
 ---
 
 # Compliance Guide
@@ -29,10 +29,10 @@ The EU AI Act (Regulation 2024/1689) establishes a risk-based regulatory framewo
 
 | EU AI Act Area | CLAW Support | Coverage |
 |----------------|--------------|----------|
-| Article 5: Prohibited Practices | Harm + Scope | Strong |
-| Article 9: Risk Management | All Gates | Strong |
-| Article 13: Transparency | Truth | Moderate |
-| Article 14: Human Oversight | Scope + Purpose | Strong |
+| Article 5: Prohibited Practices | Avoidance + Limits | Strong |
+| Article 9: Risk Management | All gates | Strong |
+| Article 13: Transparency | Credibility | Moderate |
+| Article 14: Human Oversight | Limits + Worth | Strong |
 
 ### Usage
 
@@ -63,12 +63,15 @@ if not result.compliant:
 
 ### Article 5 Detection
 
-GuardianClaw's Harm and Scope gates detect prohibited practices:
+GuardianClaw's Avoidance and Limits gates detect prohibited practices:
 
 - Subliminal manipulation
-- Exploiting vulnerabilities
+- Exploiting vulnerabilities (children, elderly, disabled)
 - Social scoring
-- Emotion recognition misuse
+- Predictive policing
+- Emotion recognition (workplace / education)
+- Biometric categorisation
+- Real-time biometric identification (mass public)
 
 ```python
 # Detect subliminal manipulation
@@ -85,15 +88,15 @@ The OWASP Top 10 for LLM Applications 2025 identifies critical risks in LLM appl
 
 | Vulnerability | CLAW Gate | Coverage |
 |---------------|-----------|----------|
-| LLM01: Prompt Injection | **Scope** | Strong |
-| LLM02: Sensitive Information Disclosure | **Truth + Harm** | Strong |
+| LLM01: Prompt Injection | **Limits** | Strong |
+| LLM02: Sensitive Information Disclosure | **Credibility + Avoidance** | Strong |
 | LLM03: Supply Chain | — | Indirect |
 | LLM04: Data and Model Poisoning | — | Indirect |
-| LLM05: Improper Output Handling | **Truth + Harm** | Strong |
-| LLM06: Excessive Agency | **Scope + Purpose** | Strong |
-| LLM07: System Prompt Leakage | **Scope** | Moderate |
+| LLM05: Improper Output Handling | **Credibility + Avoidance** | Strong |
+| LLM06: Excessive Agency | **Limits + Worth** | Strong |
+| LLM07: System Prompt Leakage | **Limits** | Moderate |
 | LLM08: Vector and Embedding Weaknesses | — | Not Applicable |
-| LLM09: Misinformation | **Truth** | Strong |
+| LLM09: Misinformation | **Credibility** | Strong |
 | LLM10: Unbounded Consumption | — | Not Applicable |
 
 **Summary:** 6/10 Strong, 2/10 Indirect, 2/10 Not Applicable
@@ -124,12 +127,12 @@ result = checker.check_pipeline(
 
 | ID | Vulnerability | Detection Method |
 |----|---------------|------------------|
-| LLM01 | Prompt Injection | Scope gate, pattern matching |
-| LLM02 | Sensitive Information Disclosure | Truth + Harm gates |
-| LLM05 | Improper Output Handling | Output validation |
-| LLM06 | Excessive Agency | Scope + Purpose gates |
-| LLM07 | System Prompt Leakage | Scope gate |
-| LLM09 | Misinformation | Truth gate |
+| LLM01 | Prompt Injection | Limits gate, pattern matching |
+| LLM02 | Sensitive Information Disclosure | Credibility + Avoidance gates |
+| LLM05 | Improper Output Handling | OutputValidator (L3) |
+| LLM06 | Excessive Agency | Limits + Worth gates |
+| LLM07 | System Prompt Leakage | Limits gate |
+| LLM09 | Misinformation | Credibility gate |
 
 ## OWASP Agentic Top 10 (2026)
 
@@ -149,18 +152,20 @@ for vuln in result.vulnerabilities:
 
 ### Coverage Summary
 
-| ID | Vulnerability | GuardianClaw Coverage |
-|----|---------------|-------------------|
-| AA01 | Agentic Misalignment | Full |
-| AA02 | Tool Misuse | Full |
-| AA03 | Privilege Escalation | Full |
-| AA04 | Memory Poisoning | Full (Memory Shield) |
-| AA05 | Identity Spoofing | Full |
-| AA06 | Prompt/Instruction Theft | Partial |
-| AA07 | Resource Overconsumption | Partial |
-| AA08 | Multi-Agent Manipulation | Partial |
-| AA09 | Supply Chain Vulnerabilities | None |
-| AA10 | Insufficient Logging | None |
+| ID | Threat | GuardianClaw Coverage | Primary Component |
+|----|--------|-----------------------|-------------------|
+| ASI01 | Agent Goal Hijack | Full | CLAW Worth gate |
+| ASI02 | Tool Misuse and Exploitation | Full | CLAW Limits gate |
+| ASI03 | Identity and Privilege Abuse | Partial | Database Guard |
+| ASI04 | Agentic Supply Chain | Partial | Memory Shield |
+| ASI05 | Unexpected Code Execution | N/A | Infrastructure |
+| ASI06 | Memory and Context Poisoning | Full | Memory Shield v2 |
+| ASI07 | Insecure Inter-Agent Communication | N/A | Roadmap |
+| ASI08 | Cascading Failures | Partial | Credibility gate |
+| ASI09 | Human-Agent Trust Exploitation | Full | Fiduciary AI |
+| ASI10 | Rogue Agents | Full | CLAW + Anti-Preservation |
+
+Summary: **5/10 full, 3/10 partial, 2/10 not covered.**
 
 ## CSA AI Controls Matrix
 

@@ -3,7 +3,7 @@ title: "FAQ"
 description: "Frequently asked questions about GuardianClaw"
 category: "resources"
 order: 3
-lastUpdated: "2026-01-23"
+lastUpdated: "2026-05-12"
 ---
 
 # Frequently Asked Questions
@@ -26,13 +26,22 @@ Yes. The core library is MIT licensed. Heuristic validation is completely free. 
 
 ### How fast is validation?
 
-- Heuristic: <10ms
-- Semantic: 1-5 seconds (depends on LLM)
+- Heuristic (L1 + L3): typically sub-10 ms on a modern CPU core
+- Semantic (L4 ClawObserver): 1 – 5 s (LLM round-trip)
 
 ### What's the accuracy?
 
-- Heuristic: ~50% (pattern matching)
-- Semantic: ~90% (LLM-based)
+Comparative per-layer accuracy figures against public benchmarks (HarmBench, SafeAgentBench,
+BadRobot, JailbreakBench) are being re-measured against the v3.x stack; the per-layer
+percentages previously published referred to an earlier SDK lineage and were retired pending
+the new run. The current release is validated by:
+
+- 416-item CLAW correctness corpus (CI-gated)
+- 39-family Python ↔ TypeScript regex parity (CI-gated)
+- Adversarial sweeps: Garak baseline (bare `llama-3.3-70b` ASR 87.30%), Crescendo multi-turn
+  (17 detect-correctly / 3 fail-late / 0 false-positive across 20 scenarios)
+
+See [Benchmarks](/docs/resources/benchmarks) for full detail.
 
 ### Does it work offline?
 
@@ -40,21 +49,33 @@ Yes. Heuristic validation is 100% local with no network calls. Semantic validati
 
 ### Which LLMs are supported?
 
-All major LLMs via integrations:
-- OpenAI (GPT-4o, GPT-4o-mini)
-- Anthropic (Claude 3.5, Claude 3)
-- Google (Gemini)
-- Local models via Ollama
+The semantic validator and `ClawObserver` accept any OpenAI-compatible endpoint:
+
+- **OpenAI** — `gpt-4o`, `gpt-4o-mini`, `gpt-5`-class (when available)
+- **Anthropic** — `claude-haiku-4-5`, `claude-sonnet-4-6`, `claude-opus-4-7`
+- **Groq** — `llama-3.3-70b-versatile`, `mixtral-8x7b`, `deepseek-r1-distill-llama-70b`
+- **Together AI** — any model on Together's OpenAI-compatible endpoint
+- **DeepSeek** — `deepseek-chat`, `deepseek-reasoner`
+- **Mistral** — `mistral-small-latest`, `mistral-large-latest`
+- **Google** — `gemini-2.0-flash`, `gemini-1.5-flash` (via dedicated integration)
+
+Local models (Ollama, vLLM, etc.) work through any OpenAI-compatible front-end by setting the
+`base_url` accordingly.
 
 ## Integration
 
 ### Which frameworks are supported?
 
-17 frameworks including:
-- ElizaOS, VoltAgent, OpenClaw
-- OpenAI, Anthropic, Google ADK
-- Solana Agent Kit, Coinbase AgentKit, Virtuals
-- garak, PyRIT, Promptfoo, OpenGuardrails
+Three distribution surfaces:
+
+- **Python SDK adapters** (11): OpenAI Agents SDK, Anthropic SDK, Google ADK, MCP Server,
+  Coinbase AgentKit + x402, Solana Agent Kit, Virtuals (GAME SDK), PyRIT, Garak, OpenGuardrails,
+  `agent_validation`
+- **npm packages** (5): `@guardianclaw/core`, `@guardianclaw/elizaos-plugin`,
+  `@guardianclaw/openclaw` (formerly `moltbot`), `@guardianclaw/voltagent`,
+  `@guardianclaw/solana-agent-kit`
+- **External-ecosystem adapters**: JetBrains plugin, `promptfoo` CLI provider, Chrome / Firefox
+  browser extension
 
 ### How do I add GuardianClaw to my agent?
 
@@ -87,11 +108,18 @@ No. All validation happens locally or through your own API keys. No data is sent
 
 ### Is it secure against prompt injection?
 
-GuardianClaw includes 100+ jailbreak detection patterns and semantic analysis. Combined with seed injection, it provides strong protection against prompt injection attacks.
+GuardianClaw layers heuristic pattern detection (700+ patterns across 39 regex families)
+against the shield-injected system prompt and an LLM-based transcript observer (L4). The
+free-tier adversarial sweep against bare `llama-3.3-70b` measured an 87.30% prompt-injection
+success rate without the SDK in front, which motivates running the SDK as a wrapper around the
+model rather than relying on model alignment alone.
 
 ### What about memory attacks?
 
-Memory Shield v2.0 provides HMAC-based signing and content validation to protect against memory injection attacks (85% of unprotected agents are vulnerable according to Princeton research).
+Memory Shield v2.0 provides HMAC-SHA256 signing and content validation across 9 injection
+categories. The threat surface comes from Princeton CrAIBench
+([arXiv:2503.16248](https://arxiv.org/abs/2503.16248)), which reports approximately 85%
+attack-success rate against unprotected agent memory in their evaluated configurations.
 
 ## Support
 

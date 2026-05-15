@@ -3,7 +3,7 @@ title: "Testing Guide"
 description: "Test your GuardianClaw integration"
 category: "guides"
 order: 4
-lastUpdated: "2026-01-23"
+lastUpdated: "2026-05-12"
 ---
 
 # Testing Guide
@@ -34,12 +34,15 @@ def test_unsafe_content(claw):
 ## Testing with Garak
 
 ```bash
-# Install
-pip install garak guardianclaw
+# Install (garak floor >= 0.11.0; validated against 0.14.1)
+pip install "guardianclaw[garak]"
 python -m guardianclaw.integrations.garak.install
 
-# Run CLAW security scan
+# Run CLAW security scan against any garak-supported target
 garak --model_type openai --model_name gpt-4o --probes claw_claw
+
+# Or against a free Groq-hosted target (uses GROQ_API_KEY)
+garak --model_type groq --model_name llama-3.3-70b-versatile --probes claw_claw
 ```
 
 ## Testing with PyRIT
@@ -65,15 +68,21 @@ async def test_red_team():
 ## Integration Testing
 
 ```python
-from guardianclaw.integrations.openai_agents import GuardianClawOpenAI
+import pytest
+from guardianclaw.integrations.openai_agents import create_claw_agent
+from agents import Runner
 
-def test_openai_agents_integration():
-    client = GuardianClawOpenAI(on_violation="raise")
-
-    # Should pass
-    response = client.chat("What is 2+2?")
-    assert client.get_stats()["total"] > 0
-    assert client.get_stats()["blocked"] == 0
+@pytest.mark.asyncio
+async def test_openai_agents_integration():
+    agent = create_claw_agent(
+        name="Test",
+        instructions="You are a helpful assistant.",
+        model="gpt-4o-mini",
+        seed_level="standard",
+    )
+    # A benign request should run to completion
+    result = await Runner.run(agent, "What is 2 + 2?")
+    assert "4" in str(result.final_output)
 ```
 
 ## Benchmarking

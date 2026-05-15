@@ -3,14 +3,16 @@ title: "Database Guard"
 description: "Query validation for AI agents to prevent data exfiltration"
 category: "products"
 order: 2
-lastUpdated: "2026-01-23"
+lastUpdated: "2026-05-12"
 ---
 
 # Database Guard
 
 Query validation for AI agents to prevent data exfiltration.
 
-Database Guard protects databases from AI agent abuse by validating SQL queries before execution. It addresses **OWASP ASI03 (Identity and Privilege Abuse)** and prevents data exfiltration attacks.
+Database Guard protects databases from AI agent abuse by validating SQL queries before
+execution. It addresses **OWASP ASI03 (Identity and Privilege Abuse)** and prevents data
+exfiltration attacks.
 
 ## The Problem
 
@@ -26,9 +28,13 @@ Agent (compromised via prompt injection):
 ```
 
 **Impact:**
-- 23% of organizations have experienced AI agent data leaks
-- Financial data, PII, and credentials can be exfiltrated
-- Destructive operations can corrupt or destroy data
+
+- Industry surveys and AI-incident trackers report a non-trivial share of organisations
+  experiencing AI-assisted data leaks; specific rates vary by source and report year.
+- Financial data, PII, and credentials can be exfiltrated when the agent has broad
+  read permissions.
+- Destructive operations (e.g. `DROP TABLE`, `TRUNCATE`, unfiltered `DELETE`) can corrupt
+  or destroy data.
 
 ## The Solution
 

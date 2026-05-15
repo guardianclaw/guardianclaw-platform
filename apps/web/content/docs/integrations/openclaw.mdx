@@ -1,14 +1,21 @@
-﻿---
+---
 title: "OpenClaw Integration"
 description: "Security guardrails for OpenClaw agents"
 category: "integrations"
 order: 6
-lastUpdated: "2026-01-28"
+lastUpdated: "2026-05-12"
 ---
 
 # OpenClaw Integration
 
-Security guardrails for OpenClaw with real-time validation, data leak prevention, and threat detection. Designed as a copilot, not a gatekeeper.
+Security guardrails for OpenClaw with real-time validation, data leak prevention, and threat
+detection. Designed as a copilot, not a gatekeeper.
+
+The current package version is **`@guardianclaw/openclaw@3.0.0-rc.1`** — the package was
+previously published as `@guardianclaw/moltbot`. The public API (`./plugin`, `./config`,
+`./validators` subpath exports, `createGuardianClawHooks`, protection levels, hook names) is
+unchanged across the rename; consumers update only the package name and the slug. See the
+[migration guide](/docs/resources/migration) for the rename mapping.
 
 ## Installation
 

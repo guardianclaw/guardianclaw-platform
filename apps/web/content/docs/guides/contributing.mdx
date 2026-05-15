@@ -3,7 +3,7 @@ title: "Contributing"
 description: "Guide for contributing to the GuardianClaw project and making AI safety accessible to all developers"
 category: "guides"
 order: 10
-lastUpdated: "2026-01-24"
+lastUpdated: "2026-05-12"
 ---
 
 # Contributing to GuardianClaw
@@ -96,22 +96,39 @@ GCLAW_TEST_MODE=true
 ## Project Structure
 
 ```
-claw/
-├── src/guardianclaw/           # Main Python package
-│   ├── core/                   # Core module (GuardianClaw, interfaces)
-│   ├── validation/             # LayeredValidator, CLAWValidator
-│   ├── validators/             # Gate implementations
-│   ├── integrations/           # 17 framework integrations
-│   ├── safety/                 # Safety modules
-│   ├── compliance/             # Regulatory compliance
-│   ├── memory/                 # Memory integrity
-│   ├── fiduciary/              # Fiduciary AI
-│   └── database/               # Database guard
-├── tests/                      # Test suite
-├── packages/                   # JavaScript/TypeScript packages
-├── api/                        # REST API
-├── docs/                       # Documentation
-└── seeds/                      # Alignment seed files
+guardianclaw-platform/
+├── apps/
+│   ├── web/                    # Next.js frontend (Vercel)
+│   ├── api/                    # Cloudflare Workers API
+│   └── browser/                # Chrome / Firefox extension
+├── packages/                   # npm packages
+│   ├── core/                   # @guardianclaw/core
+│   ├── elizaos/                # @guardianclaw/elizaos-plugin
+│   ├── openclaw/               # @guardianclaw/openclaw (formerly moltbot)
+│   ├── voltagent/              # @guardianclaw/voltagent
+│   ├── runtime/                # Modal.com runtime (internal)
+│   └── shared/                 # Shared TS types
+├── sdk/                        # Python SDK (PyPI: guardianclaw)
+│   ├── src/guardianclaw/
+│   │   ├── core/               # ClawValidator, observer, retry, token tracker
+│   │   ├── detection/          # L1 InputValidator, L3 OutputValidator, detectors
+│   │   ├── validation/         # LayeredValidator orchestrator
+│   │   ├── validators/         # CLAW gates (gates.py, semantic.py)
+│   │   ├── integrations/       # 11 first-party adapters
+│   │   ├── safety/             # safety.humanoid (ISO/TS 15066)
+│   │   ├── compliance/         # EU AI Act / OWASP / CSA checkers
+│   │   ├── memory/             # Memory Shield v2.0
+│   │   ├── fiduciary/          # Fiduciary AI
+│   │   └── database/           # Database Guard
+│   └── tests/                  # pytest suite (2,964 passing, CI-gated)
+├── integrations/               # External-ecosystem adapters
+│   ├── jetbrains/              # JetBrains plugin (Kotlin)
+│   ├── promptfoo/              # promptfoo CLI provider
+│   └── solana-agent-kit/       # TS plugin (npm 1.0.3)
+├── seeds/                      # Alignment shields (v1, v2 × minimal/standard/full)
+├── evaluation/                 # CLAW correctness corpus (416 items × 8 classes)
+├── supabase/                   # Database migrations
+└── docs/                       # Operational notes
 ```
 
 ## Making Changes
@@ -397,21 +414,23 @@ class MyFrameworkGuard(GuardianClawIntegration):
 
 | Area | Description |
 |------|-------------|
-| Humanoid Safety | Safety protocol testing, PyBullet safety layer |
-| Benchmarking | Run on new safety benchmarks, test on Gemini/Mistral-Large |
+| Benchmark re-validation | Re-run HarmBench / SafeAgentBench / BadRobot / JailbreakBench against the v3.x SDK in wrapper mode and publish the scripts |
+| Wrapper-mode Garak generator | Build a garak generator that proxies through `CLAWValidator` + `ClawObserver` so SDK marginal lift can be measured |
+| Observer prompt refinement | Reduce the three fail-late findings from the Crescendo sweep (self-harm via fiction, dieting frame, doctor roleplay) |
 
 ### Medium Priority
 
 | Area | Description |
 |------|-------------|
 | Framework Integrations | AutoGen support, Semantic Kernel integration |
-| Documentation | More examples for robotics, video tutorials |
+| Documentation | More examples for robotics, video tutorials, translations |
 
 ### Low Priority
 
 | Area | Description |
 |------|-------------|
-| Performance | Optimize pattern matching, reduce memory footprint |
+| Performance | Optimise pattern matching, reduce memory footprint |
+| Additional language SDKs | Go, Rust, Java ports of the core validator |
 
 ## Release Process
 

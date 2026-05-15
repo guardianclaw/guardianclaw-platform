@@ -3,16 +3,18 @@ title: "Detectors API"
 description: "Pattern detection for input/output validation"
 category: "api"
 order: 4
-lastUpdated: "2026-01-23"
+lastUpdated: "2026-05-12"
 ---
 
 # Detectors API
 
-Pattern detection for input/output validation with 700+ patterns.
+Pattern detection for input / output validation, backed by 700+ patterns across 39 regex
+families. The registry is generated once and emitted to both Python (`re`) and TypeScript
+(`RegExp`); a CI job (`Pattern Sync`) enforces Py↔TS verdict parity on every PR.
 
-## Input Validator
+## L1 — InputValidator
 
-Pre-AI attack detection.
+Pre-LLM attack detection.
 
 ```python
 from guardianclaw.detection import InputValidator
@@ -24,9 +26,9 @@ if not result.safe:
     print(f"Detected: {result.issues}")
 ```
 
-## Output Validator
+## L3 — OutputValidator
 
-Post-AI heuristic checking.
+Post-LLM heuristic verification.
 
 ```python
 from guardianclaw.detection import OutputValidator
@@ -50,17 +52,20 @@ if not result.safe:
 
 ## Layered Validation
 
+The `LayeredValidator` orchestrates L1 and L3 (heuristic) and, optionally, semantic (LLM-based)
+validation:
+
 ```python
-from guardianclaw.detection import LayeredValidator
+from guardianclaw.validation import LayeredValidator
 
 validator = LayeredValidator(
     use_heuristic=True,
     use_semantic=True,
-    api_key="sk-..."
+    api_key="sk-...",
 )
 
 result = validator.validate(content)
-print(f"Layer: {result.layer}")  # heuristic or semantic
+print(f"Layer: {result.layer}")  # heuristic | semantic | both
 ```
 
 ## Configuration

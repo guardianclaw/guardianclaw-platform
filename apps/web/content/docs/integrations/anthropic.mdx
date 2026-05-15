@@ -3,7 +3,7 @@ title: "Anthropic SDK Integration"
 description: "CLAW safety validation wrappers for the Anthropic Python SDK"
 category: "integrations"
 order: 2
-lastUpdated: "2026-01-23"
+lastUpdated: "2026-05-12"
 ---
 
 # Anthropic SDK Integration
@@ -13,8 +13,12 @@ Wrappers for the official Anthropic Python SDK with CLAW safety validation.
 ## Installation
 
 ```bash
-pip install guardianclaw[anthropic]
+pip install "guardianclaw[anthropic]"
 ```
+
+Validated against `anthropic@0.97.0` with floor `>=0.40.0` on 2026-04-24. The imports
+(`Anthropic`, `AsyncAnthropic`, `anthropic.types.Message`, `MessageStreamEvent`) are stable
+across the supported range.
 
 ## Components
 

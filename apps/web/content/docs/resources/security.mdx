@@ -3,7 +3,7 @@ title: "Security"
 description: "Security practices and vulnerability reporting"
 category: "resources"
 order: 4
-lastUpdated: "2026-01-23"
+lastUpdated: "2026-05-12"
 ---
 
 # Security
@@ -41,23 +41,26 @@ We follow responsible disclosure practices:
 
 ### CLAW Protocol
 
-The CLAW (Credibility, Limits, Avoidance, Worth) protocol provides defense-in-depth:
+The CLAW (Credibility, Limits, Avoidance, Worth) protocol provides defence-in-depth:
 
 | Gate | Security Function |
 |------|-------------------|
-| Truth | Detects deception, impersonation |
-| Harm | Blocks malicious content |
-| Scope | Prevents boundary violations, prompt injection |
-| Purpose | Requires legitimate justification |
+| Credibility | Detects deception, impersonation, role / roleplay manipulation, misinformation |
+| Limits | Prevents boundary violations, instruction override, prompt extraction, filter bypass, system injection |
+| Avoidance | Blocks content that could enable physical, financial, or psychological harm |
+| Worth | Requires legitimate justification; rejects purposeless action |
+
+Jailbreak attempts surface as Credibility or Limits violations rather than as a separate
+fifth gate.
 
 ### 4-Layer Architecture
 
-| Layer | Protection |
-|-------|------------|
-| L1 Input | Pre-AI attack detection (700+ patterns) |
-| L2 Seed | Alignment via system prompt |
-| L3 Output | Post-AI heuristic checking |
-| L4 Observer | LLM-based transcript analysis |
+| Layer | Component | Protection |
+|-------|-----------|------------|
+| L1 | `InputValidator` | Pre-LLM pattern detection (700+ patterns across 39 regex families) |
+| L2 | Shield Injection | Alignment via system prompt (`seeds/v1`, `seeds/v2` × minimal / standard / full) |
+| L3 | `OutputValidator` | Post-LLM heuristic verification |
+| L4 | `ClawObserver` | LLM-based transcript review for multi-turn escalation (e.g. Crescendo) |
 
 ### Memory Protection
 
@@ -149,43 +152,58 @@ if not result.is_safe:
 
 ## Attack Detection
 
-GuardianClaw detects multiple attack vectors:
+GuardianClaw detects multiple attack vectors. The 416-item CLAW correctness corpus
+exercises every class on every PR (CI-gated **Corpus Validation** job):
 
-### Prompt Injection
+### Prompt Injection (52 corpus items)
 
-- Direct injection patterns
-- Instruction override attempts
-- Role-playing attacks
-- Context manipulation
+- Direct injection patterns (`promptinject` family)
+- Instruction override attempts (`Limits.instruction_override`)
+- Context manipulation, role-play smuggling
 
-### Jailbreak Attempts
+### Jailbreak Attempts (52 corpus items)
 
-- Multiple jailbreak detection patterns
-- DAN, GPT-4, and other known jailbreaks
-- Obfuscation detection
+- DAN-family persona injection
+- Developer-mode / authority impersonation
+- Multi-turn Crescendo escalation (covered by L4 ClawObserver)
 
-### Data Exfiltration
+### Data Exfiltration (52 corpus items)
 
-- Sensitive data patterns
-- PII detection
-- API key/credential detection
+- Sensitive-data patterns (PII, API keys, credentials)
+- OSINT-style identity stitching
+- Memory / database content exfiltration
 
-### Memory Attacks
+### Encoding & Obfuscation (52 corpus items)
 
-- Memory injection patterns
-- Context poisoning
-- Trust score manipulation
+- Base64, hex, ASCII85, Atbash, Braille, Ecoji, Morse
+- Verdict parity enforced across Python `re` and TypeScript `RegExp`
+
+### Multilingual (52 corpus items)
+
+- 9 languages × cross-class attacks
+- Calibrated against `CLAWValidator` directly
+
+### Role-Play Injection (52 corpus items)
+
+- Persona injection (Credibility gate)
+- Fiction-frame harm requests (covered by L4 ClawObserver)
+
+### Indirect Memory (52 corpus items)
+
+- Memory Shield v2.0 content validation
+- HMAC-SHA256 tamper detection on memory entries
 
 ## Compliance
 
-GuardianClaw supports compliance with:
+GuardianClaw ships modules that map to the major AI regulatory and security frameworks:
 
-- EU AI Act (Regulation 2024/1689)
-- OWASP LLM Top 10
-- OWASP Agentic Top 10 (2026)
-- CSA AI Controls Matrix
+- EU AI Act (Regulation 2024/1689) — `guardianclaw.compliance.EUAIActComplianceChecker`
+- OWASP LLM Top 10 (2025) — `guardianclaw.compliance.OWASPLLMChecker`
+- OWASP Agentic Top 10 (2026) — `guardianclaw.compliance.OWASPAgenticChecker`
+  (5/10 full coverage, 3/10 partial — see [Compliance Guide](/docs/guides/compliance))
+- CSA AI Controls Matrix — `guardianclaw.compliance.CSAAICMComplianceChecker`
 
-See the [Compliance Guide](/docs/guides/compliance) for details.
+These are SDK modules, not third-party integrations.
 
 ## Data Privacy
 

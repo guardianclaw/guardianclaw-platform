@@ -3,7 +3,7 @@ title: "Google ADK Integration"
 description: "CLAW-based safety guardrails for Google Agent Development Kit"
 category: "integrations"
 order: 3
-lastUpdated: "2026-01-23"
+lastUpdated: "2026-05-12"
 ---
 
 # Google ADK Integration
@@ -13,9 +13,13 @@ CLAW-based safety guardrails for Google ADK agents and multi-agent systems.
 ## Installation
 
 ```bash
-pip install google-adk guardianclaw
+pip install "guardianclaw[google-adk]"
 export GOOGLE_API_KEY="your-api-key"
 ```
+
+Validated against `google-adk@1.31.1` with floor `>=1.7.0` on 2026-04-24. The minimum floor is
+`1.7.0` because `google.adk.plugins.base_plugin` — required by `GuardianClawPlugin` — does not
+exist in earlier releases.
 
 ## Approaches
 

@@ -3,21 +3,27 @@ title: "Coinbase Integration"
 description: "Security integration for Coinbase AgentKit and x402 payments"
 category: "integrations"
 order: 2
-lastUpdated: "2026-01-23"
+lastUpdated: "2026-05-12"
 ---
 
 # Coinbase Integration
 
-Comprehensive security integration for Coinbase ecosystem: AgentKit guardrails and x402 payment validation.
+Comprehensive security integration for the Coinbase ecosystem: AgentKit guardrails and x402
+payment validation.
 
 ## Installation
 
 ```bash
-pip install guardianclaw coinbase-agentkit
+# AgentKit guardrails
+pip install "guardianclaw[coinbase-agentkit]"
 
-# For x402 support:
-pip install guardianclaw x402 httpx
+# x402 payment validation only (no AgentKit)
+pip install "guardianclaw[x402]"
 ```
+
+Validated against `coinbase-agentkit@0.7.4` with floor `>=0.1.0` on 2026-04-24. Imports
+(`AgentKit`, `ActionProvider`, `create_action`, `coinbase_agentkit.network.Network`) are
+stable across the 0.1 → 0.7 range.
 
 ## Features
 

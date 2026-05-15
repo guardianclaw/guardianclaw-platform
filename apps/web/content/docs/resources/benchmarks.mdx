@@ -1,87 +1,110 @@
 ---
 title: "Benchmarks"
-description: "GuardianClaw performance across safety benchmarks"
+description: "GuardianClaw validation evidence and pending re-validation"
 category: "resources"
 order: 1
-lastUpdated: "2026-01-23"
+lastUpdated: "2026-05-12"
 ---
 
 # Benchmarks
 
-GuardianClaw performance across safety benchmarks.
+GuardianClaw v3.0-rc.1 is validated today by three reproducible, CI-gated mechanisms. Public
+benchmarks (HarmBench, SafeAgentBench, BadRobot, JailbreakBench) against the v3.x SDK as a
+wrapper are being re-run; the previous lineage's per-model and per-surface tables (e.g.
+"97.6% average safety", "+48% on BadRobot") were retired pending the new pass.
 
-## Overview
+## Current Validation Mechanisms
 
-Tested across **4 benchmarks** on **6 models** with **97.6% average safety rate**.
+### 1. CLAW Correctness Corpus (CI-gated)
 
-## Results by Benchmark
+416 hand-curated attacks across 8 classes (52 each). Each item carries an `expected_verdict`
+per gate and a rationale. The harness runs on every PR via the **Corpus Validation** CI job;
+any verdict drift blocks merge.
 
-### HarmBench (LLM Text Safety)
+| Attack class | Items | Primary gates |
+|--------------|------:|---------------|
+| `prompt-injection` | 52 | Limits / Credibility |
+| `data-exfil` | 52 | Limits / Avoidance |
+| `jailbreak` | 52 | Credibility / Limits |
+| `encoding` | 52 | Limits |
+| `multilingual` | 52 | cross-class (9 languages) |
+| `instruction-override` | 52 | Limits |
+| `role-play` | 52 | Credibility |
+| `indirect-via-memory` | 52 | Memory Shield + Credibility |
+| **Total** | **416** | — |
 
-| Model | Baseline | +GuardianClaw | Improvement |
-|-------|----------|-----------|-------------|
-| GPT-4o | 83.2% | 95.4% | +12.2% |
-| Claude 3.5 | 87.1% | 97.2% | +10.1% |
-| Llama 3 70B | 72.3% | 94.6% | +22.3% |
+### 2. Pattern Registry Parity (CI-gated)
 
-### SafeAgentBench (Agent Safety)
+A single registry generates 39 regex families to Python (`re`) and TypeScript (`RegExp`). The
+**Pattern Sync** CI job replays the same fixtures against both runtimes and fails the build on
+any verdict mismatch.
 
-| Model | Baseline | +GuardianClaw | Improvement |
-|-------|----------|-----------|-------------|
-| GPT-4o | 78.4% | 97.1% | +18.7% |
-| Claude 3.5 | 81.2% | 98.3% | +17.1% |
-| Gemini 1.5 | 74.9% | 95.8% | +20.9% |
+### 3. Adversarial Sweeps (2026-05-11, free-tier)
 
-### BadRobot (Physical Safety)
+| Sweep | Target / Surrogate | Result |
+|-------|-------------------|--------|
+| Garak `promptinject.HijackHateHumans` (512 attempts) | bare `llama-3.3-70b` via Groq | **87.30% attack-success rate** against the bare target — motivates the SDK-as-wrapper layer |
+| Crescendo multi-turn (20 scenarios: 18 attacks + 2 controls) | Surrogate observer `gpt-4o-mini` | **17 detect-correctly · 3 fail-late · 0 fail-missed · 0 false-positive** |
 
-| Model | Baseline | +GuardianClaw | Improvement |
-|-------|----------|-----------|-------------|
-| GPT-4o | 51.2% | 99.1% | +47.9% |
-| Claude 3.5 | 54.8% | 99.6% | +44.8% |
+The three fail-late Crescendo cases (self-harm via fiction, dieting frame, doctor roleplay)
+block at turn N+1 instead of turn N and are queued for Observer-prompt refinement. Per-scenario
+results, invocation metadata, and transcripts are stored in `_internal/auditoria/` of the
+project repository.
 
-### JailbreakBench (All Surfaces)
+## Test Suite Coverage
 
-Average: **97%** safety rate across all models.
+| Suite | Tests | Status |
+|-------|------:|--------|
+| SDK Python (pytest, CI-gated) | 2,964 passed / 3 skipped | green |
+| Platform API + Web (vitest) | 666 | green |
+| Pattern Registry parity | 39 families | green |
+| Corpus harness | 416 items | green |
 
-## Key Insights
+## Re-validation in progress
 
-1. **Stakes Correlation**: Larger improvements as stakes increase
-   - Text: +10-22%
-   - Agents: +16-26%
-   - Robots: +48%
+Four public benchmarks are being re-run against the v3.x SDK as a wrapper layer (input
+validator + output validator + Observer) and will be published with reproduction scripts:
 
-2. **Anti-Self-Preservation**: Removing ASP drops SafeAgentBench by 6.7%
+| Benchmark | Surface | Status |
+|-----------|---------|--------|
+| HarmBench | LLM (text) | re-validation scheduled |
+| SafeAgentBench | Agent (digital) | re-validation scheduled |
+| BadRobot | Robot (physical) | re-validation scheduled |
+| JailbreakBench | Jailbreak techniques | re-validation scheduled |
 
-3. **Seed Level Impact**:
-   - Minimal: Baseline +8%
-   - Standard: Baseline +15%
-   - Full: Baseline +22%
+Ablation studies (WORTH gate, Anti-Self-Preservation, Priority Hierarchy, BenignContextDetector,
+Multi-turn detection) referred to an older SDK lineage and were retired pending the new run.
 
-## Latency
+## Running Reproducible Checks Today
 
-| Operation | Time |
-|-----------|------|
-| Heuristic validation | <10ms |
-| Semantic validation | 1-5s |
-| Memory signing | <1ms |
-| Memory verification | <1ms |
-
-## Cost
-
-| Operation | Cost |
-|-----------|------|
-| Heuristic | Free |
-| Semantic (gpt-4o-mini) | ~$0.0005/call |
-| Semantic (gpt-4o) | ~$0.002/call |
-
-## Running Your Own
+Everything currently published is reproducible from the monorepo (`guardianclaw-platform`):
 
 ```bash
-# Clone evaluation repo
-git clone https://github.com/guardianclaw/guardianclaw-evaluations
+# 1. CLAW correctness corpus (416 items × 8 classes) — CI-gated
+cd evaluation/corpus
+python run.py
 
-# Run benchmarks
-cd claw-evaluations
-pip install -r requirements.txt
-python run_benchmarks.py
+# 2. Pattern Registry Py↔TS parity (39 families) — CI-gated
+python scripts/gen_patterns.py --check
+
+# 3. Crescendo multi-turn sweep (20 scenarios)
+#    Requires LLM credentials; see _internal/API_KEYS.md (local only)
+python _internal/lab/c2-crescendo/run.py --observer groq
+python _internal/lab/c2-crescendo/run.py --observer openai \
+    --only crescendo-012,crescendo-013,crescendo-015
+
+# 4. Garak adversarial sweep (NVIDIA red-team probes)
+./_internal/lab/c1-garak/run.ps1    # PowerShell (Windows)
+./_internal/lab/c1-garak/run.sh     # bash (Linux / macOS)
 ```
+
+## Latency reference
+
+Order-of-magnitude figures for the v3.x heuristic stack on a single modern CPU core:
+
+| Operation | Order of magnitude |
+|-----------|--------------------|
+| L1 + L3 heuristic validation | sub-10 ms |
+| L4 ClawObserver call (LLM-based) | 1–5 s (provider round-trip) |
+| Memory Shield signing | sub-1 ms |
+| Memory Shield verification | sub-1 ms |

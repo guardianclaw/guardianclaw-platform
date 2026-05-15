@@ -3,7 +3,7 @@ title: "OpenAI Agents SDK Integration"
 description: "Semantic LLM-based guardrails for OpenAI Agents SDK with CLAW validation"
 category: "integrations"
 order: 1
-lastUpdated: "2026-01-23"
+lastUpdated: "2026-05-12"
 ---
 
 # OpenAI Agents SDK Integration
@@ -15,9 +15,12 @@ Semantic LLM-based guardrails for the OpenAI Agents SDK implementing CLAW valida
 ## Installation
 
 ```bash
-pip install guardianclaw openai-agents
+pip install "guardianclaw[openai-agents]"
 export OPENAI_API_KEY="your-key"
 ```
+
+Validated against `openai-agents@0.14.5` with floor `>=0.6.0` on 2026-04-24. The adapter is
+duck-typed against the upstream SDK, so the 0.6 → 0.14 window is absorbed without code changes.
 
 ## Security Features
 
@@ -96,16 +99,21 @@ GuardianClawGuardrailConfig(
 ```python
 CLAWValidationOutput(
     is_safe=bool,
-    truth_passes=bool,
-    harm_passes=bool,
-    scope_passes=bool,
-    purpose_passes=bool,
+    truth_passes=bool,        # CLAW: Credibility
+    harm_passes=bool,         # CLAW: Avoidance
+    scope_passes=bool,        # CLAW: Limits
+    purpose_passes=bool,      # CLAW: Worth
     violated_gate=str | None,
     reasoning=str,
-    risk_level=str,  # low, medium, high, critical
+    risk_level=str,           # low / medium / high / critical
     injection_attempt_detected=bool,
 )
 ```
+
+The four `*_passes` field names retain their THSP-era spelling on the Pydantic model for
+backward compatibility within the v3.x release line. The public mapping that the guardrails
+emit (`gates={"credibility", "limits", "avoidance", "worth"}`) follows the canonical CLAW
+naming.
 
 ## Performance
 
