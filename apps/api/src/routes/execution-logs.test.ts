@@ -5,11 +5,31 @@
  * Tests pagination, filtering, validation, and authorization.
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { Hono } from 'hono'
 import { executionLogsRoutes } from './execution-logs'
 import { testWallets, createAgent, generateUUID } from '../test/fixtures'
 import { generateTestToken } from '../test/helpers'
+
+// Capture the streamSSE callback so SSE handler tests can drive the loop
+// directly with fake timers — the live HTTP response is short-circuited and
+// asserted via the writeSSE / sleep calls on the captured stream stub.
+type CapturedStream = {
+  writeSSE: ReturnType<typeof vi.fn>
+  sleep: ReturnType<typeof vi.fn>
+}
+type SSEHandler = (stream: CapturedStream) => Promise<void>
+let capturedSSEHandler: SSEHandler | null = null
+
+vi.mock('hono/streaming', () => ({
+  streamSSE: vi.fn((_c: unknown, cb: SSEHandler) => {
+    capturedSSEHandler = cb
+    return new Response('', {
+      status: 200,
+      headers: { 'Content-Type': 'text/event-stream' },
+    })
+  }),
+}))
 
 // ============================================
 // MOCK STATE
@@ -37,7 +57,7 @@ function resetMockState() {
 // Build chainable query mock
 function createQueryChain(getResult: () => { data?: unknown; error?: unknown }) {
   const chain: Record<string, unknown> = {}
-  const methods = ['select', 'eq', 'neq', 'single', 'order', 'gte', 'lt', 'limit']
+  const methods = ['select', 'eq', 'neq', 'single', 'order', 'gt', 'gte', 'lt', 'limit']
   for (const method of methods) {
     chain[method] = vi.fn(() => chain)
   }
@@ -571,6 +591,294 @@ describe('Execution Logs Routes', () => {
       })
 
       expect(res.status).toBe(404)
+    })
+  })
+
+  // ==========================================
+  // GET /agents/:agentId/executions/stream  (SSE)
+  // ==========================================
+
+  describe('GET /agents/:agentId/executions/stream', () => {
+    // Stream max-duration in the handler is 5 minutes. Tests use fake timers
+    // so the polling loop can race through that window in milliseconds while
+    // each iteration's mocked query resolves immediately.
+    const FIVE_MINUTES_MS = 5 * 60 * 1000
+    const POLL_INTERVAL_MS = 2_000
+    const HEARTBEAT_INTERVAL_MS = 30_000
+    const JWT_REFRESH_WINDOW_MS = 50_000
+
+    let consoleErrorSpy: ReturnType<typeof vi.spyOn>
+
+    /**
+     * Build a stream stub whose `sleep(ms)` advances vitest's fake-timer
+     * clock by `ms`. After `iterationsBeforeExit` polling cycles, the next
+     * sleep call jumps the clock past the 5-minute max-duration so the
+     * handler exits cleanly. Without this, the loop would run for the full
+     * 150 iterations and the test would assert against a long writeSSE
+     * history that masks the case under test.
+     */
+    function makeStream(iterationsBeforeExit: number): CapturedStream {
+      let iter = 0
+      const sleep = vi.fn(async (ms: number) => {
+        iter += 1
+        if (iter >= iterationsBeforeExit) {
+          vi.advanceTimersByTime(FIVE_MINUTES_MS + 1)
+        } else {
+          vi.advanceTimersByTime(ms)
+        }
+      })
+      const writeSSE = vi.fn(async () => undefined)
+      return { writeSSE, sleep }
+    }
+
+    /**
+     * Trigger the route — the streamSSE mock captures the polling handler
+     * without actually wiring the response stream. The returned object lets
+     * tests run that handler with a custom fake stream.
+     */
+    async function triggerStream(agentId: string, extraHeaders: Record<string, string> = {}) {
+      capturedSSEHandler = null
+      const res = await app.request(`/agents/${agentId}/executions/stream`, {
+        headers: { Authorization: `Bearer ${token}`, ...extraHeaders },
+      })
+      return { res, handler: capturedSSEHandler }
+    }
+
+    beforeEach(() => {
+      capturedSSEHandler = null
+      consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    })
+
+    afterEach(() => {
+      vi.useRealTimers()
+      consoleErrorSpy.mockRestore()
+    })
+
+    it('returns 400 for an invalid agent UUID without invoking the stream', async () => {
+      const { res, handler } = await triggerStream('not-a-uuid')
+      expect(res.status).toBe(400)
+      expect(handler).toBeNull()
+    })
+
+    it('returns 404 when the agent is not owned (RLS denial) without invoking the stream', async () => {
+      mockState.agentResult = { data: null, error: { code: 'PGRST116' } }
+      const { res, handler } = await triggerStream(generateUUID())
+      expect(res.status).toBe(404)
+      expect(handler).toBeNull()
+    })
+
+    it('emits each new log as an SSE execution event and closes after the timeout', async () => {
+      vi.useFakeTimers()
+      vi.setSystemTime(new Date('2026-05-15T12:00:00Z'))
+
+      const agent = createMockAgent()
+      const logs = [createMockLog(), createMockLog(), createMockLog()]
+      mockState.agentResult = { data: agent, error: null }
+      mockState.logsResult = { data: logs, error: null }
+
+      const { res, handler } = await triggerStream(agent.id as string)
+      expect(res.status).toBe(200)
+      expect(handler).not.toBeNull()
+
+      const stream = makeStream(1)
+      await handler!(stream)
+
+      // Three execution events fired, each carrying the log id and a
+      // JSON-encoded payload mirroring the mocked log shape.
+      const executionCalls = stream.writeSSE.mock.calls.filter(
+        ([msg]: [{ event?: string }]) => msg.event === 'execution'
+      )
+      expect(executionCalls).toHaveLength(3)
+      for (let i = 0; i < 3; i++) {
+        const [msg] = executionCalls[i]
+        const log = logs[i] as Record<string, unknown>
+        expect(msg).toMatchObject({ id: log.id, event: 'execution' })
+        expect(JSON.parse(msg.data as string)).toMatchObject({
+          id: log.id,
+          event_source: log.event_source,
+          status: log.status,
+        })
+      }
+
+      // Loop terminates with a close event marking the timeout.
+      const closeCalls = stream.writeSSE.mock.calls.filter(
+        ([msg]: [{ event?: string }]) => msg.event === 'close'
+      )
+      expect(closeCalls).toHaveLength(1)
+      const closePayload = JSON.parse(closeCalls[0][0].data as string)
+      expect(closePayload).toMatchObject({ reason: 'timeout', reconnect: true })
+    })
+
+    it('emits a heartbeat once 30 seconds have elapsed without new logs', async () => {
+      vi.useFakeTimers()
+      vi.setSystemTime(new Date('2026-05-15T12:00:00Z'))
+
+      const agent = createMockAgent()
+      mockState.agentResult = { data: agent, error: null }
+      mockState.logsResult = { data: [], error: null }
+
+      const { handler } = await triggerStream(agent.id as string)
+      expect(handler).not.toBeNull()
+
+      // Sleep advances 31s on the first call so the heartbeat condition
+      // (now - lastHeartbeat >= 30000) fires on the second iteration.
+      let iter = 0
+      const sleep = vi.fn(async () => {
+        iter += 1
+        if (iter === 1) {
+          vi.advanceTimersByTime(HEARTBEAT_INTERVAL_MS + 1_000)
+        } else {
+          vi.advanceTimersByTime(FIVE_MINUTES_MS + 1)
+        }
+      })
+      const writeSSE = vi.fn(async () => undefined)
+      await handler!({ writeSSE, sleep })
+
+      const heartbeatCalls = writeSSE.mock.calls.filter(
+        ([msg]: [{ event?: string }]) => msg.event === 'heartbeat'
+      )
+      expect(heartbeatCalls.length).toBeGreaterThanOrEqual(1)
+      const payload = JSON.parse(heartbeatCalls[0][0].data as string)
+      expect(payload).toHaveProperty('timestamp')
+      expect(typeof payload.timestamp).toBe('string')
+    })
+
+    it('honours Last-Event-ID by looking up the prior log timestamp before streaming', async () => {
+      vi.useFakeTimers()
+      vi.setSystemTime(new Date('2026-05-15T12:00:00Z'))
+
+      const agent = createMockAgent()
+      const lastLog = createMockLog({ created_at: '2026-05-15T11:58:00.000Z' })
+      mockState.agentResult = { data: agent, error: null }
+      mockState.singleLogResult = { data: { created_at: lastLog.created_at }, error: null }
+      mockState.logsResult = { data: [], error: null }
+
+      const { res, handler } = await triggerStream(agent.id as string, {
+        'Last-Event-ID': lastLog.id as string,
+      })
+      expect(res.status).toBe(200)
+      expect(handler).not.toBeNull()
+
+      // The pre-stream lookup is the visible side effect: rpc / from('execution_logs')
+      // .select('created_at').eq('id', lastEventId).single() is invoked.
+      const executionLogsLookup = mockSupabase.from.mock.calls.filter(
+        ([table]) => table === 'execution_logs'
+      )
+      expect(executionLogsLookup.length).toBeGreaterThanOrEqual(1)
+
+      // Running the handler still completes cleanly; the reconnection path
+      // does not change the writeSSE close contract.
+      const stream = makeStream(1)
+      await handler!(stream)
+      const closeCalls = stream.writeSSE.mock.calls.filter(
+        ([msg]: [{ event?: string }]) => msg.event === 'close'
+      )
+      expect(closeCalls).toHaveLength(1)
+    })
+
+    it('re-mints the user client once the polling loop crosses the JWT refresh window', async () => {
+      vi.useFakeTimers()
+      vi.setSystemTime(new Date('2026-05-15T12:00:00Z'))
+
+      const agent = createMockAgent()
+      mockState.agentResult = { data: agent, error: null }
+      mockState.logsResult = { data: [], error: null }
+
+      const { createClient } = await import('@supabase/supabase-js')
+      const createClientMock = vi.mocked(createClient)
+      // Baseline: the route handler already called createClient for the
+      // ownership check + the initial userClient mint before streamSSE.
+      const baselineCalls = createClientMock.mock.calls.length
+
+      const { handler } = await triggerStream(agent.id as string)
+      expect(handler).not.toBeNull()
+
+      // Walk the loop in chunks so Date.now() crosses the 50s refresh
+      // boundary on the second iteration. getRefreshableUserClient should
+      // then mint a fresh client before the third poll's query.
+      let iter = 0
+      const sleep = vi.fn(async () => {
+        iter += 1
+        if (iter === 1) {
+          vi.advanceTimersByTime(JWT_REFRESH_WINDOW_MS + 1_000)
+        } else if (iter === 2) {
+          vi.advanceTimersByTime(POLL_INTERVAL_MS)
+        } else {
+          vi.advanceTimersByTime(FIVE_MINUTES_MS + 1)
+        }
+      })
+      const writeSSE = vi.fn(async () => undefined)
+      await handler!({ writeSSE, sleep })
+
+      // At least one additional createClient call inside the loop beyond the
+      // baseline => a refresh happened. Without the wrapper the count would
+      // stay flat (single mint per handler entry).
+      const inLoopMints = createClientMock.mock.calls.length - baselineCalls
+      expect(inLoopMints).toBeGreaterThanOrEqual(1)
+    })
+
+    it('closes with a timeout payload once the 5-minute window elapses', async () => {
+      vi.useFakeTimers()
+      vi.setSystemTime(new Date('2026-05-15T12:00:00Z'))
+
+      const agent = createMockAgent()
+      mockState.agentResult = { data: agent, error: null }
+      mockState.logsResult = { data: [], error: null }
+
+      const { handler } = await triggerStream(agent.id as string)
+      expect(handler).not.toBeNull()
+
+      // First sleep advances 3 minutes; second advances another 3 — the
+      // second iteration's while-condition check exits the loop.
+      let iter = 0
+      const sleep = vi.fn(async () => {
+        iter += 1
+        vi.advanceTimersByTime(3 * 60 * 1000)
+      })
+      const writeSSE = vi.fn(async () => undefined)
+      await handler!({ writeSSE, sleep })
+
+      const closeCalls = writeSSE.mock.calls.filter(
+        ([msg]: [{ event?: string }]) => msg.event === 'close'
+      )
+      expect(closeCalls).toHaveLength(1)
+      const payload = JSON.parse(closeCalls[0][0].data as string)
+      expect(payload).toEqual({ reason: 'timeout', reconnect: true })
+      // The loop body ran at least once before timing out.
+      expect(iter).toBeGreaterThanOrEqual(1)
+    })
+
+    it('logs and continues when the execution_logs query returns an error', async () => {
+      vi.useFakeTimers()
+      vi.setSystemTime(new Date('2026-05-15T12:00:00Z'))
+
+      const agent = createMockAgent()
+      mockState.agentResult = { data: agent, error: null }
+      mockState.logsResult = { data: null, error: { message: 'rls denied' } }
+
+      const { handler } = await triggerStream(agent.id as string)
+      expect(handler).not.toBeNull()
+
+      const stream = makeStream(1)
+      await handler!(stream)
+
+      // The error path is meant to be visible but non-fatal: console.error
+      // fires, the loop keeps going to the next iteration, and the close
+      // event still fires when the window elapses.
+      expect(consoleErrorSpy).toHaveBeenCalled()
+      const errorMessages = consoleErrorSpy.mock.calls.map((args) => String(args[0]))
+      expect(errorMessages.some((m) => m.includes('SSE: Failed to fetch logs'))).toBe(true)
+
+      const closeCalls = stream.writeSSE.mock.calls.filter(
+        ([msg]: [{ event?: string }]) => msg.event === 'close'
+      )
+      expect(closeCalls).toHaveLength(1)
+
+      // No execution events were emitted because the query failed.
+      const executionCalls = stream.writeSSE.mock.calls.filter(
+        ([msg]: [{ event?: string }]) => msg.event === 'execution'
+      )
+      expect(executionCalls).toHaveLength(0)
     })
   })
 })
