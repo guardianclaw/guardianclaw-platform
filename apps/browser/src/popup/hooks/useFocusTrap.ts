@@ -50,7 +50,7 @@ interface UseFocusTrapOptions {
  */
 export function useFocusTrap<T extends HTMLElement = HTMLDivElement>(
   options: UseFocusTrapOptions
-): React.RefObject<T> {
+): React.RefObject<T | null> {
   const { isActive, onEscape, restoreFocus = true, initialFocus } = options;
 
   const containerRef = useRef<T>(null);
