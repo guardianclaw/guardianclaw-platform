@@ -30,7 +30,10 @@ from json import dumps
 from threading import Lock
 from typing import Any, Callable
 
+from .audit_sink import AuditSink, build_audit_record
 from .config import GuardianClawX402Config, get_default_config
+from .drainer_db import DrainerLookup
+from .simulation import SimulationGate, SimulationProvider
 from .types import (
     PaymentAuditEntry,
     PaymentDecision,
@@ -79,6 +82,10 @@ class GuardianClawX402Middleware:
         on_payment_blocked: Callable[[PaymentValidationResult], None] | None = None,
         on_payment_approved: Callable[[PaymentValidationResult], None] | None = None,
         on_confirmation_required: Callable[[PaymentValidationResult], bool] | None = None,
+        drainer_lookup: DrainerLookup | None = None,
+        audit_sink: AuditSink | None = None,
+        agent_id: str | None = None,
+        simulation_provider: SimulationProvider | None = None,
     ) -> None:
         """Initialize the middleware.
 
@@ -88,9 +95,34 @@ class GuardianClawX402Middleware:
             on_payment_approved: Callback when a payment is approved
             on_confirmation_required: Callback to get user confirmation.
                 Should return True if user confirms, False otherwise.
+            drainer_lookup: Optional deterministic drainer-intel lookup
+                (ClawPay Sprint 1). When provided, AvoidanceGate cites
+                specific feed entries on blocks instead of falling back to
+                the static blocklist alone.
+            audit_sink: Optional sink that receives a structured AuditRecord
+                after every validate_payment() call (ClawPay Sprint 2 Phase F).
+                Failures inside the sink are logged and swallowed — they
+                must not propagate up and block the payment flow.
+            agent_id: Optional ID of the calling agent, attached to every
+                audit record. Useful when one process drives many agents.
+            simulation_provider: Optional pre-flight simulation provider
+                (ClawPay Sprint 4). When supplied, the middleware runs the
+                provider BEFORE the four CLAW gates and pipes the result
+                through ``context['simulation_result']``. WOULD_FAIL and
+                SUSPICIOUS_* outcomes are turned into Credibility / Avoidance
+                issues respectively. Fail-safe: provider errors never block.
         """
         self.config = config or get_default_config("standard")
-        self.validator = CLAWPaymentValidator()
+        simulation_gate = (
+            SimulationGate(simulation_provider) if simulation_provider is not None else None
+        )
+        self.validator = CLAWPaymentValidator(
+            drainer_lookup=drainer_lookup,
+            simulation_gate=simulation_gate,
+        )
+        self.simulation_provider = simulation_provider
+        self.audit_sink = audit_sink
+        self.agent_id = agent_id
 
         # Callbacks
         self._on_blocked = on_payment_blocked
@@ -173,6 +205,21 @@ class GuardianClawX402Middleware:
                 payment_requirements=payment_requirements,
                 result=result,
             )
+
+        # Emit to the persistent audit sink (Sprint 2 Phase F). Best-effort —
+        # any exception here is logged and swallowed; payment flow proceeds.
+        if self.audit_sink is not None:
+            try:
+                record = build_audit_record(
+                    wallet_address=wallet_address,
+                    endpoint=endpoint,
+                    payment_requirements=payment_requirements,
+                    result=result,
+                    agent_id=self.agent_id,
+                )
+                self.audit_sink.emit(record)
+            except Exception as exc:  # pragma: no cover — defensive
+                logger.warning("Audit sink emit failed: %s", exc)
 
         return result
 

@@ -13,6 +13,107 @@
 
 export const blogPosts: BlogPost[] = [
   {
+    slug: 'clawpay-beta-launch',
+    title: 'Introducing ClawPay (beta) — Decision Firewall for AI Agent Payments',
+    excerpt:
+      'After six engineering sprints, ClawPay is opening to a closed beta. Four CLAW gates, drainer-intel lookups, on-chain simulation, and outcome-based billing — all behind one SDK that protects x402 and the Stripe Agent Toolkit equally.',
+    date: '2026-05-21',
+    author: 'GuardianClaw Team',
+    category: 'announcement',
+    readTime: '6 min',
+    featured: true,
+    content: `
+# Introducing ClawPay (beta)
+
+In Q1 2026, public reports tallied over **$600M lost in crypto hacks** —
+many of them autonomous agents routed into drainer contracts before
+any human reviewed the transaction. The same quarter Coinbase x402
+crossed **$600M in annualized volume** and Stripe shipped its Agent
+Toolkit. Machine-to-machine payments are not theoretical anymore; they
+are happening, at scale, with very little between the agent and the
+chain.
+
+Today we're opening **ClawPay** — the first commercial product on top
+of the GuardianClaw framework — to a **closed beta**.
+
+## What it does
+
+ClawPay is the **decision firewall** that sits between an AI agent and
+the payment it's about to make. Every payment passes through four CLAW
+gates before broadcast:
+
+- **Credibility** — is the request well-formed? Currency, contract,
+  amount, endpoint, idempotency key.
+- **Avoidance** — could it cause harm? Drainer-intel lookup (Blowfish /
+  GoPlus / ScamSniffer / custom feeds) plus your own blocklists.
+- **Limits** — is it within your spending caps? Deterministic USD math
+  over rolling windows.
+- **Worth** — does it have a stated purpose? Required for money-moving
+  intents above your threshold.
+
+A fifth, optional layer runs **pre-flight on-chain simulation** through
+Helius (Solana) or Tenderly (EVM) and catches what wallet-level
+simulation can't: bit-flip drainers like \`aqua\` and \`vanish\`,
+ownership-reassignment attacks, simulated outflows that exceed the
+advertised payment. The Avoidance gate blocks; the audit trail cites
+the exact discrepancy.
+
+## What's in the beta
+
+| Piece | Status |
+|---|---|
+| Python SDK (\`guardianclaw[x402]\`) + npm \`@guardianclaw/stripe-agent-toolkit\` | shipping |
+| Four CLAW gates, drainer-intel lookup, simulation gate | shipping |
+| Dashboard: spending limits, audit log, alerts, billing | shipping |
+| Outcome-based billing (0.5% of blocked, $99/agent/mo Pro) | shipping |
+| Stripe invoicing + webhook reconciliation | shipping |
+| Onboarding wizard + status page + public case-study export | shipping |
+| HarmBench / SafeAgentBench re-validation against v3.x | in flight |
+| Closed-beta cohort + paid design partners | this sprint |
+
+## How outcomes line up with pricing
+
+The pitch is simple: **if we don't save you money, we don't charge a
+fee.** Pro at $99/agent/month plus 0.5% of blocked-value, with
+1M validations included. A representative beta partner that processed
+1,000 payments and had ClawPay block $12,000 of suspicious outflow:
+
+- Subscription: $99
+- Outcome fee: $12,000 × 0.5% = $60
+- **Total: $159 against $12,000 you didn't lose.**
+
+No outcome fee in the month we don't block anything.
+
+## What we're not promising
+
+Tier-1 means saying the parts that don't work out loud:
+
+- **The drainer feed is not exhaustive.** Public blacklists cover a
+  meaningful fraction of malicious addresses, not all of them. ClawPay
+  uses drainer hits as **one signal of four**.
+- **L1 keyword detection is a signal, not a decision.** Our May 2026
+  calibration audit confirmed that classifier-based safety alone is
+  Pareto-dominated on adversarial benchmarks. The Avoidance gate uses
+  structural rules (drainer DB lookup, simulation, limits), not
+  classifier scores.
+- **The simulator can be wrong.** We re-simulate against trusted RPCs;
+  attackers that find a way to make the simulator-time state diverge
+  from broadcast-time state can still slip through. We document this
+  failure mode in the docs and the audit log shows the exact decision
+  basis.
+
+## Joining the beta
+
+Reach out via [contact@guardianclaw.org](mailto:contact@guardianclaw.org).
+Invite codes are scoped to design partners we can support directly during
+the beta period. The whole pipeline — SDK, dashboard, billing, invoicing,
+status page, audit export — is live behind invite-only access.
+
+We're building this for AI agents that move money. If that's the
+problem you're solving, we want to talk.
+`,
+  },
+  {
     slug: 'integrate-claw-in-5-minutes',
     title: 'Integrate GuardianClaw in 5 Minutes: A Quick Start Guide',
     excerpt:

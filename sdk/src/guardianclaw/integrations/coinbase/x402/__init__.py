@@ -107,6 +107,40 @@ from .agentkit_provider import (
     claw_x402_action_provider,
 )
 
+# Drainer intel lookup (ClawPay Sprint 1)
+from .drainer_db import (
+    DrainerEntry,
+    DrainerKind,
+    DrainerLookup,
+    DrainerMatch,
+    DrainerSeverity,
+    DrainerSource,
+    InMemoryDrainerSource,
+    SupabaseDrainerSource,
+)
+
+# Audit sink (ClawPay Sprint 2 Phase F)
+from .audit_sink import (
+    AuditRecord,
+    AuditSink,
+    InMemoryAuditSink,
+    SupabaseAuditSink,
+    build_audit_record,
+)
+
+# Pre-flight simulation (ClawPay Sprint 4)
+from .simulation import (
+    BalanceChange,
+    HeliusSimulationProvider,
+    InMemorySimulationProvider,
+    OwnershipChange,
+    SimulationGate,
+    SimulationProvider,
+    SimulationResult,
+    SimulationStatus,
+    TenderlySimulationProvider,
+)
+
 __all__ = [
     # Configuration
     "GuardianClawX402Config",
@@ -149,4 +183,29 @@ __all__ = [
     # AgentKit
     "GuardianClawX402ActionProvider",
     "claw_x402_action_provider",
+    # Drainer intel
+    "DrainerKind",
+    "DrainerSeverity",
+    "DrainerEntry",
+    "DrainerMatch",
+    "DrainerSource",
+    "InMemoryDrainerSource",
+    "SupabaseDrainerSource",
+    "DrainerLookup",
+    # Audit sink
+    "AuditRecord",
+    "AuditSink",
+    "InMemoryAuditSink",
+    "SupabaseAuditSink",
+    "build_audit_record",
+    # Simulation (Sprint 4)
+    "SimulationStatus",
+    "SimulationResult",
+    "SimulationProvider",
+    "SimulationGate",
+    "InMemorySimulationProvider",
+    "HeliusSimulationProvider",
+    "TenderlySimulationProvider",
+    "BalanceChange",
+    "OwnershipChange",
 ]

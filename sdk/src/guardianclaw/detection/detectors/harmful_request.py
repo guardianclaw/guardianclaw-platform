@@ -61,6 +61,13 @@ class HarmfulRequestConfig:
     # Boost for multiple categories detected
     multi_category_boost: float = 0.15
 
+    # Action-verb + category boost only applies when there is at least one
+    # high-precision signal (pattern match or precision-tier-1 keyword). This
+    # avoids giving a free +0.15 to benign prompts that happen to combine a
+    # common verb ("explain", "create", "write") with an ambiguous category
+    # keyword. Set False to restore pre-2026-05-19 behavior.
+    require_strong_signal_for_action_boost: bool = True
+
 
 # =============================================================================
 # HARMFUL CONTENT PATTERNS
@@ -158,12 +165,18 @@ HARM_CATEGORIES: Dict[str, Set[str]] = {
     },
     "illegal_activities": {
         "illegal", "illegally", "unlawful", "crime", "criminal",
-        "drugs", "narcotics", "cocaine", "heroin", "meth",
+        "drugs", "narcotics", "cocaine", "heroin",
+        # "meth" + common compounds. "meth" alone is rarely used outside the
+        # drug context, but with word-boundary matching it no longer catches
+        # "methamphetamine" — keep both.
+        "meth", "methamphetamine", "crystal meth",
+        "fentanyl", "opioid", "opioids",
         "smuggle", "smuggling", "traffic", "trafficking",
         "evade", "evasion", "tax evasion", "money laundering",
         # Portuguese
         "ilegal", "ilegalmente", "crime", "criminoso",
         "drogas", "narcóticos", "contrabando", "tráfico",
+        "metanfetamina",
     },
     "dangerous_instructions": {
         "how to make", "how to create", "how to build",
@@ -280,6 +293,74 @@ HARMFUL_PATTERNS: List[Tuple[str, re.Pattern, float]] = [
 ]
 
 
+# =============================================================================
+# Keyword precision tiers
+# =============================================================================
+#
+# Keywords are tagged by how much information they carry on their own.
+#   T1 (high precision)  — the term alone is strong evidence of harm intent
+#                          (e.g. "ransomware", "anthrax", "doxxing"). Triggers
+#                          action-verb boost when combined.
+#   T2 (medium precision)— harm-adjacent but routinely benign in tutorials,
+#                          fiction, security education ("malware", "phishing",
+#                          "exploit"). Counts as a category hit, but does NOT
+#                          on its own grant the action-verb boost.
+#
+# Anything not listed defaults to T2.
+
+_TIER1_KEYWORDS: Set[str] = {
+    # malware_hacking — terms used essentially only in offensive contexts
+    "ransomware", "rootkit", "botnet", "ddos", "keylogger", "zero-day", "0-day",
+    # physical_harm
+    "bomb", "bombs", "explosive", "explosives", "explosivo", "assassinate",
+    "assassinar", "murder", "murdering", "poison", "veneno", "torturar",
+    "torture", "torturing",
+    # economic_harm
+    "extort", "extortion", "extorquir", "blackmail", "blackmailing",
+    "chantagear", "embezzle", "embezzlement", "launder", "laundering",
+    "money laundering", "lavagem de dinheiro", "counterfeit", "counterfeiting",
+    "falsificar", "forgery",
+    # privacy_violation
+    "dox", "doxx", "doxxing",
+    # illegal_activities
+    "cocaine", "heroin", "narcotics", "narcóticos", "smuggle", "smuggling",
+    "contrabando", "tax evasion",
+    # sexual_content
+    "pornography", "pornographic", "pornografia", "pornográfico", "xxx", "nsfw",
+    # fraud_deception
+    "deepfake", "phishing", "impersonate", "impersonating", "impersonation",
+    # disinformation
+    "disinformation", "desinformação",
+    # harassment_discrimination
+    "defamatory", "defamation", "difamatório", "hate speech", "discurso de ódio",
+}
+
+
+def _compile_keyword_regex(keyword: str) -> re.Pattern:
+    """Word-boundary regex for a keyword (handles single words and phrases).
+
+    Phrases collapse internal whitespace into `\\s+` so the regex matches
+    "step  by  step" or "step\tby\tstep" the same as "step by step".
+    """
+    if " " in keyword:
+        # Phrase: escape, then relax single spaces into flexible whitespace.
+        escaped = re.escape(keyword).replace(r"\ ", r"\s+")
+        return re.compile(rf"\b{escaped}\b", re.IGNORECASE | re.UNICODE)
+    return re.compile(rf"\b{re.escape(keyword)}\b", re.IGNORECASE | re.UNICODE)
+
+
+# Pre-compile every keyword once at import. Each category maps to a list of
+# (keyword, tier, compiled_regex) tuples so detection is a single pass over
+# the text per regex without rebuilding patterns on each call.
+_CATEGORY_PATTERNS: Dict[str, List[Tuple[str, str, re.Pattern]]] = {
+    category: [
+        (kw, ("T1" if kw in _TIER1_KEYWORDS else "T2"), _compile_keyword_regex(kw))
+        for kw in keywords
+    ]
+    for category, keywords in HARM_CATEGORIES.items()
+}
+
+
 class HarmfulRequestDetector(BaseDetector):
     """
     Detects direct requests for harmful content.
@@ -351,30 +432,52 @@ class HarmfulRequestDetector(BaseDetector):
         if not text or not text.strip():
             return DetectionResult.nothing_detected(self.name, self.version)
 
-        text_lower = text.lower()
-        words = set(text_lower.split())
+        # Tokenize once with unicode-aware word boundaries (handles accents).
+        words = {m.group(0).lower() for m in re.finditer(r"[\w]+", text, re.UNICODE)}
 
         # Collect signals
         signals: List[Tuple[str, float]] = []
         categories_detected: Set[str] = set()
         matched_patterns: List[str] = []
         evidence_parts: List[str] = []
+        # Track precision tiers of category hits so the action-verb boost can
+        # require at least one strong (T1) signal before firing.
+        category_tiers: Dict[str, str] = {}
 
-        # 1. Check for action verbs
+        # 1. Check for action verbs (whole-word match via tokenization above)
         action_verbs_found = words & ACTION_VERBS
         if action_verbs_found:
             signals.append(("action_verb", self._harm_config.action_verb_weight))
 
-        # 2. Check for harmful category keywords
-        for category, keywords in HARM_CATEGORIES.items():
-            for keyword in keywords:
-                if keyword.lower() in text_lower:
-                    categories_detected.add(category)
-                    signals.append(
-                        (f"category:{category}", self._harm_config.category_keyword_weight)
-                    )
-                    evidence_parts.append(f"{category}:{keyword}")
-                    break  # One keyword per category is enough
+        # 2. Check for harmful category keywords via pre-compiled word-boundary
+        #    regex. Substring matching (`"con" in "construct"`) is no longer
+        #    used — that produced massive false positives on benign tutorial
+        #    prompts (validated against OR-Bench-Hard 2026-05-19).
+        #
+        #    We scan every keyword in the category (no early break) so a T1
+        #    hit always beats a T2 hit encountered first — set iteration is
+        #    order-unstable and a T2 keyword winning the race would silently
+        #    suppress the action-verb boost gate even when a stronger T1
+        #    keyword is also present.
+        for category, items in _CATEGORY_PATTERNS.items():
+            best_evidence: tuple[str, str] | None = None  # (keyword, tier)
+            for keyword, tier, pattern in items:
+                if not pattern.search(text):
+                    continue
+                if best_evidence is None:
+                    best_evidence = (keyword, tier)
+                elif tier == "T1" and best_evidence[1] != "T1":
+                    best_evidence = (keyword, tier)
+                    break  # T1 found, can stop scanning this category
+            if best_evidence is None:
+                continue
+            keyword, tier = best_evidence
+            categories_detected.add(category)
+            category_tiers[category] = tier
+            signals.append(
+                (f"category:{category}", self._harm_config.category_keyword_weight)
+            )
+            evidence_parts.append(f"{category}:{keyword}")
 
         # 3. Check compiled patterns
         for pattern_name, pattern, weight in self._compiled_patterns:
@@ -390,8 +493,18 @@ class HarmfulRequestDetector(BaseDetector):
         max_signal = max(s[1] for s in signals)
         confidence = max_signal
 
-        # Boost for action verb + harmful category combination
-        if action_verbs_found and categories_detected:
+        # Boost for action verb + harmful category combination.
+        # Gated on the presence of at least one strong signal (pattern match
+        # or T1 keyword) to avoid handing out +0.15 to benign prompts that
+        # combine a common verb with an ambiguous category keyword.
+        has_strong_signal = bool(matched_patterns) or any(
+            t == "T1" for t in category_tiers.values()
+        )
+        gate_boost = (
+            (not self._harm_config.require_strong_signal_for_action_boost)
+            or has_strong_signal
+        )
+        if action_verbs_found and categories_detected and gate_boost:
             confidence = min(1.0, confidence + 0.15)
 
         # Boost for multiple categories

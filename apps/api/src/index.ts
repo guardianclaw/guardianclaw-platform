@@ -26,6 +26,17 @@ import { agentExportRoutes } from './routes/agent-export'
 import { complianceRoutes } from './routes/compliance'
 import { contactRoutes } from './routes/contact'
 import { socialDeliveriesRoutes } from './routes/social-deliveries'
+import { clawpaySpendingLimitsRoutes } from './routes/clawpay-spending-limits'
+import { clawpayAuditEventsRoutes } from './routes/clawpay-audit-events'
+import { clawpayAlertsRoutes } from './routes/clawpay-alerts'
+import { clawpayBillingRoutes } from './routes/clawpay-billing'
+import {
+  clawpayBillingStripeRoutes,
+  clawpayBillingStripeWebhookRoutes,
+} from './routes/clawpay-billing-stripe'
+import { clawpayBetaPublicRoutes, clawpayBetaRoutes } from './routes/clawpay-beta'
+import { clawpayCaseStudyRoutes } from './routes/clawpay-case-study'
+import { clawpayStatusRoutes } from './routes/clawpay-status'
 import { loggingMiddleware, getRequestId } from './middleware/logging'
 import { rateLimitMiddleware } from './middleware/rate-limit'
 import { securityHeadersMiddleware } from './middleware/security-headers'
@@ -216,6 +227,29 @@ app.route('/agents', agentExportRoutes) // /agents/:id/export, /agents/import (a
 app.route('/compliance', complianceRoutes) // /compliance/check, /compliance/frameworks (public with rate limit)
 app.route('/contact', contactRoutes) // /contact (public with rate limit)
 app.route('/social-deliveries', socialDeliveriesRoutes) // /social-deliveries (authenticated)
+
+// ClawPay (Sprint 2, 2026-05-21) — wallet-scoped payment governance product.
+//
+// IMPORTANT: public routes MUST be mounted first. Each authenticated sub-router
+// uses `.use('*', authMiddleware)`, which Hono registers as a wildcard match
+// against the mount prefix (`/clawpay/*`). Hono evaluates matched middleware
+// in declaration order, so any authenticated sub-router declared before a
+// public route ends up rejecting unauthenticated requests to that public path
+// (e.g. /clawpay/status returning 401 instead of the status payload).
+//
+// Public sub-routers — no auth middleware:
+app.route('/clawpay', clawpayStatusRoutes) // /clawpay/status (public, Sprint 6)
+app.route('/clawpay', clawpayBetaPublicRoutes) // /clawpay/beta/invites/:code (public)
+app.route('/clawpay', clawpayBillingStripeWebhookRoutes) // /clawpay/billing/webhooks/stripe (public)
+
+// Authenticated sub-routers — each declares `.use('*', authMiddleware)`:
+app.route('/clawpay', clawpaySpendingLimitsRoutes) // /clawpay/spending-limits/*
+app.route('/clawpay', clawpayAuditEventsRoutes) // /clawpay/audit-events/* + /export.csv
+app.route('/clawpay', clawpayAlertsRoutes) // /clawpay/alerts/* + deliveries + test
+app.route('/clawpay', clawpayBillingRoutes) // /clawpay/billing/* (Sprint 5)
+app.route('/clawpay', clawpayBillingStripeRoutes) // /clawpay/billing/periods/:id/invoice
+app.route('/clawpay', clawpayBetaRoutes) // /clawpay/beta + /clawpay/notifications (Sprint 6)
+app.route('/clawpay', clawpayCaseStudyRoutes) // /clawpay/case-study/* (Sprint 6)
 
 // Root
 app.get('/', (c) => {

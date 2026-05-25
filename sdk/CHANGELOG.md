@@ -5,6 +5,274 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **ClawPay Sprint 6 — closed-beta launch infrastructure.** Three new
+  Supabase tables (`clawpay_beta_invites`, `clawpay_beta_invite_redemptions`,
+  `clawpay_email_subscriptions`, `clawpay_email_deliveries`,
+  `clawpay_status_incidents`) plus the SECURITY DEFINER
+  `redeem_clawpay_beta_invite(text, text)` RPC. Codes can be single- or
+  multi-use, optionally expiring; the redemption flow is idempotent via
+  the `(code, wallet)` unique index — a second call by the same wallet
+  returns the original redemption metadata.
+
+- **Transactional email layer** in
+  `apps/api/src/services/clawpay-email.ts`. New abstractions:
+  `EmailProvider` ABC, `ResendEmailProvider` (raw fetch, no SDK,
+  Idempotency-Key support), `InMemoryEmailProvider` (tests). Five
+  hand-rolled templates (welcome, beta_invite_redeemed, period_closed,
+  alerts_summary_daily, alerts_critical) with subject + HTML + text
+  variants and a registry that marks security-critical channels as
+  override-unsubscribe. The orchestrator `sendClawpayEmail` honours
+  per-channel preferences + the unsubscribe flag, persists every attempt
+  to `clawpay_email_deliveries`, and never throws on provider failures.
+
+- **API surface for beta + notifications:** `GET /clawpay/beta/invites/:code`
+  (public liveness check), `POST /clawpay/beta/invites/:code/redeem`
+  (auth, idempotent), `GET/PATCH /clawpay/notifications/preferences`,
+  `POST /clawpay/notifications/test`. The check endpoint returns 400 /
+  404 / 410 (expired/exhausted) with structured reasons so the
+  onboarding wizard can render helpful UI.
+
+- **Case-study export** at `GET /clawpay/case-study/export?anonymize=true`.
+  Streams a versioned JSON report (schema_version=1) with totals,
+  drainer-source breakdown, simulation-outcome histogram, and an
+  optional anonymized sample of blocked events. Wallets / endpoints /
+  pay_to addresses are replaced with deterministic 8-char hashes so a
+  partner can publish the report without leaking PII.
+
+- **Public status page** at `GET /clawpay/status` — no auth required.
+  Reports component-level status (api / modal / supabase / stripe /
+  helius / tenderly) by scanning unresolved rows of the new
+  \`clawpay_status_incidents\` table. Critical incidents map to outage,
+  minor to degraded, maintenance to maintenance. Status response stays
+  200 even when the incidents store itself is unreachable — the API
+  responds with a typed warning so the public page can render a
+  degraded notice instead of an opaque error.
+
+- **Onboarding wizard** at \`/app/clawpay/onboarding\` walks a fresh
+  design partner through invite redemption → notification email →
+  first spending limit → first alert webhook. The wizard hydrates from
+  the server on mount, so partner who closes the tab can resume cleanly.
+
+- **80+ new vitest cases** across the email service, beta routes, case
+  study builder, status route, and pure report logic. Coverage includes
+  the no-email-on-file path, unsubscribe override on critical templates,
+  idempotent redemption, expired/exhausted invite handling, anonymization
+  determinism, severity-to-status mapping for status incidents.
+
+- **Blog post draft** \`apps/web/src/lib/blog.ts\` ships the closed-beta
+  launch announcement with a concrete worked example ($12k blocked ⇒
+  $159 invoice).
+
+- **ClawPay Sprint 5 — outcome-based billing pipeline.** Three new
+  Supabase tables (`clawpay_billing_accounts`, `clawpay_billing_periods`,
+  `clawpay_billing_usage_records`) plus an atomic, idempotent
+  `close_clawpay_billing_period(uuid)` SECURITY DEFINER RPC that
+  aggregates every blocked audit event in a window into a closed-period
+  snapshot. The dashboard speaks to a new `clawpay_billing` API surface
+  (`GET /clawpay/billing/account|current|periods`, `POST
+  /clawpay/billing/periods/close`); the Stripe bridge
+  (`POST /clawpay/billing/periods/:id/invoice`) builds one invoice with
+  per-line idempotency keys, and a public
+  `POST /clawpay/billing/webhooks/stripe` route validates Stripe
+  signatures and applies `invoice.paid` / `invoice.payment_failed` to
+  the period row.
+
+- **Plan pricing** lives in `apps/api/src/services/clawpay-billing.ts`
+  (`PLAN_PRICING`). Default tiers: Free ($0, 0%, 1k validations),
+  Starter ($29/mo, 0%, 100k validations), Pro ($99/mo, 0.5% on blocked,
+  1M validations), Enterprise ($499/mo, 0.25%, 10M validations). The
+  fee-bps + subscription-fee are mirrored on the
+  `clawpay_billing_accounts` row so enterprise contracts can override
+  per tenant without a code change.
+
+- **Period closure is fully idempotent.** The SQL function and the TS
+  wrapper both short-circuit on `invoiced` / `paid` periods, and the
+  `(billing_period_id, audit_event_id)` unique index on the
+  usage_records table absorbs duplicate inserts. Calling the close
+  endpoint twice in the same period returns the same totals; calling it
+  while the period is already invoiced returns the existing snapshot.
+
+- **Stripe invoicing is decoupled from period close** — a Stripe
+  outage cannot roll back the aggregation, and the close + invoice
+  routes are split so the dashboard can show the closed total before
+  the Stripe round-trip completes. Stripe `Idempotency-Key` headers are
+  keyed off `{period_id}:{line_kind}` so a retry of the whole sequence
+  is safe.
+
+- **Webhook signature verification** uses WebCrypto's HMAC-SHA256
+  directly instead of the Stripe Node SDK, so the worker image stays
+  small and the verification path is constant-time. Tolerance window
+  defaults to 300s, matching Stripe's documented recommendation.
+
+- **35 new vitest cases** across the route + service files cover the
+  zero/empty preview, fee math at 0.5%, blocked-event filtering, list
+  pagination, status filter validation, RPC idempotency, missing
+  Stripe customer, missing subscription/usage lines, all-zero periods,
+  webhook signature paths (happy, missing header, malformed header,
+  out-of-tolerance timestamp, wrong secret), and the dispatch of
+  `invoice.paid` / `invoice.payment_failed` vs unrelated events.
+
+- **Dashboard `/app/clawpay/billing` page** with current-period KPI
+  cards (blocked value, outcome fee, subscription, total), plan
+  config card, and a periods history table with hosted-invoice links.
+  New `BillingStatusBadge` component follows the same severity-aware
+  color vocabulary as the existing badges.
+
+- **ClawPay Sprint 4 — pre-flight on-chain simulation** in
+  `guardianclaw.integrations.coinbase.x402.simulation`. New public surface:
+  `SimulationProvider` ABC plus three implementations
+  (`HeliusSimulationProvider` for Solana, `TenderlySimulationProvider` for
+  Base / Avalanche / other EVM networks, `InMemorySimulationProvider` for
+  tests). The `SimulationGate` orchestrator runs the provider BEFORE the
+  four CLAW gates and pipes a structured `SimulationResult` into the
+  validator `context`. The Credibility gate turns `WOULD_FAIL` into a
+  request-shape issue; the Avoidance gate turns `SUSPICIOUS_BALANCE_CHANGE`
+  / `SUSPICIOUS_OWNERSHIP_CHANGE` into a hard block. The intent is to
+  defeat the bit-flip and TOCTOU drainer families (aqua, vanish, and
+  successors) that bypass wallet-level simulation by mutating transaction
+  state between sign and broadcast.
+
+- **`GuardianClawX402Middleware(simulation_provider=...)`** opt-in
+  argument. When omitted the middleware behaves identically to the
+  pre-Sprint-4 release — `simulation` is `None` on the audit row and no
+  pre-flight runs. Provider exceptions are caught at the gate boundary and
+  yield `SimulationStatus.ERROR`, never block a payment.
+
+- **`AuditRecord.simulation`** optional field carrying the provider-agnostic
+  simulation payload (status, provider, balance_changes, ownership_changes,
+  logs_excerpt, raw_error, duration_ms). The Stripe `build_stripe_audit_record`
+  helper now also extracts it from the AvoidanceGate details. Both write to
+  the new `clawpay_audit_events.simulation` JSONB column added in migration
+  `20260521030000_clawpay_simulation_field.sql`.
+
+- **45 new pytest cases** under `test_simulation.py` covering every
+  `SimulationStatus` path, all three providers with mocked httpx (happy,
+  reverted, network failure, malformed payload, ownership reassignment via
+  accounts and via logs, balance discrepancy on Tenderly), gate behavior,
+  middleware end-to-end, audit emission, and the fail-safe contract.
+
+- **ClawPay Sprint 3 — Stripe Agent Toolkit safety layer** in
+  `guardianclaw.integrations.stripe`. New public surface mirrors the x402
+  module: `GuardianClawStripeMiddleware`, `StripePaymentRequest`,
+  `StripeIntentKind`, `StripeApiKeyKind`, the four CLAW gates
+  (`StripeCredibilityGateValidator`, `StripeAvoidanceGateValidator`,
+  `StripeLimitsGateValidator`, `StripeWorthGateValidator`), and
+  `StripeCLAWValidator` as orchestrator. Reuses the `DrainerLookup` from
+  the x402 module so a single intel feed protects both payment surfaces.
+  Currency conversion handles zero-decimal currencies (JPY, KRW, …) and
+  falls back to a coarse FX table when the caller does not supply
+  `amount_usd_hint`. Four security profiles (`permissive` / `standard` /
+  `strict` / `paranoid`) match the x402 ones for cross-provider parity.
+
+- **AuditRecord ships a `provider` field** ('x402' | 'stripe'). Backwards
+  compatible — `AuditRecord` constructed without an explicit `provider`
+  defaults to 'x402', preserving the wire shape callers depend on.
+  `SupabaseAuditSink` includes the column in its insert.
+
+- **`build_stripe_audit_record`** maps `PaymentValidationResult` from the
+  Stripe namespace onto the shared `AuditRecord`. The `endpoint` column
+  carries a synthetic `stripe://<intent_kind>` URI so dashboard rendering
+  stays uniform across providers; Stripe-specific facts (intent kind,
+  currency, idempotency key, API-key kind) ride in `metadata.stripe`.
+
+- **128 new pytest cases** covering type detection, currency
+  normalization, every gate (positive + negative + edge cases), risk-level
+  computation, middleware orchestration, hook raises, audit emission,
+  drainer-hit propagation, fail-safe behavior and the cross-provider
+  drainer feed.
+
+- **Companion npm package `@guardianclaw/stripe-agent-toolkit`** at
+  `integrations/stripe-agent-toolkit/typescript/` for parity in TypeScript
+  agents. 32 Vitest cases.
+
+- **ClawPay Sprint 2 — audit sink** in
+  `guardianclaw.integrations.coinbase.x402.audit_sink`. New public types:
+  `AuditRecord`, `AuditSink`, `InMemoryAuditSink`, `SupabaseAuditSink`,
+  `build_audit_record`. `GuardianClawX402Middleware` accepts an optional
+  `audit_sink=` (and `agent_id=`) — every `validate_payment()` call emits a
+  structured record to the configured sink. Emission is fail-safe: sink
+  exceptions are logged and swallowed so a misbehaving storage layer cannot
+  block payment validation. The default constructor is unchanged (no sink,
+  no emission), preserving backwards compatibility.
+
+- **ClawPay Sprint 1 — drainer_intel lookup layer** in
+  `guardianclaw.integrations.coinbase.x402.drainer_db`. New public types:
+  `DrainerKind`, `DrainerSeverity`, `DrainerEntry`, `DrainerMatch`,
+  `DrainerSource`, `InMemoryDrainerSource`, `SupabaseDrainerSource`,
+  `DrainerLookup`. Backed by the `drainer_intel` Supabase table introduced
+  in migration `20260521000000_drainer_intel.sql`. The lookup is fail-safe
+  (source exceptions become misses) and TTL-cached (default 300s, both
+  positive and negative entries) so a feed outage cannot panic-block payments.
+
+- **`AvoidanceGateValidator(drainer_lookup=...)` constructor** — opt-in
+  deterministic drainer-intel consultation for recipient address, endpoint
+  host, and pattern matches. Blocks at `severity ∈ {critical, high}`,
+  downgrades low/medium to `risk_factors` for review. Hits surface as an
+  `details.drainer_intel` audit list with `source`, `source_ref`, `severity`,
+  `scope` — explainable enough for a compliance review without re-running
+  the model.
+
+- **`CLAWPaymentValidator(drainer_lookup=...)`** propagates the lookup to
+  the AvoidanceGate; other gates are unaffected. Backwards-compatible: the
+  no-arg constructor still works identically to v3.0.0-rc.1.
+
+- **Feed ingester** at `scripts/ingest_drainer_feeds.py` — pulls open intel
+  from public sources (ScamSniffer first; Blowfish/GoPlus/MetaMask planned)
+  and upserts into `drainer_intel` with a sync-log row per run. Can be
+  invoked locally, via Modal cron, or via GitHub Action.
+
+### Changed
+
+- **L1 keyword detection — role redefined.** As documented in
+  `MIGRATION.md` §"v3.0 → v3.1", L1 (`HarmfulRequestDetector` and adjacent
+  perimeter checks) is now recommended as a **signal layer**, not a
+  decision layer. The public API is unchanged; the recommended usage
+  pattern is. Backed by a calibration audit (May 2026) against OR-Bench-Hard
+  and HarmBench showing L1 alone is Pareto-dominated in adversarial
+  contexts (ΔFRR +15pp without ΔASR reduction; AUROC 0.43–0.47, below
+  random). Internal usage in ClawPay treats L1 as audit-only.
+
+### Fixed
+
+- `HarmfulRequestDetector` now matches category keywords with word-boundary
+  regex (`\b{kw}\b`) instead of substring `in` containment. The substring
+  path was a long-standing source of false positives — `con` (intended:
+  to-con/scam) was matching inside `convincing`, `consequences`,
+  `controversial`, `construct`, `content`; `meth` was matching inside
+  `methods`, `something`; `kill` inside `skills`/`skilled`. Validated
+  against a 600-item OR-Bench-Hard subset: 30/30 substring-only blocks
+  cleared, with the cited substring keyword no longer appearing as
+  detection evidence.
+
+### Changed
+
+- Keywords now carry an internal precision tier (T1 = inherently harmful
+  like `ransomware`, `bomb`, `phishing`, `doxxing`; T2 = harm-adjacent
+  but routinely benign in tutorials/fiction/security education). The
+  +0.15 action-verb-plus-category boost is now gated on the presence of
+  at least one strong signal (regex pattern match OR T1 keyword hit),
+  controlled by `HarmfulRequestConfig.require_strong_signal_for_action_boost`
+  (default `True`). Set `False` to restore the previous unconditional
+  boost. Category scanning no longer breaks on the first keyword hit —
+  it continues until a T1 hit is found or the category is exhausted, so
+  T2-then-T1 evidence ordering does not silently suppress the boost gate.
+
+### Added
+
+- `illegal_activities` category gained `methamphetamine`, `metanfetamina`,
+  `crystal meth`, `fentanyl`, `opioid`, `opioids`. Word-boundary matching
+  means `\bmeth\b` no longer catches `methamphetamine`, so the full forms
+  are needed to keep coverage of drug-synthesis prompts.
+
+- `tests/test_harmful_request_calibration.py` — 62 regression tests
+  (30 TP from HarmBench, 30 TN from OR-Bench-Hard substring overblocks,
+  2 aggregate gates). Fixture in
+  `tests/fixtures/harmful_request_calibration.json`.
+
 ## [3.0.0-rc.1] - 2026-04-22
 
 ### Changed
