@@ -32,10 +32,11 @@ const DATE_SHORT_FORMATTER = new Intl.DateTimeFormat('en-US', {
 
 export function formatUsd(amount: number | null | undefined): string {
   if (amount === null || amount === undefined || Number.isNaN(amount)) return '—'
-  // Use the high-precision formatter for sub-dollar amounts so 0.000022 isn't
-  // rendered as "$0.00" (a real audit row with x402 micro-payments would
-  // otherwise be invisible).
-  if (Math.abs(amount) < 1) return USD_MICRO_FORMATTER.format(amount)
+  // Use the high-precision formatter for non-zero sub-dollar amounts so
+  // 0.000022 isn't rendered as "$0.00" (a real audit row with x402 micro
+  // payments would otherwise be invisible). Exact zero stays on the standard
+  // formatter so it reads "$0.00" not "$0".
+  if (amount !== 0 && Math.abs(amount) < 1) return USD_MICRO_FORMATTER.format(amount)
   return USD_FORMATTER.format(amount)
 }
 
