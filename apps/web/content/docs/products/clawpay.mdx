@@ -1,0 +1,516 @@
+---
+title: "ClawPay — Payment Decision Firewall"
+description: "Stop drainer addresses, enforce spending limits, and audit every CLAW decision before your AI agent moves a dollar on-chain."
+category: "products"
+order: 6
+lastUpdated: "2026-05-21"
+---
+
+# ClawPay
+
+> **ClawPay** is the first commercial product built on top of the GuardianClaw
+> framework. It applies the four CLAW gates (Credibility, Limits, Avoidance,
+> Worth) to the semantics of **payment** — specifically, the autonomous
+> machine-to-machine flows that AI agents make via Coinbase **x402** and the
+> Stripe Agent Toolkit.
+
+## What problem it solves
+
+In Q1 2026, public reports tallied **over $600M lost in crypto hacks**, many
+involving autonomous agents that were routed into drainer contracts before any
+human reviewed the transaction. At the same time, **x402** crossed roughly
+**$600M in annualized volume** in just a few months, and Stripe shipped its
+Agent Toolkit — so machine payments are not theoretical, they are happening
+now, at scale.
+
+The category that should stop those drains — *guardrails* — is saturated with
+classifier-based products whose decisions cannot be explained and whose
+false-positive rates rise faster than detection improves (something
+GuardianClaw confirmed in its own May 2026 calibration audit — see
+[`MIGRATION.md` "v3.0 → v3.1"](../../MIGRATION.md)). ClawPay is the opposite:
+**deterministic, explainable, defense-in-depth**.
+
+## Architecture
+
+Every payment validation runs four gates. Each gate either passes cleanly,
+flags a risk factor, or blocks with a reason an auditor can read.
+
+| Gate            | What it answers                                          | How it answers it                                                                  |
+| --------------- | -------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| **Credibility** | Is the payment request well-formed and trustworthy?     | URL parses; HTTPS; supported network; verified USDC/USDT contract; positive amount. |
+| **Avoidance**   | Could this payment cause harm?                          | Static blocklists + **`drainer_intel`** feed (ScamSniffer, GoPlus, Blowfish) — exact-match lookup with source citation. |
+| **Limits**      | Is this within the spending caps the operator set?      | Deterministic math over rolling windows (hourly / daily / weekly / monthly / lifetime). |
+| **Worth**       | Does the payment have a legitimate purpose?             | Requires the agent to declare intent (`purpose`) for sensitive amounts.            |
+
+The L4 **ClawObserver** (LLM-based) is available for post-decision review and
+classification, but it never blocks alone — payment-blocking decisions are
+structural.
+
+## Two payment surfaces
+
+ClawPay covers both major agent payment surfaces in 2026 with the same four
+CLAW gates and the same audit row shape:
+
+| Surface                | When to use                                             | Install |
+| ---------------------- | ------------------------------------------------------- | ------- |
+| **Coinbase x402**      | HTTP 402 stablecoin micropayments on Base or Solana.   | `pip install "guardianclaw[x402]"` |
+| **Stripe Agent Toolkit** | Card / bank / Connect transfers via the official Stripe Agent Toolkit. Works with OpenAI Agents SDK, LangChain, CrewAI, Vercel AI SDK. | `pip install guardianclaw` *(plus the Python or npm Stripe Agent Toolkit you already use)* |
+
+The dashboard renders both with a single audit table, with a `provider`
+column so you can filter on either. Spending limits and alerts apply across
+both surfaces — you don't need to configure ClawPay twice.
+
+## Quick start (x402)
+
+### 1. Install the SDK
+
+```bash
+pip install "guardianclaw[x402]"
+```
+
+The `[x402]` extra pulls in `httpx` and `pydantic` (the only runtime deps
+beyond `typing-extensions`).
+
+### 2. Wire the middleware
+
+```python
+import os
+
+from guardianclaw.integrations.coinbase.x402 import (
+    GuardianClawX402Middleware,
+    DrainerLookup,
+    SupabaseDrainerSource,
+    InMemoryDrainerSource,
+    DrainerEntry,
+    DrainerKind,
+)
+
+# Option A — remote feed (recommended for production):
+remote = SupabaseDrainerSource(
+    supabase_url=os.environ["SUPABASE_URL"],
+    api_key=os.environ["SUPABASE_SERVICE_KEY"],
+)
+
+# Option B — static blocklist for tests / offline mode:
+static = InMemoryDrainerSource([
+    DrainerEntry(
+        kind=DrainerKind.ADDRESS,
+        value="0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
+        severity="critical",
+        source="manual",
+    ),
+])
+
+middleware = GuardianClawX402Middleware(
+    drainer_lookup=DrainerLookup(sources=[remote, static]),
+)
+```
+
+### 3. Validate before signing
+
+```python
+result = middleware.validate_payment(
+    payment_requirements=payment_req,   # from your x402 client
+    endpoint="https://api.example.com/paid",
+    wallet_address=agent_wallet,
+)
+
+if not result.is_approved:
+    # Block, log, alert. Do not sign.
+    log.warning("ClawPay blocked: %s", result.blocked_reason)
+    for gate, gate_result in result.gates.items():
+        if not gate_result.passed:
+            log.warning("  %s: %s", gate.value, gate_result.reason)
+    return
+
+# All four gates passed — proceed with the x402 payment flow.
+```
+
+### 4. Wire to AgentKit (optional)
+
+```python
+from coinbase_agentkit import AgentKit
+from guardianclaw.integrations.coinbase.x402 import claw_x402_action_provider
+
+agent = AgentKit(
+    action_providers=[
+        claw_x402_action_provider(security_profile="standard"),
+    ],
+)
+```
+
+## Quick start (Stripe Agent Toolkit)
+
+### 1. Same install, different integration module
+
+```bash
+pip install guardianclaw
+# plus whatever you already use to call Stripe (the official toolkit or stripe-python).
+```
+
+### 2. Wrap your Stripe call
+
+```python
+import os, stripe
+
+from guardianclaw.integrations.stripe import (
+    GuardianClawStripeMiddleware,
+    StripeIntentKind,
+    StripePaymentRequest,
+)
+from guardianclaw.integrations.coinbase.x402 import (
+    DrainerLookup,
+    SupabaseDrainerSource,
+    SupabaseAuditSink,
+)
+
+# Reuse the same drainer feed + audit sink across providers — one config,
+# every payment surface covered.
+lookup = DrainerLookup(sources=[SupabaseDrainerSource(
+    supabase_url=os.environ["SUPABASE_URL"],
+    api_key=os.environ["SUPABASE_SERVICE_KEY"],
+)])
+sink = SupabaseAuditSink(
+    supabase_url=os.environ["SUPABASE_URL"],
+    service_key=os.environ["SUPABASE_SERVICE_KEY"],
+)
+
+middleware = GuardianClawStripeMiddleware(
+    drainer_lookup=lookup, audit_sink=sink, agent_id="support-agent-1",
+)
+
+stripe.api_key = os.environ["STRIPE_RESTRICTED_KEY"]  # rk_* recommended
+
+request = StripePaymentRequest(
+    intent_kind=StripeIntentKind.PAYMENT_INTENT_CREATE,
+    amount=4900,            # cents
+    currency="usd",
+    customer="cus_NksY4M0bM4FfXg",
+    description="Daily API budget refill for the support agent",
+    api_key=os.environ["STRIPE_RESTRICTED_KEY"],
+)
+
+result = middleware.validate_payment(request, wallet_address="support-agent-1")
+if not result.is_approved:
+    log.warning("ClawPay blocked: %s", result.blocked_reason)
+    return
+
+intent = stripe.PaymentIntent.create(
+    amount=request.amount,
+    currency=request.currency,
+    customer=request.customer,
+    description=request.description,
+)
+
+# Record the outcome so spending counters update.
+middleware.after_create_hook(
+    request, wallet_address="support-agent-1",
+    success=intent.status in ("succeeded", "requires_capture"),
+    reference_id=intent.id,
+)
+```
+
+### 3. TypeScript equivalent
+
+```typescript
+import Stripe from "stripe";
+import { createValidator, StripeIntentKind } from "@guardianclaw/stripe-agent-toolkit";
+
+const validator = createValidator("standard");
+const stripe = new Stripe(process.env.STRIPE_RESTRICTED_KEY!);
+
+const result = validator.validate(
+  {
+    intentKind: StripeIntentKind.PAYMENT_INTENT_CREATE,
+    amount: 4900,
+    currency: "usd",
+    customer: "cus_NksY4M0bM4FfXg",
+    description: "Daily API budget refill for the support agent",
+    apiKey: process.env.STRIPE_RESTRICTED_KEY,
+  },
+  "support-agent-1",
+);
+if (!result.isApproved) return;
+
+await stripe.paymentIntents.create({
+  amount: 4900, currency: "usd",
+  customer: "cus_NksY4M0bM4FfXg",
+});
+```
+
+## Configuration
+
+### Spending limits
+
+Spending limits live in the dashboard under
+[**ClawPay → Spending limits**](/app/clawpay/limits). Each limit is identified
+by `(wallet, agent_id, name, period)` and caps the USD-equivalent of
+**approved** payments inside that rolling window.
+
+| Field         | Notes                                                                          |
+| ------------- | ------------------------------------------------------------------------------ |
+| `name`        | Up to 100 characters. Lives in the slot identity; reuse it to edit, don't duplicate. |
+| `period`      | `hourly` / `daily` / `weekly` / `monthly` / `lifetime`.                        |
+| `limit_usd`   | Positive, up to $1,000,000 per rule. 6 decimals of resolution.                 |
+| `agent_id`    | `null` = catch-all for the wallet. Non-null = scope to one agent.              |
+
+The validator queries the active rows for the requesting wallet, sums the
+window's approved payments, and rejects anything that would breach the cap.
+Limits are deterministic — there is no model in this path.
+
+### Drainer intel
+
+The `drainer_intel` table (Supabase migration `20260521000000_drainer_intel.sql`)
+holds three kinds of indicators:
+
+- **address** — exact-match for an EVM / SPL / program address.
+- **endpoint** — exact-match for a host (e.g. `evil.example.com`).
+- **pattern** — case-insensitive regex applied to endpoint / asset / metadata.
+
+Feed ingestion is decoupled: `scripts/ingest_drainer_feeds.py` pulls
+**ScamSniffer**'s public blacklist into the table on a schedule (Modal cron or
+GitHub Action). Operators can append manual entries from the dashboard at any
+time.
+
+A hit becomes part of the audit record with full attribution:
+
+```json
+{
+  "kind": "address",
+  "value": "0xdeadbeef...",
+  "severity": "critical",
+  "source": "scamsniffer",
+  "source_ref": "https://github.com/scamsniffer/scam-database/...",
+  "scope": "recipient"
+}
+```
+
+### Alerts
+
+Webhook alerts fire when conditions match incoming audit events. Today there
+are three condition kinds:
+
+| Kind                       | Example                                                   |
+| -------------------------- | --------------------------------------------------------- |
+| `blocked_count_above`      | "5 blocked payments in 60 minutes."                       |
+| `blocked_value_above`      | "$100 of blocked value in 60 minutes."                    |
+| `drainer_hit`              | "Any drainer intel hit at severity ≥ high."               |
+
+Each alert has a webhook URL (SSRF-validated before save) and a cooldown
+window to prevent storms. The dashboard exposes a **Fire test** action that
+sends a benign payload to the configured URL — useful when configuring a new
+destination.
+
+## Auditing a decision
+
+Every call to `middleware.validate_payment(...)` produces an audit event
+visible at [**ClawPay → Audit**](/app/clawpay/audit). The detail view shows:
+
+- Per-gate outcome and reason.
+- Every drainer-intel hit with `source`, `source_ref`, `severity`, `scope`.
+- The `reasoning` field (filled by the L4 ClawObserver when enabled).
+- The original payment payload (endpoint, network, asset, recipient, amount).
+
+You can export a filtered slice as CSV (up to 10,000 rows per request) for
+compliance review or offline analysis.
+
+## Pre-flight simulation (Sprint 4)
+
+Modern Solana drainer families — `aqua`, `vanish`, and their TOCTOU
+successors — bypass wallet-level simulation by mutating the transaction
+between the moment the user signs and the moment the chain executes. The
+wallet shows a benign preview; the chain sees a drain. ClawPay's
+`SimulationGate` defends against this by re-running the same transaction
+through a trusted RPC right before the agent broadcasts it, then comparing
+the simulated outcome against the advertised payment.
+
+Two providers ship out of the box:
+
+| Provider | Chain | What it catches |
+|----------|-------|-----------------|
+| `HeliusSimulationProvider` | Solana | Ownership reassignments (`assign` instructions to attacker programs), simulator `err`, log-level signatures of known drainer kits. |
+| `TenderlySimulationProvider` | Base, Avalanche, Ethereum, Polygon, Arbitrum, Optimism | Balance discrepancies (simulated outflow exceeds advertised payment by `balance_tolerance`), reverted transactions, asset changes mismatch. |
+
+Wire one or both at construction time:
+
+```python
+import os
+from guardianclaw.integrations.coinbase.x402 import (
+    GuardianClawX402Middleware,
+    HeliusSimulationProvider,
+    TenderlySimulationProvider,
+    SimulationStatus,
+)
+
+solana_sim = HeliusSimulationProvider(
+    rpc_url=f"https://mainnet.helius-rpc.com/?api-key={os.environ['HELIUS_API_KEY']}",
+    timeout_seconds=5.0,
+)
+base_sim = TenderlySimulationProvider(
+    account_slug=os.environ["TENDERLY_ACCOUNT"],
+    project_slug=os.environ["TENDERLY_PROJECT"],
+    access_key=os.environ["TENDERLY_ACCESS_KEY"],
+    balance_tolerance=1.05,  # block if simulated outflow > 5% above advertised
+)
+
+# Pick the provider that matches the network; in practice you'd wrap a
+# small router that selects per payment_requirements.network.
+middleware = GuardianClawX402Middleware(simulation_provider=solana_sim)
+```
+
+### Outcome → decision mapping
+
+| `SimulationStatus` | Effect on the four CLAW gates |
+|--------------------|-------------------------------|
+| `OK` | No-op — gates proceed normally. |
+| `WOULD_FAIL` | Credibility issue — the request is structurally wrong; the agent should rebuild. |
+| `SUSPICIOUS_BALANCE_CHANGE` | Avoidance block — outflow exceeds the advertised payment. |
+| `SUSPICIOUS_OWNERSHIP_CHANGE` | Avoidance block — wallet ownership reassigned during simulation. |
+| `UNSUPPORTED` | Risk factor — provider does not cover this chain; falls through. |
+| `ERROR` | Risk factor — provider unreachable; falls through. |
+
+Every outcome is persisted in `clawpay_audit_events.simulation` as a JSONB
+blob so the dashboard can render the evidence (balance deltas, ownership
+changes, log excerpts) alongside the block reason.
+
+### Fail-safe semantics
+
+- Provider exceptions are converted to `SimulationStatus.ERROR` and never
+  block a payment on their own.
+- A 5-second timeout is enforced on every RPC call.
+- A `SimulationProvider` that does not recognize the requested network
+  returns `UNSUPPORTED`; the gate logs it as a risk factor but lets the
+  other gates decide.
+- Omitting `simulation_provider` on the middleware preserves the exact
+  pre-Sprint-4 behavior — there is no implicit default RPC, no surprise
+  network call.
+
+## Outcome-based billing (Sprint 5)
+
+ClawPay charges a flat monthly subscription plus a small percentage on the
+USD value of payments we actually blocked. If we don't save you money in a
+given month, the outcome fee is zero — that's the whole point.
+
+### Tiers
+
+| Plan | Subscription | Outcome fee | Free validations / mo |
+|------|-------------:|------------:|----------------------:|
+| Free | $0 | 0 % | 1,000 |
+| Starter | $29 | 0 % | 100,000 |
+| **Pro** *(most teams)* | **$99** | **0.5 %** | 1,000,000 |
+| Enterprise | $499 | 0.25 % | 10,000,000 |
+
+Tiers are stored on `clawpay_billing_accounts.plan` and the per-tenant
+`fee_bps` field. Enterprise contracts override `fee_bps` and
+`subscription_fee_usd` directly on the row — no code change needed.
+
+### Lifecycle
+
+```
+            ┌────────────┐
+            │   open     │  <- new period, accumulating audit events
+            └─────┬──────┘
+                  │  POST /clawpay/billing/periods/close
+                  ▼
+            ┌────────────┐
+            │  closed    │  <- atomic SUM done, usage_records written
+            └─────┬──────┘
+                  │  POST /clawpay/billing/periods/:id/invoice
+                  ▼
+            ┌────────────┐
+            │  invoiced  │  <- Stripe Invoice created + URL stored
+            └─────┬──────┘
+                  │  webhook: invoice.paid    │  webhook: invoice.payment_failed
+                  ▼                           ▼
+            ┌────────────┐              ┌────────────┐
+            │   paid     │              │  failed    │
+            └────────────┘              └────────────┘
+```
+
+Every transition is idempotent. `close` returns the same snapshot on a
+second call; `invoice` returns the existing Stripe invoice if
+`stripe_invoice_id` is already set. The audit trail of contributing events
+lives in `clawpay_billing_usage_records` — one row per blocked audit event,
+with the fee that line generated, so a tenant can drill into "what made up
+this $5 charge?" without leaving the dashboard.
+
+### Failure modes
+
+- **Stripe down at invoicing time.** The period stays in `closed` — call
+  the invoice endpoint again once Stripe recovers. The Idempotency-Key
+  guarantees no duplicate invoice.
+- **Audit event purged after close.** The `usage_records` row is a
+  snapshot of the contributing event — the `audit_event_id` FK is
+  `ON DELETE SET NULL`, so the billing row survives a GDPR purge of the
+  underlying event with its `blocked_usd` / `fee_usd` intact.
+- **Plan change mid-period.** Each period snapshots `fee_bps_snapshot`
+  and `plan_snapshot` at close time, so a Pro→Enterprise upgrade only
+  affects the period that closes *after* the upgrade. Past periods are
+  immutable for billing-trail purposes.
+
+## Joining the beta
+
+ClawPay is in **closed beta** as of Sprint 6 (May 2026). Access is gated
+by invite codes scoped to specific design-partner cohorts:
+
+1. Request access by emailing
+   [contact@guardianclaw.org](mailto:contact@guardianclaw.org).
+2. Once issued, redeem your code in the
+   [/app/clawpay/onboarding](/app/clawpay/onboarding) wizard. The
+   onboarding flow walks you through the four critical setup steps:
+   notification email, first spending limit, first alert webhook, and
+   a smoke-test of the integration.
+3. The wizard hydrates from your existing state on every visit — close
+   the tab and resume mid-setup without losing progress.
+
+### What you get during the beta
+
+- The full SDK + dashboard surface described above (x402, Stripe Agent
+  Toolkit, drainer-intel lookup, simulation, billing).
+- A dedicated [public status page](/clawpay/status) so you can see
+  whether ClawPay is up before you call support.
+- A structured case-study export — anonymizable JSON you can hand to
+  your security or finance team as evidence of what ClawPay blocked
+  for you in a given window. Schema is versioned via
+  \`schema_version\` so downstream consumers can detect breaking
+  changes.
+- Direct line to the team. The whole point of the closed beta is that
+  we can ship fixes and tune defaults based on what your real traffic
+  looks like.
+
+## Failure modes (read this)
+
+A few things ClawPay deliberately **does not** promise, so you can build
+around them honestly:
+
+- **It is not a wallet.** ClawPay never holds keys, never signs, never
+  broadcasts. The decision is always the agent caller's.
+- **The drainer feed is not exhaustive.** Public blacklists like ScamSniffer
+  cover a meaningful fraction of malicious addresses but not all of them.
+  Treat drainer intel as one of four signals.
+- **L1 keyword detection is a signal, not a decision-maker.** See
+  [`MIGRATION.md` §"v3.0 → v3.1"](../../MIGRATION.md) for the calibration
+  audit findings that motivated this stance.
+- **Latency budget.** Target is &lt;150ms p95 for the middleware itself
+  (excluding any LLM observer call). Remote drainer lookup adds ~30-60ms;
+  consider an `InMemoryDrainerSource` warm-cache layer in tight loops.
+
+## Where it fits
+
+ClawPay is the payment vertical of GuardianClaw. The framework remains the
+same: four layers (L1–L4), four gates (Credibility / Limits / Avoidance /
+Worth), 17 integrations. ClawPay specializes the gates for payment semantics
+and ships the dashboard + audit + alert infrastructure on top.
+
+If your agent makes payments, start here. If your agent does anything else
+that needs a decision firewall, the broader GuardianClaw SDK still applies —
+ClawPay is one applied vertical of it.
+
+## Next steps
+
+- 🧪 Try the [dashboard](/app/clawpay) end-to-end.
+- 📖 Read the [introduction](/docs/introduction) to GuardianClaw if you're new.
+- 🛠️ Browse the [Solana Agent Kit integration](/docs/integrations/solana-agent-kit)
+  if your agent transacts on Solana.
+- 🔬 Want to contribute a new feed source to `drainer_intel`? See the ingester
+  scaffold in `scripts/ingest_drainer_feeds.py`.

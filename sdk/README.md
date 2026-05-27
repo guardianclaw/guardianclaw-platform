@@ -43,7 +43,7 @@ GuardianClaw is an **AI safety framework** that protects across three surfaces:
 - **Teleological Core:** Actions must serve legitimate purposes
 - **Anti-Self-Preservation:** Prevents AI from prioritizing its own existence
 - **Alignment Seeds:** System prompts that shape LLM behavior
-- **Input/Output Validators:** Pattern detection with 20+ detector types and false-positive reduction
+- **Input/Output Validators:** Pattern detection with 20+ detector types and false-positive reduction. **In v3.1 we recommend treating the L1 keyword layer as a *signal*, not a sole decision layer.** A May 2026 calibration audit on adversarial benchmarks (OR-Bench-Hard / HarmBench) showed L1 alone is Pareto-dominated — see [`MIGRATION.md` §"v3.0 → v3.1"](../MIGRATION.md#v30--v31--l1-keyword-detection-role-evolution) for the recommended multi-layer / structural pattern (also used by the upcoming ClawPay product on top of this SDK).
 - **Memory Integrity:** HMAC-based protection against memory injection attacks
 - **Fiduciary AI:** Ensures AI acts in user's best interest (duty of loyalty and care)
 - **EU AI Act Compliance:** Regulation 2024/1689 compliance checker (Article 5 prohibited practices)

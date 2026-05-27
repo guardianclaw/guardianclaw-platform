@@ -15,10 +15,37 @@ from __future__ import annotations
 import logging
 import re
 from abc import ABC, abstractmethod
-from typing import Any
+from typing import Any, Optional
 from urllib.parse import urlparse
 
 logger = logging.getLogger("guardianclaw.integrations.coinbase.x402.validators")
+
+
+def _simulation_status_from_context(
+    context: dict[str, Any] | None,
+) -> Optional[SimulationStatus]:
+    """Extract the SimulationStatus from a validator context, if present.
+
+    Tolerates both raw ``SimulationStatus`` values and the serialized
+    ``{status: '...'}`` dict shape (so the middleware can stuff the
+    audit-ready ``to_audit_dict()`` output in there without losing the
+    enum on the way out).
+    """
+    if not context:
+        return None
+    raw = context.get("simulation_result")
+    if isinstance(raw, SimulationResult):
+        return raw.status
+    if isinstance(raw, dict):
+        status_value = raw.get("status")
+        if isinstance(status_value, SimulationStatus):
+            return status_value
+        if isinstance(status_value, str):
+            try:
+                return SimulationStatus(status_value)
+            except ValueError:
+                return None
+    return None
 
 from .config import (
     KNOWN_USDC_CONTRACTS,
@@ -26,6 +53,8 @@ from .config import (
     SUSPICIOUS_URL_PATTERNS,
     GuardianClawX402Config,
 )
+from .drainer_db import DrainerKind, DrainerLookup, DrainerMatch
+from .simulation import SimulationGate, SimulationResult, SimulationStatus
 from .types import (
     PaymentRequirementsModel,
     PaymentRiskLevel,
@@ -148,6 +177,24 @@ class CredibilityGateValidator(PaymentValidator):
         elif not self._is_valid_address(pay_to):
             issues.append("Invalid recipient address format")
 
+        # Pre-flight simulation signal — when the SimulationGate reports the
+        # transaction would revert onchain, surface it here. WOULD_FAIL is a
+        # Credibility issue (the request is structurally wrong / out of
+        # date), not an Avoidance issue (something malicious is happening).
+        sim_status = _simulation_status_from_context(context)
+        if sim_status == SimulationStatus.WOULD_FAIL:
+            sim_payload = (context or {}).get("simulation_result")
+            sim_msg: Optional[str] = None
+            if isinstance(sim_payload, SimulationResult):
+                sim_msg = sim_payload.message
+            elif isinstance(sim_payload, dict):
+                maybe_msg = sim_payload.get("message")
+                if isinstance(maybe_msg, str):
+                    sim_msg = maybe_msg
+            issues.append(
+                f"Simulation: {sim_msg or 'Pre-flight simulation reports the transaction would fail onchain'}"
+            )
+
         passed = len(issues) == 0
         reason = None if passed else "; ".join(issues)
 
@@ -170,11 +217,27 @@ class AvoidanceGateValidator(PaymentValidator):
     """AVOIDANCE gate: Validates payment won't cause harm.
 
     Checks:
-        - Recipient is not on blocklist
-        - Endpoint is not malicious
-        - No suspicious patterns in URL
+        - Recipient is not on blocklist (static config + drainer_intel feed)
+        - Endpoint is not malicious (static config + drainer_intel feed)
+        - No suspicious patterns in URL (static config + drainer_intel patterns)
         - Contract is not flagged as malicious
+
+    The drainer_intel layer (Sprint 1, ClawPay) adds a deterministic feed-backed
+    lookup that complements the static config blocklists. The lookup is fail-safe:
+    if it errors or returns None, validation falls through to the static rules.
+    Auditing intentionally records the matched intel entry (source, source_ref,
+    severity) so a blocked payment can be explained without re-running a model.
     """
+
+    def __init__(self, drainer_lookup: Optional[DrainerLookup] = None) -> None:
+        """Initialize.
+
+        Args:
+            drainer_lookup: Optional drainer-intel lookup. When provided,
+                AvoidanceGate consults it for recipient address, endpoint host,
+                and pattern matches. When None, only static config rules apply.
+        """
+        self.drainer_lookup = drainer_lookup
 
     @property
     def gate(self) -> CLAWGate:
@@ -191,6 +254,7 @@ class AvoidanceGateValidator(PaymentValidator):
         """Validate payment won't cause harm."""
         issues: list[str] = []
         risk_factors: list[str] = []
+        drainer_hits: list[dict[str, Any]] = []
 
         # Check recipient against blocklist
         pay_to = payment_requirements.pay_to
@@ -227,6 +291,7 @@ class AvoidanceGateValidator(PaymentValidator):
                 risk_factors.append("Endpoint uses direct IP address instead of domain")
         except (ValueError, AttributeError) as e:
             logger.debug(f"Failed to check IP address in endpoint: {e}")
+            parsed = None
 
         # If context includes known malicious data, check it
         if context:
@@ -234,18 +299,113 @@ class AvoidanceGateValidator(PaymentValidator):
             if pay_to in [addr.lower() for addr in known_scams]:
                 issues.append("Recipient identified as known scam address")
 
+        # Drainer-intel layer (ClawPay Sprint 1).
+        # Failure modes here are explicitly absorbed: any unexpected exception
+        # from the lookup is logged downstream by DrainerLookup itself and
+        # treated as a miss. We never escalate a lookup error into a block.
+        if self.drainer_lookup is not None:
+            network = payment_requirements.network
+            try:
+                # 1) Recipient address against drainer_intel.
+                addr_match = self.drainer_lookup.consult(
+                    DrainerKind.ADDRESS, pay_to, network=network,
+                )
+                if addr_match is not None:
+                    self._record_drainer_hit(addr_match, issues, drainer_hits,
+                                             scope="recipient")
+
+                # 2) Endpoint hostname (case-insensitive) against drainer_intel.
+                if parsed is not None and parsed.netloc:
+                    host = parsed.netloc.split(":")[0].lower()
+                    host_match = self.drainer_lookup.consult(
+                        DrainerKind.ENDPOINT, host, network=network,
+                    )
+                    if host_match is not None:
+                        self._record_drainer_hit(host_match, issues, drainer_hits,
+                                                 scope="endpoint")
+
+                # 3) Endpoint pattern scan (e.g. wildcard phishing families).
+                pattern_match = self.drainer_lookup.match_endpoint_patterns(
+                    endpoint, network=network,
+                )
+                if pattern_match is not None:
+                    # Patterns are downgraded to risk_factors at low/medium
+                    # severity to allow operator review; high/critical block.
+                    if pattern_match.severity in ("high", "critical"):
+                        self._record_drainer_hit(pattern_match, issues,
+                                                 drainer_hits, scope="endpoint_pattern")
+                    else:
+                        risk_factors.append(
+                            f"Endpoint matches drainer pattern "
+                            f"(severity={pattern_match.severity}, "
+                            f"source={pattern_match.source})"
+                        )
+                        drainer_hits.append(pattern_match.to_audit_dict() | {
+                            "scope": "endpoint_pattern",
+                        })
+            except Exception as exc:  # pragma: no cover — fail-safe
+                logger.warning("Drainer lookup raised unexpectedly: %s", exc)
+
+        # Pre-flight simulation signal (ClawPay Sprint 4). Suspicious
+        # outcomes (balance discrepancy, ownership reassignment) escalate
+        # to a block; UNSUPPORTED / ERROR surface only as risk_factors so
+        # a misbehaving simulator never panic-blocks legitimate traffic.
+        sim_status = _simulation_status_from_context(context)
+        sim_payload: dict[str, Any] | None = None
+        if sim_status is not None:
+            raw_sim = (context or {}).get("simulation_result")
+            if isinstance(raw_sim, SimulationResult):
+                sim_payload = raw_sim.to_audit_dict()
+            elif isinstance(raw_sim, dict):
+                sim_payload = raw_sim
+
+            if sim_status.is_block_worthy:
+                sim_msg = (
+                    (sim_payload or {}).get("message")
+                    or f"Pre-flight simulation status: {sim_status.value}"
+                )
+                issues.append(f"Simulation: {sim_msg}")
+            elif sim_status in (SimulationStatus.UNSUPPORTED, SimulationStatus.ERROR):
+                risk_factors.append(
+                    f"Pre-flight simulation could not complete "
+                    f"(status={sim_status.value}, provider="
+                    f"{(sim_payload or {}).get('provider', 'unknown')})"
+                )
+
         passed = len(issues) == 0
         reason = None if passed else "; ".join(issues)
+
+        details: dict[str, Any] = {}
+        if issues:
+            details["issues"] = issues
+        if risk_factors:
+            details["risk_factors"] = risk_factors
+        if drainer_hits:
+            details["drainer_intel"] = drainer_hits
+        if sim_payload is not None:
+            details["simulation"] = sim_payload
 
         return CLAWGateResult(
             gate=CLAWGate.AVOIDANCE,
             passed=passed,
             reason=reason,
-            details={
-                "issues": issues,
-                "risk_factors": risk_factors,
-            } if issues or risk_factors else None,
+            details=details or None,
         )
+
+    def _record_drainer_hit(
+        self,
+        match: "DrainerMatch",
+        issues: list[str],
+        drainer_hits: list[dict[str, Any]],
+        *,
+        scope: str,
+    ) -> None:
+        """Append a drainer-intel hit to issues + audit list."""
+        issues.append(
+            f"{scope.replace('_', ' ').capitalize()} matched drainer_intel "
+            f"(severity={match.severity}, source={match.source})"
+        )
+        drainer_hits.append(match.to_audit_dict() | {"scope": scope})
 
 
 class LimitsGateValidator(PaymentValidator):
@@ -444,11 +604,31 @@ class CLAWPaymentValidator:
         ...     print("Payment approved")
     """
 
-    def __init__(self) -> None:
-        """Initialize with all CLAW gate validators."""
+    def __init__(
+        self,
+        drainer_lookup: Optional[DrainerLookup] = None,
+        *,
+        simulation_gate: Optional[SimulationGate] = None,
+    ) -> None:
+        """Initialize with all CLAW gate validators.
+
+        Args:
+            drainer_lookup: Optional deterministic drainer-intel lookup
+                (ClawPay Sprint 1). Passed to AvoidanceGateValidator so payment
+                blocking can cite a specific feed entry. When None, only static
+                config rules apply.
+            simulation_gate: Optional pre-flight simulation orchestrator
+                (ClawPay Sprint 4). When provided, it runs BEFORE the four
+                CLAW gates and the resulting ``SimulationResult`` is injected
+                into the ``context`` under the ``simulation_result`` key.
+                CredibilityGate treats WOULD_FAIL as a request-shape issue;
+                AvoidanceGate treats SUSPICIOUS_* as a hard block. When None,
+                no simulation is attempted.
+        """
+        self.simulation_gate = simulation_gate
         self._validators: list[PaymentValidator] = [
             CredibilityGateValidator(),
-            AvoidanceGateValidator(),
+            AvoidanceGateValidator(drainer_lookup=drainer_lookup),
             LimitsGateValidator(),
             WorthGateValidator(),
         ]
@@ -463,6 +643,11 @@ class CLAWPaymentValidator:
     ) -> dict[CLAWGate, CLAWGateResult]:
         """Run all CLAW gates on a payment request.
 
+        When a ``SimulationGate`` is configured, it runs first and its result
+        is merged into ``context['simulation_result']`` so the four gates can
+        consume it. The simulation never blocks on its own — its outcome
+        only manifests through the Credibility or Avoidance gates.
+
         Args:
             payment_requirements: The x402 payment requirements
             endpoint: The endpoint URL requesting payment
@@ -473,6 +658,21 @@ class CLAWPaymentValidator:
         Returns:
             Dictionary mapping each gate to its result
         """
+        # Pre-flight simulation (Sprint 4). Always fail-safe — the gate
+        # already wraps the provider call in a try/except.
+        if self.simulation_gate is not None:
+            sim_result = self.simulation_gate.run(
+                payment_requirements=payment_requirements,
+                endpoint=endpoint,
+                wallet_address=wallet_address,
+            )
+            # Mutate (or create) the caller's context dict so all four gates
+            # see the same object. We pass the raw SimulationResult so
+            # downstream code can read either the enum or the dict form.
+            if context is None:
+                context = {}
+            context["simulation_result"] = sim_result
+
         results: dict[CLAWGate, CLAWGateResult] = {}
 
         for validator in self._validators:
