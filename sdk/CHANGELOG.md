@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.1.0] - 2026-05-26
+
+Graduates `3.0.0rc1` to stable and ships the six ClawPay sprints
+(drainer-intel DB, dashboard MVP, Stripe Agent Toolkit adapter, on-chain
+SimulationGate, outcome-based billing, closed-beta launch infrastructure).
+No breaking API changes versus `3.0.0rc1`; everything below was additive.
+
 ### Added
 
 - **ClawPay Sprint 6 — closed-beta launch infrastructure.** Three new
